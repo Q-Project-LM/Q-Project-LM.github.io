@@ -1,0 +1,6 @@
+.DS_Store
+.claude/
+exec-*.png
+_ss.html
+_darkpreview.html
+node_modules/

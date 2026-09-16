@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docs — Q Project</title>
+  <meta name="description" content="Documentation for Q Project models: quickstart, model reference, fine-tuning, and roadmap." />
+  <link rel="icon" type="image/svg+xml" href="assets/q-logo.svg" />
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("q-theme") || "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip" href="#intro">Skip to content</a>
+
+  <header class="nav" id="top">
+    <a class="nav__brand" href="index.html" aria-label="Q Project home">
+      <img src="assets/q-logo.svg" alt="" width="34" height="34" />
+      <span>Q Project</span>
+    </a>
+    <div class="nav__group">
+      <nav class="nav__links" aria-label="Primary">
+        <a href="index.html#models">Models</a>
+        <a href="docs.html" aria-current="page">Docs</a>
+        <a href="index.html#work">Research</a>
+        <a href="index.html#access">Access</a>
+      </nav>
+      <a class="icon-btn" href="https://github.com/Q-Project-LM" target="_blank" rel="noopener" aria-label="Q Project on GitHub">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.7.5.5 5.7.5 12a11.5 11.5 0 0 0 7.9 10.9c.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 1.7 2.6 1.2 3.3.9.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.4-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5A11.5 11.5 0 0 0 23.5 12C23.5 5.7 18.3.5 12 .5Z"/></svg>
+      </a>
+      <a class="nav__hf" href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a>
+      <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="docs">
+    <aside class="docs__side">
+      <h4>Documentation</h4>
+      <ul class="docs__nav">
+        <li><a href="#intro">Introduction</a></li>
+        <li><a href="#quickstart">Quickstart</a></li>
+        <li><a href="#reference">Model reference</a></li>
+        <li><a href="#finetune">Fine-tuning</a></li>
+        <li><a href="#roadmap">Roadmap</a></li>
+        <li><a href="#api">Hosted API</a></li>
+      </ul>
+    </aside>
+
+    <main class="docs__main">
+      <section class="doc-block" id="intro">
+        <h1>Q Project docs</h1>
+        <p class="docs__lead">
+          Q Project is an independent lab training language and agent models from scratch.
+          These docs cover how to run our open models today — and what is coming next.
+        </p>
+        <p>
+          Everything published under the <a href="https://huggingface.co/q-project" target="_blank" rel="noopener" style="color:var(--brand)">q-project</a>
+          organization is open-weight and Apache 2.0. Our current release is
+          <strong style="color:var(--text)">Q-50M-Base</strong>, a compact base language model you can run on a laptop.
+        </p>
+        <div class="callout">
+          <div><strong>Base, not chat.</strong> Q-50M-Base continues text; it does not follow instructions out of the box. See <a href="#finetune" style="color:var(--brand)">Fine-tuning</a> to teach it a task.</div>
+        </div>
+      </section>
+
+      <section class="doc-block" id="quickstart">
+        <h2>Quickstart</h2>
+        <p>Q models use the standard Hugging Face Transformers API. Install the dependencies:</p>
+
+        <div class="code" data-copy="pip install transformers torch">
+          <div class="code__bar">
+            <div class="code__dots"><span></span><span></span><span></span></div>
+            <span class="code__file">shell</span>
+            <button class="code__copy" type="button">Copy</button>
+          </div>
+          <pre><code><span class="tok-com"># Python 3.9+</span>
+pip install transformers torch</code></pre>
+        </div>
+
+        <h3>Load and generate</h3>
+        <p>Pull the checkpoint from the Hub and continue a prompt:</p>
+
+        <div class="code" data-copy="from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
+
+model_id = &quot;q-project/Q-50M-Base&quot;
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float16)
+
+prompt = &quot;The theory of relativity states that&quot;
+inputs = tokenizer(prompt, return_tensors=&quot;pt&quot;)
+output = model.generate(**inputs, max_new_tokens=64, do_sample=True, temperature=0.8)
+print(tokenizer.decode(output[0], skip_special_tokens=True))">
+          <div class="code__bar">
+            <div class="code__dots"><span></span><span></span><span></span></div>
+            <span class="code__file">quickstart.py</span>
+            <button class="code__copy" type="button">Copy</button>
+          </div>
+          <pre><code><span class="tok-kw">from</span> transformers <span class="tok-kw">import</span> AutoModelForCausalLM, AutoTokenizer
+<span class="tok-kw">import</span> torch
+
+model_id = <span class="tok-str">"q-project/Q-50M-Base"</span>
+tokenizer = AutoTokenizer.<span class="tok-fn">from_pretrained</span>(model_id)
+model = AutoModelForCausalLM.<span class="tok-fn">from_pretrained</span>(model_id, torch_dtype=torch.float16)
+
+prompt = <span class="tok-str">"The theory of relativity states that"</span>
+inputs = <span class="tok-fn">tokenizer</span>(prompt, return_tensors=<span class="tok-str">"pt"</span>)
+output = model.<span class="tok-fn">generate</span>(**inputs, max_new_tokens=<span class="tok-num">64</span>, do_sample=<span class="tok-kw">True</span>, temperature=<span class="tok-num">0.8</span>)
+<span class="tok-fn">print</span>(tokenizer.<span class="tok-fn">decode</span>(output[<span class="tok-num">0</span>], skip_special_tokens=<span class="tok-kw">True</span>))</code></pre>
+        </div>
+
+        <p>Keep prompts within the 2,048-token context window. Lower the temperature for steadier text; raise it for more variety.</p>
+      </section>
+
+      <section class="doc-block" id="reference">
+        <h2>Model reference</h2>
+        <p>Q-50M-Base is a decoder-only causal language model pretrained from scratch on ~5B tokens of FineWeb-Edu.</p>
+
+        <table class="doc-table">
+          <thead><tr><th>Field</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>parameters</td><td>50,878,208 (50.9M)</td></tr>
+            <tr><td>hidden_size</td><td>512</td></tr>
+            <tr><td>num_layers</td><td>10</td></tr>
+            <tr><td>attention</td><td>Grouped-query — 8 query heads, 2 KV heads</td></tr>
+            <tr><td>head_dim</td><td>64, with per-head QK-Norm</td></tr>
+            <tr><td>mlp</td><td>SwiGLU / SiLU, intermediate 1,792</td></tr>
+            <tr><td>norm</td><td>RMSNorm (eps 1e-5)</td></tr>
+            <tr><td>positional</td><td>RoPE, all layers</td></tr>
+            <tr><td>vocab_size</td><td>32,768 (byte-level BPE)</td></tr>
+            <tr><td>context</td><td>2,048 tokens</td></tr>
+            <tr><td>val_perplexity</td><td>24.47</td></tr>
+            <tr><td>license</td><td>Apache 2.0</td></tr>
+          </tbody>
+        </table>
+        <p>The full training recipe — optimizer, schedule, and evaluation — lives on the <a href="https://huggingface.co/q-project/Q-50M-Base" target="_blank" rel="noopener" style="color:var(--brand)">model card</a>.</p>
+      </section>
+
+      <section class="doc-block" id="finetune">
+        <h2>Fine-tuning</h2>
+        <p>Because it is a base model, Q-50M-Base is a good starting point for supervised fine-tuning on your own task — classification, domain text, or a simple instruction format.</p>
+        <ul>
+          <li>Format your data as plain text sequences under 2,048 tokens.</li>
+          <li>Start from <code>q-project/Q-50M-Base</code> and train with a small learning rate (2e-5 to 5e-5).</li>
+          <li>The model is small enough to fine-tune on a single consumer GPU.</li>
+        </ul>
+        <div class="callout">
+          <div><strong>Sharing back.</strong> If you release a fine-tune, we'd love to see it — tag <code>q-project</code> or open a thread on the model card.</div>
+        </div>
+      </section>
+
+      <section class="doc-block" id="roadmap">
+        <h2>Roadmap</h2>
+        <p>Where Q Project is heading. Dates are intentions, not promises.</p>
+        <ul>
+          <li><strong style="color:var(--text)">Q-50M-Base</strong> — shipped. Open weights, Apache 2.0.</li>
+          <li><strong style="color:var(--text)">Q · Next</strong> — in training. A larger model built for perception and agentic tool use. Details under wraps until release.</li>
+          <li><strong style="color:var(--text)">Hosted API</strong> — managed endpoints so you can call Q models without your own hardware.</li>
+          <li><strong style="color:var(--text)">Private models</strong> — closed models and custom training for teams.</li>
+        </ul>
+      </section>
+
+      <section class="doc-block" id="api">
+        <h2>Hosted API</h2>
+        <p>A managed API for Q models is on the way. It will offer OpenAI-compatible endpoints, so most existing clients work with only a base-URL change.</p>
+        <div class="callout">
+          <div><strong>Coming soon.</strong> Want early access? <a href="index.html#waitlist" style="color:var(--brand)">Join the waitlist</a> and we'll reach out when it opens.</div>
+        </div>
+
+        <div class="docs__page-nav">
+          <a href="#intro"><span>Back to top</span><strong>Introduction</strong></a>
+          <a class="next" href="index.html#access"><span>Next</span><strong>Access &amp; pricing</strong></a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div class="footer__brand">
+      <img src="assets/q-logo.svg" alt="" width="28" height="28" />
+      <span>Q Project</span>
+    </div>
+    <p class="footer__tag">Pretrain · Finetune · Agents · Research</p>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="index.html">Home</a>
+      <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a>
+      <a href="https://github.com/Q-Project-LM" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <p class="footer__copy">© <span id="year"></span> Q Project. Built independently.</p>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
