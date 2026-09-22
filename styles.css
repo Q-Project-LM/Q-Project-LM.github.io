@@ -550,3 +550,5 @@ section { max-width: var(--maxw); margin: 0 auto; padding: 92px 28px; }
   font-size: 0.92rem; line-height: 1.6; color: var(--code-text);
 }
 .demo-note { color: var(--faint); font-size: 0.88rem; margin-top: 18px; }
+.demo-hint { color: var(--faint); font-size: 0.85rem; margin-top: 12px; line-height: 1.5; }
+.demo-hint code { font-family: var(--f-mono); font-size: 0.85em; background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--muted); }

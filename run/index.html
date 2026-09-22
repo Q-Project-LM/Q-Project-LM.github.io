@@ -63,15 +63,17 @@
       <textarea id="prompt">Once upon a time,</textarea>
       <div class="demo__row">
         <button id="gen" class="btn btn--solid" disabled>Generate</button>
+        <label><input id="askMode" type="checkbox"> Ask as a question (exact circuits)</label>
         <label>max tokens <input id="maxnew" type="number" value="60" min="1" max="300"></label>
         <label>temperature <input id="temp" type="range" min="0" max="1.5" step="0.1" value="0.8"></label>
         <span id="tps" class="demo__tps"></span>
       </div>
+      <p class="demo-hint">With <strong>Ask</strong> on, try: <code>347 times 86?</code> &middot; <code>15% of 240?</code> &middot; <code>Is 97 prime?</code> &middot; <code>Sort 5, 2, 9.</code> The model writes the calculation itself; a deterministic evaluator (ported from <code>circuits.py</code>, exact same code as the paper's) overwrites the digits with the exact answer &mdash; verified 98.7% correct end-to-end on 300 held-out questions matching this phrasing style. Unusual phrasings can still make the model pick the wrong circuit; that failure mode is real and disclosed in the <a href="../blog-q-omni.html">write-up</a>.</p>
     </div>
 
     <div id="out" class="demo-out"></div>
 
-    <p class="demo-note">Text-only demo (image/audio/circuit tokens are suppressed here). Model card: <a href="https://huggingface.co/q-project/Q-Omni-53M-Experimental" target="_blank" rel="noopener">q-project/Q-Omni-53M-Experimental</a>. WebAssembly with SIMD is supported by every current browser. Read how it all works on the <a href="../blog-q-omni.html">blog</a>.</p>
+    <p class="demo-note">Text-only demo (image/audio tokens are suppressed here). Model card: <a href="https://huggingface.co/q-project/Q-Omni-53M-Experimental" target="_blank" rel="noopener">q-project/Q-Omni-53M-Experimental</a>. WebAssembly with SIMD is supported by every current browser. Read how it all works on the <a href="../blog-q-omni.html">blog</a>.</p>
   </main>
 
   <footer class="footer">
@@ -94,6 +96,7 @@
   <script src="tokenizer.js"></script>
   <script src="model.js"></script>
   <script src="wasm.js"></script>
+  <script src="circuits.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

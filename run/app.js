@@ -86,6 +86,13 @@ function suppressNonText(logits, vocabTextEnd) {
   return logits;
 }
 
+// Text-only demo, but circuits live in the control-token block [special_offset, image_offset) —
+// only mask out the image/audio code ranges, leaving <USER>/<MODEL>/<CALC>/<EQ>/... choosable.
+function suppressImageAudio(logits, imageOffset) {
+  for (let i = imageOffset; i < logits.length; i++) logits[i] = -Infinity;
+  return logits;
+}
+
 function sample(logits, temperature, topK) {
   const idx = [...logits.keys()].sort((a, b) => logits[b] - logits[a]).slice(0, topK);
   if (temperature <= 0) return idx[0];
@@ -102,18 +109,35 @@ async function generate() {
   const prompt = $('prompt').value || 'Once upon a time,';
   const maxNew = parseInt($('maxnew').value, 10) || 60;
   const temp = parseFloat($('temp').value);
+  const askMode = $('askMode') && $('askMode').checked;
   const model = backend === 'wasm' ? wasmModel : jsModel;
   model.reset();
-  const ids = tok.encodeWithBos(prompt);
-  $('out').textContent = prompt;
-  let logits;
+
+  // "Ask" mode wraps the prompt as a chat turn ([<bos><USER> ... <EOT><MODEL>]) — this is the exact
+  // format the exact-circuit mechanism was trained and evaluated with (see the model card / paper).
+  // Plain continuation mode (default) feeds the prompt as-is, matching how the demo always worked.
+  const ids = askMode ? [1, Lib.USER, ...tok.encode(prompt), Lib.EOT, Lib.MODEL] : tok.encodeWithBos(prompt);
+  const seen = ids.slice();
+  const circuit = askMode ? new Lib.CircuitInterceptor(tok) : null;
+
+  $('out').textContent = askMode ? '' : prompt;
+  let logits, hiding = false;
   const t0 = performance.now(); let n = 0;
   for (const id of ids) logits = await model.step(id);
-  const textEnd = loaded.cfg.special_offset; // keep sampling in the text vocabulary only
+  const imgOffset = loaded.cfg.image_offset; // block image/audio codes; circuits live below this in the control block
+
   while (n < maxNew && !stopFlag) {
-    const next = sample(suppressNonText(logits.slice(), textEnd), temp, 40);
+    let next = circuit ? circuit.next() : null;
+    if (next === null) next = sample(suppressImageAudio(logits.slice(), imgOffset), temp, 40);
     if (next === 2 /* <eos> */) break;
-    $('out').textContent += tok.decode([next]);
+    seen.push(next);
+    if (circuit) circuit.afterToken(seen);
+    // the <CALC>expr<EQ>result<ECALC> scratchpad is never shown — only the model's own final
+    // natural-language sentence (which restates the answer in words) reaches the visible output.
+    if (next === Lib.CALC) hiding = true;
+    else if (next === Lib.ECALC) hiding = false;
+    else if (!hiding && next < loaded.cfg.special_offset) $('out').textContent += tok.decode([next]);
+    if (next === Lib.EOT) break;
     n++;
     $('tps').textContent = `${(n / ((performance.now() - t0) / 1000)).toFixed(1)} tok/s (${backend})`;
     logits = await model.step(next);
