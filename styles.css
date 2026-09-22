@@ -466,3 +466,59 @@ section { max-width: var(--maxw); margin: 0 auto; padding: 92px 28px; }
   .spec { grid-template-columns: 1fr; }
   .nav__hf { display: none; }
 }
+
+/* ================= Blog ================= */
+.blog__list { max-width: var(--maxw); margin: 0 auto; padding: 48px 28px 96px; display: grid; gap: 20px; }
+.post-card {
+  display: block; background: linear-gradient(180deg, var(--surface), var(--surface-2));
+  border: 1px solid var(--line); border-radius: var(--r); padding: 30px 32px;
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+.post-card:hover { border-color: var(--brand); transform: translateY(-2px); }
+.post-card__date { font-family: var(--f-display); font-size: 0.82rem; color: var(--cyan); }
+.post-card h3 { font-size: 1.55rem; margin-top: 10px; }
+.post-card p { color: var(--muted); margin: 12px 0 0; }
+.post-card__tags { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+.post-card__tags span {
+  font-family: var(--f-mono); font-size: 0.76rem; color: var(--muted);
+  background: var(--surface-2); border: 1px solid var(--line); padding: 3px 10px; border-radius: 999px;
+}
+.blog__lead { max-width: 640px; padding: 56px 28px 0; margin: 0 auto; }
+.blog__lead h1 { font-size: clamp(2rem, 4.6vw, 2.9rem); }
+.blog__lead p { color: var(--muted); margin: 14px 0 0; font-size: 1.08rem; }
+
+/* ---------- Article ---------- */
+.article { max-width: 720px; margin: 0 auto; padding: 56px 28px 96px; }
+.article__kicker { font-family: var(--f-display); font-size: 0.9rem; color: var(--cyan); margin: 0 0 14px; }
+.article__title { font-size: clamp(2rem, 5vw, 3rem); line-height: 1.08; }
+.article__lede { color: var(--muted); font-size: 1.15rem; margin: 20px 0 0; max-width: 60ch; }
+.article__stats { display: flex; flex-wrap: wrap; gap: 26px; margin: 36px 0 0; padding: 24px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.article__stats div b { display: block; font-family: var(--f-display); font-size: 1.4rem; color: var(--brand); }
+.article__stats div span { font-size: 0.8rem; color: var(--faint); text-transform: uppercase; letter-spacing: 0.05em; }
+.article .doc-block { padding: 40px 0; border-bottom: 1px solid var(--line); }
+.article .doc-block:last-child { border-bottom: none; }
+.article .doc-block h2 { font-size: 1.7rem; }
+.article .doc-block h3 { font-size: 1.15rem; margin: 26px 0 6px; }
+.doc-table td.good { color: var(--good, #1a8f5e); font-weight: 600; }
+.doc-table tr.shade td { background: var(--surface-2); }
+.doc-table--plain td:first-child { font-family: var(--f-body); font-size: inherit; color: var(--text); }
+.callout--warn::before { background: linear-gradient(120deg, #e2934c, #b54708); }
+
+/* ---------- Architecture diagram ---------- */
+.diagram-wrap {
+  margin-top: 22px; background: linear-gradient(180deg, var(--surface), var(--surface-2));
+  border: 1px solid var(--line); border-radius: var(--r); padding: 20px 8px;
+}
+.arch text { font-family: var(--f-display); fill: var(--text); }
+.arch .lbl-sm { font-family: var(--f-mono); fill: var(--muted); font-size: 11px; }
+.arch .lbl-faint { fill: var(--faint); font-size: 10.5px; font-family: var(--f-body); }
+.arch rect.box { fill: var(--bg-2); stroke: var(--line-2); stroke-width: 1.2; }
+.arch rect.box--accent { stroke: var(--brand); fill: var(--surface-2); }
+.arch rect.box--ghost { fill: none; stroke: var(--line-2); stroke-dasharray: 4 4; }
+.arch .conn { stroke: var(--line-2); stroke-width: 1.6; fill: none; }
+.arch .pulse { fill: var(--cyan); filter: drop-shadow(0 0 4px var(--cyan)); }
+.arch .branch-lbl { font-size: 11px; font-family: var(--f-body); fill: var(--muted); }
+
+@media (max-width: 640px) {
+  .post-card { padding: 24px 22px; }
+}
