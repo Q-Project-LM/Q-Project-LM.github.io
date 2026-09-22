@@ -50,7 +50,7 @@
 
   <main class="run demo" id="demo">
     <h1>Run Q-Omni in your browser</h1>
-    <p class="run__lede">A 53M-parameter ternary-weight model, decoded natively from its 33&nbsp;MB <code>model.qpack</code> file &mdash; no server, no Python. Runs on a compiled <strong>WebAssembly&nbsp;+&nbsp;SIMD</strong> kernel by default (~30 tok/s, single-threaded), with an experimental WebGPU path and a plain-JavaScript fallback.</p>
+    <p class="run__lede">A 53M-parameter ternary-weight model, decoded natively from its 33&nbsp;MB <code>model.qpack</code> file &mdash; no server, no Python. Runs on a compiled <strong>WebAssembly&nbsp;+&nbsp;SIMD</strong> kernel (~30 tok/s, single-threaded), with a plain-JavaScript fallback.</p>
 
     <div class="demo-card">
       <div id="status" class="demo-status">loading&hellip;</div>
@@ -63,7 +63,6 @@
       <textarea id="prompt">Once upon a time,</textarea>
       <div class="demo__row">
         <button id="gen" class="btn btn--solid" disabled>Generate</button>
-        <button id="gpuToggle" class="btn btn--ghost" disabled title="Try the experimental WebGPU backend instead of the default WebAssembly one">Try WebGPU</button>
         <label>max tokens <input id="maxnew" type="number" value="60" min="1" max="300"></label>
         <label>temperature <input id="temp" type="range" min="0" max="1.5" step="0.1" value="0.8"></label>
         <span id="tps" class="demo__tps"></span>
@@ -72,7 +71,7 @@
 
     <div id="out" class="demo-out"></div>
 
-    <p class="demo-note">Text-only demo (image/audio/circuit tokens are suppressed here). Model card: <a href="https://huggingface.co/q-project/Q-Omni-53M-Experimental" target="_blank" rel="noopener">q-project/Q-Omni-53M-Experimental</a>. WebAssembly with SIMD is supported by every current browser; the WebGPU path (Chrome/Edge 113+) is experimental &mdash; the &ldquo;Try WebGPU&rdquo; button switches to it. Read how it all works on the <a href="../blog-q-omni.html">blog</a>.</p>
+    <p class="demo-note">Text-only demo (image/audio/circuit tokens are suppressed here). Model card: <a href="https://huggingface.co/q-project/Q-Omni-53M-Experimental" target="_blank" rel="noopener">q-project/Q-Omni-53M-Experimental</a>. WebAssembly with SIMD is supported by every current browser. Read how it all works on the <a href="../blog-q-omni.html">blog</a>.</p>
   </main>
 
   <footer class="footer">
@@ -95,7 +94,6 @@
   <script src="tokenizer.js"></script>
   <script src="model.js"></script>
   <script src="wasm.js"></script>
-  <script src="gpu.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

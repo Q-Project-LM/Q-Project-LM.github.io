@@ -1,7 +1,14 @@
 'use strict';
-const { readContainer, loadTensors, ByteLevelBPE, QOmniJS, loadWasmModel, initGPU, QOmniGPU } = window.QOmniLib;
+// NOTE: deliberately no `const { x } = window.QOmniLib` here — qpack.js/model.js/wasm.js each
+// declare their own top-level `function`/`class` with the same names (readContainer, loadTensors,
+// ByteLevelBPE, QOmniJS, loadWasmModel), so destructuring those names again at this file's top
+// level collides with those declarations in a real browser (classic scripts share one global
+// lexical scope) — "Identifier 'readContainer' has already been declared". Node's eval-based
+// harness used to verify this code never actually ran app.js itself, so the bug went unnoticed
+// until it was reported live. Referencing everything via window.QOmniLib.* avoids the collision.
+const Lib = window.QOmniLib;
 const $ = (id) => document.getElementById(id);
-let loaded = null, jsModel = null, wasmModel = null, gpuModel = null, tok = null, backend = 'none', generating = false, stopFlag = false;
+let loaded = null, jsModel = null, wasmModel = null, tok = null, backend = 'none', generating = false, stopFlag = false;
 
 function log(msg) { $('status').textContent = msg; }
 
@@ -36,16 +43,15 @@ async function loadModel() {
     log(total ? `${label} ${mb}/${(total / 1e6).toFixed(1)} MB (${(100 * got / total).toFixed(0)}%)…` : `${label} ${mb} MB…`);
   };
   log('downloading model.qpack (33 MB)…');
-  const [buf, wasmBytesRaw] = await Promise.all([
+  const [buf, wasmBytes] = await Promise.all([
     fetchWithProgress('./model.qpack', progress('downloading model.qpack')),
     fetchWithProgress('./kernel.wasm', progress('downloading kernel.wasm')).catch((e) => { console.warn('kernel.wasm fetch failed:', e); return null; }),
   ]);
-  const wasmBytes = wasmBytesRaw;
   log(`parsing container (${(buf.byteLength / 1e6).toFixed(1)} MB downloaded in ${((performance.now() - t0) / 1000).toFixed(1)}s)…`);
-  const c = readContainer(buf);
-  loaded = loadTensors(c);
-  tok = new ByteLevelBPE(c.json('tokenizer.json'));
-  jsModel = new QOmniJS(loaded);
+  const c = Lib.readContainer(buf);
+  loaded = Lib.loadTensors(c);
+  tok = new Lib.ByteLevelBPE(c.json('tokenizer.json'));
+  jsModel = new Lib.QOmniJS(loaded);
   $('params').textContent = `${loaded.cfg.num_hidden_layers} layers · hidden ${loaded.cfg.hidden_size} · vocab ${loaded.cfg.vocab_size.toLocaleString()}`;
 
   log("running self-test (compares to the reference model's saved logits)…");
@@ -62,29 +68,17 @@ async function loadModel() {
   }
   jsModel.reset();
 
-  // Preferred backend: WebAssembly (SIMD), a compiled C kernel — synchronous, and checked token-for-token identical
-  // to the JS reference before shipping (see kernel.c's header comment). Falls back to WebGPU, then plain JS.
+  // WebAssembly (SIMD), a compiled C kernel — synchronous, checked token-for-token identical
+  // to the JS reference before shipping (see kernel.c's header comment). Falls back to plain JS.
   if (wasmBytes) {
-    try { log('compiling the WebAssembly kernel and uploading weights…'); wasmModel = await loadWasmModel(loaded, wasmBytes); backend = 'wasm'; }
+    try { log('compiling the WebAssembly kernel and uploading weights…'); wasmModel = await Lib.loadWasmModel(loaded, wasmBytes); backend = 'wasm'; }
     catch (e) { console.warn('WASM init failed:', e); }
   }
-  if (backend === 'none' && navigator.gpu) {
-    try { log('initialising WebGPU (experimental — uploading weights to the GPU)…'); const gpuCtx = await initGPU(); gpuModel = new QOmniGPU(gpuCtx, loaded); backend = 'webgpu'; }
-    catch (e) { console.warn('WebGPU init failed, using CPU:', e); }
-  }
   if (backend === 'none') backend = 'js';
-  const labels = { wasm: 'WebAssembly + SIMD (compiled C kernel, ~30 tok/s single-threaded)', webgpu: 'WebGPU (experimental, GPU-accelerated)', js: 'plain JavaScript fallback (slow, ~1-2 tok/s)' };
+  const labels = { wasm: 'WebAssembly + SIMD (compiled C kernel, ~30 tok/s single-threaded)', js: 'plain JavaScript fallback (slow, ~1-2 tok/s)' };
   $('backend').textContent = labels[backend];
   log('ready.');
   $('gen').disabled = false;
-  $('gpuToggle').disabled = !(navigator.gpu && backend !== 'webgpu');
-}
-
-async function useGpuInstead() {
-  if (gpuModel || !navigator.gpu) return;
-  log('initialising WebGPU (experimental)…');
-  try { const gpuCtx = await initGPU(); gpuModel = new QOmniGPU(gpuCtx, loaded); backend = 'webgpu'; $('backend').textContent = 'WebGPU (experimental, GPU-accelerated)'; log('ready.'); }
-  catch (e) { log('WebGPU init failed: ' + e.message); }
 }
 
 function suppressNonText(logits, vocabTextEnd) {
@@ -108,7 +102,7 @@ async function generate() {
   const prompt = $('prompt').value || 'Once upon a time,';
   const maxNew = parseInt($('maxnew').value, 10) || 60;
   const temp = parseFloat($('temp').value);
-  const model = backend === 'wasm' ? wasmModel : backend === 'webgpu' ? gpuModel : jsModel;
+  const model = backend === 'wasm' ? wasmModel : jsModel;
   model.reset();
   const ids = tok.encodeWithBos(prompt);
   $('out').textContent = prompt;
@@ -129,5 +123,4 @@ async function generate() {
 }
 
 $('gen').addEventListener('click', generate);
-$('gpuToggle').addEventListener('click', useGpuInstead);
 loadModel().catch((e) => { log('error: ' + e.message); console.error(e); });
