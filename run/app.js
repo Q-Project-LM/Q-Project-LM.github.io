@@ -40,7 +40,11 @@ async function loadModel() {
   const t0 = performance.now();
   const progress = (label) => (got, total) => {
     const mb = (got / 1e6).toFixed(1);
-    log(total ? `${label} ${mb}/${(total / 1e6).toFixed(1)} MB (${(100 * got / total).toFixed(0)}%)…` : `${label} ${mb} MB…`);
+    // `total` comes from the Content-Length header, which some servers report as the *compressed*
+    // wire size while the browser hands us decompressed bytes — that can push got past total and
+    // print e.g. "113%"; clamp for display only (the transfer itself is unaffected).
+    const pct = total ? Math.min(100, Math.round(100 * got / total)) : null;
+    log(total ? `${label} ${mb}/${(total / 1e6).toFixed(1)} MB (${pct}%)…` : `${label} ${mb} MB…`);
   };
   log('downloading model.qpack (33 MB)…');
   const [buf, wasmBytes] = await Promise.all([
@@ -108,8 +112,12 @@ async function generate() {
   generating = true; stopFlag = false; $('gen').textContent = 'Stop';
   const prompt = $('prompt').value || 'Once upon a time,';
   const maxNew = parseInt($('maxnew').value, 10) || 60;
-  const temp = parseFloat($('temp').value);
   const askMode = $('askMode') && $('askMode').checked;
+  // The published 99.7%/98.7% circuit accuracy was measured with GREEDY decoding (eval.py's
+  // gen() defaults to greedy=True); sampling at the story-mode temperature makes the model far
+  // more likely to pick the wrong circuit or malform the expression before <EQ> is even reached.
+  // Ask mode always decodes greedily, matching the methodology that produced those numbers.
+  const temp = askMode ? 0 : parseFloat($('temp').value);
   const model = backend === 'wasm' ? wasmModel : jsModel;
   model.reset();
 
@@ -147,4 +155,9 @@ async function generate() {
 }
 
 $('gen').addEventListener('click', generate);
+if ($('askMode')) {
+  const syncTempDisabled = () => { $('temp').disabled = $('askMode').checked; };
+  $('askMode').addEventListener('change', syncTempDisabled);
+  syncTempDisabled();
+}
 loadModel().catch((e) => { log('error: ' + e.message); console.error(e); });

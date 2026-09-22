@@ -68,7 +68,7 @@
         <label>temperature <input id="temp" type="range" min="0" max="1.5" step="0.1" value="0.8"></label>
         <span id="tps" class="demo__tps"></span>
       </div>
-      <p class="demo-hint">With <strong>Ask</strong> on, try: <code>347 times 86?</code> &middot; <code>15% of 240?</code> &middot; <code>Is 97 prime?</code> &middot; <code>Sort 5, 2, 9.</code> The model writes the calculation itself; a deterministic evaluator (ported from <code>circuits.py</code>, exact same code as the paper's) overwrites the digits with the exact answer &mdash; verified 98.7% correct end-to-end on 300 held-out questions matching this phrasing style. Unusual phrasings can still make the model pick the wrong circuit; that failure mode is real and disclosed in the <a href="../blog-q-omni.html">write-up</a>.</p>
+      <p class="demo-hint">With <strong>Ask</strong> on, decoding is forced greedy (temperature is disabled) &mdash; that's what the published 98.7% figure was measured with; sampling made circuit dispatch much less reliable. Try: <code>347 times 86?</code> &middot; <code>15% of 240?</code> &middot; <code>Is 97 prime?</code> &middot; <code>Sort 5, 2, 9.</code> The model writes the calculation itself; a deterministic evaluator (ported from <code>circuits.py</code>, exact same code as the paper's) overwrites the digits with the exact answer. Unusual phrasings can still make the model pick the wrong circuit; that failure mode is real and disclosed in the <a href="../blog-q-omni.html">write-up</a>.</p>
     </div>
 
     <div id="out" class="demo-out"></div>
