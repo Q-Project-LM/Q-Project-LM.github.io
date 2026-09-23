@@ -55,6 +55,20 @@ function evaluate(expr) {
       const [y, m, d] = expr.slice(3).split('-').map(Number);
       return WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
     }
+    if (expr.startsWith('dur:')) {
+      const [d1, d2] = expr.slice(4).split(',');
+      const toUtc = (s) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+      return String(Math.round(Math.abs(toUtc(d2) - toUtc(d1)) / 86400000));
+    }
+    if (expr.startsWith('filter:')) {
+      const [cond, rest] = expr.slice(7).split(/:(.*)/s);
+      const ops = { '>=': (a, b) => a >= b, '<=': (a, b) => a <= b, '>': (a, b) => a > b, '<': (a, b) => a < b, '==': (a, b) => a === b };
+      const sym = ['>=', '<=', '>', '<', '=='].find((s) => cond.startsWith(s));
+      if (!sym) return null;
+      const thr = parseFloat(cond.slice(sym.length));
+      const xs = rest.split(',').filter((x) => ops[sym](parseFloat(x), thr));
+      return xs.length ? xs.join(',') : 'none';
+    }
     if (expr.startsWith('conv:')) {
       const rest = expr.slice(5);
       const sp = rest.indexOf(' ');
