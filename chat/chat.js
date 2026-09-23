@@ -129,11 +129,23 @@ async function sendMessage() {
 
   const bubble = addBubble('model', '');
   bubble.classList.add('pending');
+  let cur = document.createTextNode('');
+  bubble.appendChild(cur);
   const circuit = new Lib.CircuitInterceptor(tok);
   const maxNew = 200;
-  const imgOffset = loaded.cfg.image_offset != null ? loaded.cfg.image_offset : loaded.cfg.vocab_size;
-  let hiding = false, n = 0;
+  // Unlike the single-shot run/ demo, this UI shows tool calls as a chip instead of hiding them --
+  // "agentic" transparency: you see when the network hands off to the deterministic executor.
+  let mode = 'text', exprChars = [], resultChars = [], n = 0;
   const t0 = performance.now();
+
+  function appendChip(expr, result) {
+    const chip = document.createElement('span');
+    chip.className = 'tool-chip';
+    chip.innerHTML = `<span class="tool-chip__tag">tool</span> ${expr.replace(/</g, '&lt;')} = ${result.replace(/</g, '&lt;')}`;
+    bubble.appendChild(chip);
+    cur = document.createTextNode('');
+    bubble.appendChild(cur);
+  }
 
   while (n < maxNew && !stopFlag) {
     let next = circuit.next();
@@ -141,9 +153,12 @@ async function sendMessage() {
     if (next === 2 /* <eos> */) break;
     history.push(next);
     circuit.afterToken(history);
-    if (next === Lib.CALC) hiding = true;
-    else if (next === Lib.ECALC) hiding = false;
-    else if (!hiding && next < loaded.cfg.special_offset) bubble.textContent += tok.decode([next]);
+    if (next === Lib.CALC) { mode = 'expr'; exprChars = []; }
+    else if (next === Lib.EQ) { mode = 'result'; resultChars = []; }
+    else if (next === Lib.ECALC) { mode = 'text'; appendChip(exprChars.join(''), resultChars.join('')); }
+    else if (mode === 'expr') exprChars.push(tok.decode([next]));
+    else if (mode === 'result') resultChars.push(tok.decode([next]));
+    else if (next < loaded.cfg.special_offset) cur.nodeValue += tok.decode([next]);
     if (next === Lib.EOT) break;
     n++;
     logits = await activeModel().step(next);
