@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Q-164M: text, dialogue, and exact tool calls — Q Project</title>
-  <meta name="description" content="DRAFT — a from-scratch text-only successor in the Q architecture family: bigger, dialogue-first, with a generalized exact-tool-calling mechanism." />
+  <meta name="description" content="A from-scratch text-only successor in the Q architecture family, training now: bigger, dialogue-first, with a generalized exact-tool-calling mechanism and a live browser demo." />
   <link rel="icon" type="image/svg+xml" href="assets/q-logo.svg" />
 
   <script>
@@ -20,6 +20,27 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    [data-lang] { display: none; }
+    [data-lang].is-active { display: block; }
+    .lang-group { display: flex; gap: 2px; background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 10px; padding: 3px; }
+    .lang-group button { font: 600 12px var(--f-display); border: none; background: transparent; color: var(--muted); border-radius: 7px; padding: 0 10px; height: 34px; cursor: pointer; transition: background .15s, color .15s; }
+    .lang-group button.is-on { background: var(--surface); color: var(--brand); box-shadow: 0 1px 2px rgba(16,25,43,.08); }
+
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 22px 0; }
+    .flow__box { flex: 1 1 150px; background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 12px; padding: 12px 14px; font-size: 0.86rem; line-height: 1.45; color: var(--text); }
+    .flow__box b { display: block; font-family: var(--f-display); font-size: 0.8rem; text-transform: uppercase; letter-spacing: .03em; color: var(--brand); margin-bottom: 4px; }
+    .flow__box code { font-family: var(--f-mono); font-size: 0.82em; color: var(--text); }
+    .flow__arrow { flex: 0 0 auto; color: var(--faint); font-size: 1.3rem; line-height: 1; }
+    .flow__branch { display: flex; flex-wrap: wrap; gap: 10px; flex: 1 1 100%; padding-left: 20px; border-left: 2px dashed var(--line-2); margin: -6px 0; }
+    .flow__branch .flow__box { border-color: var(--cyan); }
+    .flow-caption { font-size: 0.8rem; color: var(--faint); margin-top: -12px; margin-bottom: 18px; }
+
+    .stat-strip { display: flex; flex-wrap: wrap; gap: 18px; margin: 18px 0 0; }
+    .stat-strip div { flex: 1 1 130px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+    .stat-strip b { display: block; font-family: var(--f-mono); font-size: 1.1rem; color: var(--indigo); }
+    .stat-strip span { font-size: 0.72rem; color: var(--faint); text-transform: uppercase; letter-spacing: .04em; }
+  </style>
 </head>
 <body>
   <a class="skip" href="#intro">Skip to article</a>
@@ -38,6 +59,11 @@
         <a href="chat/">Chat</a>
         <a href="index.html#work">Research</a>
       </nav>
+      <div class="lang-group" id="langGroup" role="group" aria-label="Language">
+        <button type="button" data-v="ru">RU</button>
+        <button type="button" data-v="en">EN</button>
+        <button type="button" data-v="zh">中</button>
+      </div>
       <a class="icon-btn" href="https://github.com/Q-Project-LM" target="_blank" rel="noopener" aria-label="Q Project on GitHub">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.7.5.5 5.7.5 12a11.5 11.5 0 0 0 7.9 10.9c.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 1.7 2.6 1.2 3.3.9.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.4-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5A11.5 11.5 0 0 0 23.5 12C23.5 5.7 18.3.5 12 .5Z"/></svg>
       </a>
@@ -50,37 +76,214 @@
   </header>
 
   <article class="article" id="intro">
-    <p class="article__kicker">RESEARCH NOTES &middot; DRAFT, NOT YET PUBLISHED</p>
-    <h1 class="article__title">Q-164M: text, dialogue, and exact tool calls</h1>
-    <p class="article__lede">A from-scratch successor in the Q architecture family — bigger than Q-Omni's text branch, English-only, dialogue-first, and built around a generalized version of exact-arithmetic circuits: real tool calls a small model can pull off reliably because it never has to compute the answer itself.</p>
+
+  <!-- ===================== RUSSIAN ===================== -->
+  <div data-lang="ru">
+    <p class="article__kicker">ЗАМЕТКИ С ИССЛЕДОВАНИЯ &middot; ОБУЧЕНИЕ ИДЁТ СЕЙЧАС</p>
+    <h1 class="article__title">Q-164M: текст, диалог и точные вызовы инструментов</h1>
+    <p class="article__lede">Новая модель в архитектуре Q, обучается с нуля — крупнее текстовой ветки Q-Omni, только английский язык, с упором на диалог и обобщённый механизм точных вычислений: модель никогда сама не считает арифметику, поэтому не ошибается там, где обычно ошибаются маленькие модели.</p>
 
     <div class="article__stats">
-      <div><b>~164M</b><span>parameters</span></div>
-      <div><b>1.58-bit</b><span>ternary weights</span></div>
-      <div><b>&ge;15B</b><span>training tokens (target)</span></div>
-      <div><b>TBD</b><span>tool-call exact match</span></div>
+      <div><b>164.6M</b><span>параметров</span></div>
+      <div><b>1.58-бит</b><span>тернарные веса</span></div>
+      <div><b>13.1B</b><span>токенов, весь план обучения</span></div>
+      <div><b>12.5%</b><span>пройдено на сейчас</span></div>
     </div>
 
     <div class="doc-block">
-      <p><em>This page is a placeholder scaffold, written before training started, so the site's structure is ready the moment there are real numbers to report. Every number above is a target, not a result. Nothing here should be read as a finished claim yet.</em></p>
+      <div class="callout">
+        <div><strong>Смотри вживую.</strong> Полная прозрачность обучения — реальные графики Loss/PPL, честные примеры генераций (включая ошибки, без прикрас) и живая демка в браузере на текущем чекпоинте: <a href="http://lakomoor.com:8080" target="_blank" rel="noopener">lakomoor.com:8080</a>.</div>
+      </div>
+
+      <h2>Почему отдельная модель, а не Q-Omni</h2>
+      <p>Ставка Q-Omni была на единый словарь для текста, изображений и звука с замороженным (необучаемым) «отпечатком» вместо обучаемой embedding-таблицы. Эта ставка сработала для текста и точной арифметики, но не для генерации изображений и речи — честные результаты в <a href="blog-q-omni.html">заметке про Q-Omni</a>. Q-164M полностью отказывается от мультимодальности и ставит более узкий вопрос: <strong>как далеко можно зайти с тем же рецептом (замороженный отпечаток + тернарные веса), если все параметры потратить на текст, диалог и надёжный вызов инструментов?</strong></p>
+
+      <h2>Что такое «точные вызовы инструментов» здесь</h2>
+      <p>Q-Omni уже показал один пример этой идеи: модель пишет <code>&lt;CALC&gt;347*86&lt;EQ&gt;</code>, и результат <code>29842</code> вписывает не нейросеть, а маленькая детерминированная программа. Единственная задача сети — решить, <em>когда</em> открыть вычисление и <em>что</em> в него положить; саму арифметику ей верно считать не нужно. Именно поэтому модель на 45–95M параметров достигает 98–99% точного совпадения на арифметике, датах, конвертации единиц и сортировке — заметно ниже порога, который обычно называют необходимым для <em>неявного</em> вызова инструментов.</p>
+
+      <div class="flow">
+        <div class="flow__box"><b>вход</b>id токена</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>отпечаток</b><code>codes[id] + Δ_in[id]</code><br>512-мерный вектор</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>w_in</b><code>512 → 1280</code></div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>10 × Q-layer</b>тернарные веса, GQA + RoPE, SiLU MLP</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>w_out</b><code>1280 → 512</code></div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>logits</b><code>· (codes+Δ_out)ᵀ</code><br>32 832 id на выходе</div>
+      </div>
+      <p class="flow-caption">Архитектура целиком: у токенов нет обучаемой embedding-таблицы — только случайный фиксированный «отпечаток» плюс маленькая обучаемая поправка (отдельная для входа и выхода).</p>
+
+      <p>Q-164M распространяет этот же приём на растущий набор инструментов помимо арифметики (сейчас это ещё расчёт длительности между датами и фильтрация списков) и — самая непроверенная часть — впервые в проекте сочетает это с настоящим многоходовым диалогом. У Q-Omni с диалоговой дообучкой смешанный опыт: loss на учительском форсинге стабильно падает, но свободная генерация не всегда следует ему. Это открытая проблема, а не готовое решение, которое досталось модели по наследству.</p>
+
+      <h2>Что отличается архитектурно</h2>
+      <ul>
+        <li>Вообще нет словаря для изображений и звука — каждый из ~32.8K id в словаре это либо обычный текст, либо управляющий токен диалога/инструмента.</li>
+        <li>Обучаемая поправка поверх замороженного отпечатка покрывает <em>весь</em> словарь с самого первого шага (в Q-Omni её добавили только для мультимодальных id, позже — <a href="https://huggingface.co/q-project/Q-Omni-Text-95M">Q-Omni-Text-95M</a> это тот самый эксперимент, где её донастроили и для текста тоже, и это заметно помогло). В Q-164M она заложена изначально.</li>
+        <li>Крупнее: около 131M тернарных параметров в теле сети плюс ~33.6M в таблице поправки (полная, не только под спецтокены) — против 45–62M у Q-Omni.</li>
+      </ul>
+
+      <h2>Как работает qpack</h2>
+      <p>Чтобы модель можно было запустить где угодно — не только в PyTorch — чекпоинт упаковывается в один файл формата <code>QPACK1</code>: тернарные веса без потерь (5 «трит» в байт + масштаб на строку), отпечатки токенов по биту на измерение, и обучаемые поправки в fp16. Файл выровнен по 64 байта, так что рантайм может сделать <code>mmap</code> и сразу указывать на любой тензор без копирования.</p>
+
+      <div class="flow">
+        <div class="flow__box"><b>чекпоинт</b><code>last.pt</code><br>обычный PyTorch state_dict</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>export_qpack.py</b>тернарная упаковка, биты, fp16-поправки</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>model.qpack</b>один файл, ~100 МБ</div>
+        <div class="flow__branch">
+          <div class="flow__box"><b>Python / numpy</b><code>qpack_run.py</code>, без PyTorch</div>
+          <div class="flow__box"><b>браузер, JS</b><code>qpack.js + model.js</code><br>без сервера и GPU</div>
+        </div>
+      </div>
+      <p class="flow-caption">Оба пути численно сверены друг с другом и с оригинальной моделью на живом чекпоинте — расхождение логитов ~0.0002, топ-1 токен совпадает всегда. Именно второй путь (чистый JS) и запускает <a href="http://lakomoor.com:8080" target="_blank" rel="noopener">живую демку на странице обучения</a> — модель весом ~100 МБ работает прямо в твоём браузере, без сервера.</p>
+
+      <h2>Честный статус на сейчас</h2>
+      <p>Обучение идёт: шаг 25 080 из 200 000 (12.5%), около 11.6 часов на одной Tesla V100. Loss 3.30, perplexity на eval 25.4, на полностью отложенном куске FineWeb (модель его не видела) — 36.4. На фиксированном наборе из 8 задач с инструментами модель сейчас решает 6 из 8 верно: уверенно считает арифметику и находит максимум/минимум, но всё ещё путает «sort» с другими инструментами и иногда искажает числа при пересказе результата словами. Свободная генерация текста местами зацикливается на повторах — ожидаемо для такой ранней стадии. Ничего из этого не приукрашено — все актуальные цифры и живые примеры на <a href="http://lakomoor.com:8080" target="_blank" rel="noopener">странице обучения</a>.</p>
+    </div>
+  </div>
+
+  <!-- ===================== ENGLISH ===================== -->
+  <div data-lang="en">
+    <p class="article__kicker">RESEARCH NOTES &middot; TRAINING IN PROGRESS</p>
+    <h1 class="article__title">Q-164M: text, dialogue, and exact tool calls</h1>
+    <p class="article__lede">A from-scratch successor in the Q architecture family, training right now — bigger than Q-Omni's text branch, English-only, dialogue-first, and built around a generalized version of exact-arithmetic circuits: real tool calls a small model can pull off reliably because it never has to compute the answer itself.</p>
+
+    <div class="article__stats">
+      <div><b>164.6M</b><span>parameters</span></div>
+      <div><b>1.58-bit</b><span>ternary weights</span></div>
+      <div><b>13.1B</b><span>tokens, full training budget</span></div>
+      <div><b>12.5%</b><span>done as of writing</span></div>
+    </div>
+
+    <div class="doc-block">
+      <div class="callout">
+        <div><strong>Watch it train, live.</strong> Full training transparency — real Loss/PPL curves, honest generation samples (mistakes included, nothing cleaned up), and a live in-browser demo running the current checkpoint: <a href="http://lakomoor.com:8080" target="_blank" rel="noopener">lakomoor.com:8080</a>.</div>
+      </div>
 
       <h2>Why a separate model from Q-Omni</h2>
       <p>Q-Omni's bet was one shared vocabulary across text, images, and audio, with a frozen (non-trainable) fingerprint standing in for a learned embedding table. That bet paid off for text and for exact arithmetic, but not for image or speech generation — see the <a href="blog-q-omni.html">Q-Omni write-up</a> for the honest results. Q-164M drops the multimodal ambition entirely and asks a narrower question instead: <strong>how far can the same frozen-fingerprint, ternary-weight recipe go if every parameter is spent on text, dialogue, and reliable tool use?</strong></p>
 
       <h2>What "exact tool calls" means here</h2>
       <p>Q-Omni already demonstrated one instance of this idea: a model that writes <code>&lt;CALC&gt;347*86&lt;EQ&gt;</code> and a small deterministic program — not the neural network — fills in <code>29842</code> before the model continues. The network's only job is deciding <em>when</em> to open a calculation and <em>what</em> to put inside it; it never has to get the arithmetic itself right. That split is why a 45–95M-parameter model can hit 98–99% exact-match on arithmetic, dates, unit conversion, and sorting, well below the parameter counts research on <em>implicit</em> tool-calling generally reports as necessary.</p>
+
+      <div class="flow">
+        <div class="flow__box"><b>input</b>token id</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>fingerprint</b><code>codes[id] + Δ_in[id]</code><br>512-dim vector</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>w_in</b><code>512 → 1280</code></div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>10 × Q-layer</b>ternary weights, GQA + RoPE, SiLU MLP</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>w_out</b><code>1280 → 512</code></div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>logits</b><code>· (codes+Δ_out)ᵀ</code><br>32,832 ids out</div>
+      </div>
+      <p class="flow-caption">The whole architecture: tokens have no trainable embedding table at all — just a random fixed "fingerprint" plus a small learned correction (separate ones for the input lookup and the output readout).</p>
+
       <p>Q-164M generalizes the same trick to a small, growing registry of tools beyond arithmetic (starting with elapsed-time/duration calculations and list filtering), and — the harder, unproven part — combines it with genuine multi-turn dialogue for the first time in this project. Chat fine-tuning in the Q-Omni line has a mixed track record: teacher-forced loss reliably improves, free-running answers don't always follow. That's an open problem this model has to clear, not a solved one it inherits.</p>
 
       <h2>What's different, architecturally</h2>
       <ul>
         <li>No image or audio vocabulary at all — every id in a ~32.8K-token vocabulary is either ordinary text or a dialogue/tool control token.</li>
         <li>A learned per-token correction on top of the frozen fingerprint, covering the <em>entire</em> vocabulary from step one (Q-Omni added this only to multimodal ids, later; it was retrofitted to text on top of that and measurably helped — <a href="https://huggingface.co/q-project/Q-Omni-Text-95M">Q-Omni-Text-95M</a> is that experiment). Q-164M starts with it baked in.</li>
-        <li>Bigger: roughly 130M ternary backbone parameters plus the ~34M correction table, versus Q-Omni's 45–62M backbone.</li>
+        <li>Bigger: roughly 131M ternary backbone parameters plus a ~33.6M correction table (covering the full vocabulary, not just special ids), versus Q-Omni's 45–62M backbone.</li>
       </ul>
 
-      <h2>Honest status</h2>
-      <p>As of this draft: architecture designed and smoke-tested, training not yet started. This section will be replaced with real held-out perplexity, tool-call exact-match under paraphrased (not just templated) prompts, and free-running dialogue samples — good or bad — once training produces a checkpoint worth reporting on.</p>
+      <h2>How qpack works</h2>
+      <p>To run the model anywhere — not just inside PyTorch — a checkpoint gets packed into a single <code>QPACK1</code> file: ternary weights stored losslessly (5 trits per byte, plus a per-row scale), token fingerprints packed one bit per dimension, and the learned corrections as fp16. The file is 64-byte aligned, so a runtime can <code>mmap</code> it and point straight at any tensor with no copying.</p>
+
+      <div class="flow">
+        <div class="flow__box"><b>checkpoint</b><code>last.pt</code><br>an ordinary PyTorch state_dict</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>export_qpack.py</b>ternary packing, bit-packed codes, fp16 deltas</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>model.qpack</b>one file, ~100MB</div>
+        <div class="flow__branch">
+          <div class="flow__box"><b>Python / numpy</b><code>qpack_run.py</code>, no PyTorch needed</div>
+          <div class="flow__box"><b>browser, JS</b><code>qpack.js + model.js</code><br>no server, no GPU</div>
+        </div>
+      </div>
+      <p class="flow-caption">Both paths are numerically checked against each other and against the original model on a live checkpoint — logits differ by ~0.0002, top-1 token always matches. The JS path is exactly what powers the <a href="http://lakomoor.com:8080" target="_blank" rel="noopener">live demo on the training page</a> — a ~100MB model, running entirely in your browser, no server involved.</p>
+
+      <h2>Honest status right now</h2>
+      <p>Training is under way: step 25,080 of 200,000 (12.5%), about 11.6 hours in on a single Tesla V100. Loss is 3.30, eval perplexity 25.4, and 36.4 on a fully held-out slice of FineWeb the model has never seen. On a fixed set of 8 tool-use tasks it currently gets 6 of 8 right: reliable at arithmetic and finding a max/min, still confuses "sort" with other tools and occasionally garbles a number when restating a result in words. Free-running text generation loops into repetition sometimes — expected this early. None of this is dressed up — every current number and live sample lives on the <a href="http://lakomoor.com:8080" target="_blank" rel="noopener">training page</a>.</p>
     </div>
+  </div>
+
+  <!-- ===================== 中文 ===================== -->
+  <div data-lang="zh">
+    <p class="article__kicker">研究笔记 &middot; 训练进行中</p>
+    <h1 class="article__title">Q-164M：文本、对话与精确工具调用</h1>
+    <p class="article__lede">Q 架构家族的最新成员，目前正在从零开始训练 —— 比 Q-Omni 的文本分支更大，仅支持英文，以对话为核心，并围绕一种通用化的精确计算机制构建：真正的工具调用，一个小模型也能可靠完成，因为它从来不需要自己去算出答案。</p>
+
+    <div class="article__stats">
+      <div><b>1.646亿</b><span>参数量</span></div>
+      <div><b>1.58 比特</b><span>三元权重</span></div>
+      <div><b>131 亿</b><span>词元，完整训练预算</span></div>
+      <div><b>12.5%</b><span>撰写时已完成</span></div>
+    </div>
+
+    <div class="doc-block">
+      <div class="callout">
+        <div><strong>实时观看训练。</strong> 完全透明的训练过程 —— 真实的 Loss/PPL 曲线、如实展示的生成示例（包括错误，未做任何美化），以及运行当前检查点的浏览器实时演示：<a href="http://lakomoor.com:8080" target="_blank" rel="noopener">lakomoor.com:8080</a>。</div>
+      </div>
+
+      <h2>为什么不直接用 Q-Omni，而要做一个独立的模型</h2>
+      <p>Q-Omni 的赌注是：让文本、图像和音频共用一套词表，用一个冻结的（不可训练的）「指纹」取代可训练的嵌入表。这个赌注在文本和精确算术上是成功的，但在图像和语音生成上并不成功 —— 详见 <a href="blog-q-omni.html">Q-Omni 的文章</a> 中如实呈现的结果。Q-164M 完全放弃了多模态的野心，转而提出一个更聚焦的问题：<strong>如果把所有参数都用在文本、对话和可靠的工具调用上，同样的「冻结指纹 + 三元权重」配方能走多远？</strong></p>
+
+      <h2>这里的「精确工具调用」是什么意思</h2>
+      <p>Q-Omni 已经展示过一个例子：模型写出 <code>&lt;CALC&gt;347*86&lt;EQ&gt;</code>，然后在模型继续生成之前，由一个小型确定性程序 —— 而不是神经网络本身 —— 填入结果 <code>29842</code>。网络唯一的任务是决定<em>何时</em>发起一次计算，以及在里面<em>写什么</em>；它完全不需要自己把算术算对。正因如此，一个 45–95M 参数的模型就能在算术、日期、单位换算和排序上做到 98–99% 的精确匹配，远低于研究中通常认为<em>隐式</em>工具调用所需要的参数规模。</p>
+
+      <div class="flow">
+        <div class="flow__box"><b>输入</b>词元 id</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>指纹</b><code>codes[id] + Δ_in[id]</code><br>512 维向量</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>w_in</b><code>512 → 1280</code></div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>10 × Q 层</b>三元权重，GQA + RoPE，SiLU MLP</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>w_out</b><code>1280 → 512</code></div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>logits</b><code>· (codes+Δ_out)ᵀ</code><br>输出 32,832 个 id</div>
+      </div>
+      <p class="flow-caption">完整架构：词元根本没有可训练的嵌入表 —— 只有一个随机固定的「指纹」，加上一个小的可学习修正（输入查找和输出读出各自独立一份）。</p>
+
+      <p>Q-164M 把同样的技巧推广到算术之外一个不断增长的工具集合（目前新增了日期间隔计算和列表筛选），并且 —— 这是最没有把握的部分 —— 第一次在这个项目里把它和真正的多轮对话结合在一起。Q-Omni 系列在对话微调上的表现参差不齐：teacher-forcing 下的 loss 稳定下降，但自由生成的回答并不总能跟上。这是这个模型必须自己解决的开放问题，而不是继承来的现成方案。</p>
+
+      <h2>架构上有什么不同</h2>
+      <ul>
+        <li>完全没有图像或音频词表 —— 约 3.28 万个 id 里，每一个要么是普通文本，要么是对话/工具的控制词元。</li>
+        <li>在冻结指纹之上的可学习修正，从第一步起就覆盖<em>整个</em>词表（Q-Omni 是后来才只为多模态 id 加上这个机制，之后又追加应用到文本上，效果明显 —— <a href="https://huggingface.co/q-project/Q-Omni-Text-95M">Q-Omni-Text-95M</a>就是这个实验）。Q-164M 从一开始就内置了这一点。</li>
+        <li>规模更大：主干三元参数约 1.31 亿，外加约 3360 万的修正表（覆盖整个词表，而不只是特殊 id），相比之下 Q-Omni 的主干是 4500 万–6200 万。</li>
+      </ul>
+
+      <h2>qpack 是如何工作的</h2>
+      <p>为了让模型能在任何地方运行 —— 而不只是在 PyTorch 里 —— 检查点会被打包成一个 <code>QPACK1</code> 单文件：三元权重无损存储（每字节 5 个「trit」，外加每行一个缩放系数），词元指纹按每维 1 比特打包，可学习修正以 fp16 存储。文件按 64 字节对齐，运行时可以直接 <code>mmap</code> 并指向任意张量而无需拷贝。</p>
+
+      <div class="flow">
+        <div class="flow__box"><b>检查点</b><code>last.pt</code><br>普通的 PyTorch state_dict</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>export_qpack.py</b>三元打包、位打包指纹、fp16 修正</div>
+        <div class="flow__arrow">→</div>
+        <div class="flow__box"><b>model.qpack</b>单个文件，约 100MB</div>
+        <div class="flow__branch">
+          <div class="flow__box"><b>Python / numpy</b><code>qpack_run.py</code>，无需 PyTorch</div>
+          <div class="flow__box"><b>浏览器 JS</b><code>qpack.js + model.js</code><br>无需服务器和 GPU</div>
+        </div>
+      </div>
+      <p class="flow-caption">两条路径都在一个真实检查点上，相互之间以及与原始模型之间做过数值校验 —— logits 相差约 0.0002，top-1 词元始终一致。正是 JS 这条路径驱动着<a href="http://lakomoor.com:8080" target="_blank" rel="noopener">训练页面上的实时演示</a> —— 一个约 100MB 的模型，完全在你的浏览器里运行，不经过任何服务器。</p>
+
+      <h2>此刻的真实状态</h2>
+      <p>训练正在进行：第 25,080 步，共 200,000 步（12.5%），在单张 Tesla V100 上已运行约 11.6 小时。Loss 为 3.30，eval 困惑度为 25.4，在模型从未见过的 FineWeb 留出片段上为 36.4。在一组固定的 8 个工具调用任务中，目前答对 6 个：算术和求最大/最小值可靠，但仍会把「sort」和其他工具搞混，用文字复述结果时偶尔会写错数字。自由生成的文本有时会陷入重复循环 —— 在这么早的阶段是预料之中的。这些都没有任何美化 —— 所有最新数字和实时示例都在<a href="http://lakomoor.com:8080" target="_blank" rel="noopener">训练页面</a>上。</p>
+    </div>
+  </div>
+
   </article>
 
   <footer class="footer">
@@ -99,5 +302,28 @@
   </footer>
 
   <script src="main.js"></script>
+  <script>
+    (function () {
+      var KNOWN = ["ru", "en", "zh"];
+      function setLang(v) {
+        document.querySelectorAll("[data-lang]").forEach(function (el) {
+          el.classList.toggle("is-active", el.getAttribute("data-lang") === v);
+        });
+        document.querySelectorAll("#langGroup button").forEach(function (b) {
+          b.classList.toggle("is-on", b.getAttribute("data-v") === v);
+        });
+        document.documentElement.setAttribute("lang", v === "zh" ? "zh-CN" : v);
+        try { localStorage.setItem("q-blog-lang", v); } catch (e) {}
+      }
+      document.getElementById("langGroup").addEventListener("click", function (e) {
+        var btn = e.target.closest("button[data-v]");
+        if (btn) setLang(btn.getAttribute("data-v"));
+      });
+      var saved = null;
+      try { saved = localStorage.getItem("q-blog-lang"); } catch (e) {}
+      var nav = (navigator.language || "en").slice(0, 2);
+      setLang(saved && KNOWN.indexOf(saved) >= 0 ? saved : (KNOWN.indexOf(nav) >= 0 ? nav : "en"));
+    })();
+  </script>
 </body>
 </html>
