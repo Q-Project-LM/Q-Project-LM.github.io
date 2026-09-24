@@ -175,6 +175,16 @@ h1, h2, h3, h4 { font-family: var(--f-display); font-weight: 600; letter-spacing
 }
 .nav__hf:hover { border-color: var(--brand); }
 
+/* ---------- Language toggle ---------- */
+[data-lang] { display: none !important; }
+[data-lang].is-active { display: revert !important; }
+.lang-group { display: flex; gap: 2px; background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 10px; padding: 3px; }
+.lang-group button {
+  font: 600 12px var(--f-display); border: none; background: transparent; color: var(--muted);
+  border-radius: 7px; padding: 0 10px; height: 34px; cursor: pointer; transition: background .15s, color .15s;
+}
+.lang-group button.is-on { background: var(--surface); color: var(--brand); box-shadow: 0 1px 2px rgba(16,25,43,.08); }
+
 /* ---------- Sections ---------- */
 section { max-width: var(--maxw); margin: 0 auto; padding: 92px 28px; }
 .section-head { max-width: 640px; margin-bottom: 46px; }

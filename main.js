@@ -15,9 +15,33 @@
     });
   }
 
+  /* ---------- Language toggle (RU/EN/ZH), shared across every page ---------- */
+  var langGroup = document.getElementById("langGroup");
+  if (langGroup) {
+    var KNOWN_LANGS = ["ru", "en", "zh"];
+    var setLang = function (v) {
+      document.querySelectorAll("[data-lang]").forEach(function (el) {
+        el.classList.toggle("is-active", el.getAttribute("data-lang") === v);
+      });
+      document.querySelectorAll("#langGroup button").forEach(function (b) {
+        b.classList.toggle("is-on", b.getAttribute("data-v") === v);
+      });
+      document.documentElement.setAttribute("lang", v === "zh" ? "zh-CN" : v);
+      try { localStorage.setItem("q-lang", v); } catch (e) {}
+    };
+    langGroup.addEventListener("click", function (e) {
+      var btn = e.target.closest("button[data-v]");
+      if (btn) setLang(btn.getAttribute("data-v"));
+    });
+    var savedLang = null;
+    try { savedLang = localStorage.getItem("q-lang"); } catch (e) {}
+    var navLang = (navigator.language || "en").slice(0, 2);
+    setLang(savedLang && KNOWN_LANGS.indexOf(savedLang) >= 0 ? savedLang : (KNOWN_LANGS.indexOf(navLang) >= 0 ? navLang : "en"));
+  }
+
   /* ---------- Footer year ---------- */
-  var y = document.getElementById("year");
-  if (y) y.textContent = new Date().getFullYear();
+  var yearNow = new Date().getFullYear();
+  document.querySelectorAll(".year, #year").forEach(function (el) { el.textContent = yearNow; });
 
   /* ---------- Waitlist (front-end stub) ---------- */
   var form = document.getElementById("waitlist");

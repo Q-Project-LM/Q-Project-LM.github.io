@@ -40,16 +40,21 @@
     </a>
     <div class="nav__group">
       <nav class="nav__links" aria-label="Primary">
-        <a href="#models">Models</a>
-        <a href="docs.html">Docs</a>
-        <a href="blog.html">Blog</a>
-        <a href="run/">Run</a>
-        <a href="#work">Research</a>
-        <a href="#access">Access</a>
+        <a href="#models"><span data-lang="ru">Модели</span><span data-lang="en">Models</span><span data-lang="zh">模型</span></a>
+        <a href="docs.html"><span data-lang="ru">Документация</span><span data-lang="en">Docs</span><span data-lang="zh">文档</span></a>
+        <a href="blog.html"><span data-lang="ru">Блог</span><span data-lang="en">Blog</span><span data-lang="zh">博客</span></a>
+        <a href="run/"><span data-lang="ru">Запустить</span><span data-lang="en">Run</span><span data-lang="zh">运行</span></a>
+        <a href="#work"><span data-lang="ru">Исследования</span><span data-lang="en">Research</span><span data-lang="zh">研究</span></a>
+        <a href="#access"><span data-lang="ru">Доступ</span><span data-lang="en">Access</span><span data-lang="zh">访问</span></a>
       </nav>
       <a class="icon-btn" href="https://github.com/Q-Project-LM" target="_blank" rel="noopener" aria-label="Q Project on GitHub">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.7.5.5 5.7.5 12a11.5 11.5 0 0 0 7.9 10.9c.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 1.7 2.6 1.2 3.3.9.1-.7.4-1.2.7-1.5-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.4-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5A11.5 11.5 0 0 0 23.5 12C23.5 5.7 18.3.5 12 .5Z"/></svg>
       </a>
+      <div class="lang-group" id="langGroup" role="group" aria-label="Language">
+        <button type="button" data-v="ru">RU</button>
+        <button type="button" data-v="en">EN</button>
+        <button type="button" data-v="zh">中</button>
+      </div>
       <a class="nav__hf" href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a>
       <button class="icon-btn theme-toggle" type="button" aria-label="Switch color theme">
         <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
@@ -67,15 +72,37 @@
           <div class="hero__mark" aria-hidden="true">
             <img src="assets/q-logo.svg" alt="" width="128" height="128" />
           </div>
-          <p class="hero__kicker">Independent AI research lab</p>
-          <h1 id="hero-title" class="hero__title">We build models<br />from first principles.</h1>
-          <p class="hero__lede">
+          <p class="hero__kicker" data-lang="ru">Независимая исследовательская лаборатория</p>
+          <p class="hero__kicker" data-lang="en">Independent AI research lab</p>
+          <p class="hero__kicker" data-lang="zh">独立人工智能研究实验室</p>
+          <h1 id="hero-title" class="hero__title">
+            <span data-lang="ru">Мы строим модели<br />с первых принципов.</span>
+            <span data-lang="en">We build models<br />from first principles.</span>
+            <span data-lang="zh">我们从第一性原理<br />构建模型。</span>
+          </h1>
+          <p class="hero__lede" data-lang="ru">
+            Q Project обучает языковые и агентские модели с нуля — некоторые открыты для всех,
+            некоторые остаются приватными. Каждый вес, токенизатор и решение по обучению — наши собственные.
+          </p>
+          <p class="hero__lede" data-lang="en">
             Q Project trains language and agent models from scratch — some open for anyone
             to run, some kept private. Every weight, tokenizer, and training decision is ours.
           </p>
-          <div class="hero__actions">
+          <p class="hero__lede" data-lang="zh">
+            Q Project 从零开始训练语言模型和智能体模型 —— 有些完全开放，任何人都可以运行；有些则保持私有。
+            每一个权重、分词器和训练决策都是我们自己的。
+          </p>
+          <div class="hero__actions" data-lang="ru">
+            <a class="btn btn--solid" href="#models">Смотреть модели</a>
+            <a class="btn btn--ghost" href="docs.html">Читать документацию</a>
+          </div>
+          <div class="hero__actions" data-lang="en">
             <a class="btn btn--solid" href="#models">See the models</a>
             <a class="btn btn--ghost" href="docs.html">Read the docs</a>
+          </div>
+          <div class="hero__actions" data-lang="zh">
+            <a class="btn btn--solid" href="#models">查看模型</a>
+            <a class="btn btn--ghost" href="docs.html">阅读文档</a>
           </div>
         </div>
       </div>
@@ -84,61 +111,128 @@
     <!-- MODELS -->
     <section class="models" id="models" aria-labelledby="models-title">
       <div class="section-head">
-        <h2 id="models-title">Models</h2>
-        <p>Open-weight releases to learn from, and closed models built to go further.</p>
+        <h2 id="models-title">
+          <span data-lang="ru">Модели</span><span data-lang="en">Models</span><span data-lang="zh">模型</span>
+        </h2>
+        <p data-lang="ru">Открытые релизы, на которых можно учиться, и закрытые модели, созданные, чтобы идти дальше.</p>
+        <p data-lang="en">Open-weight releases to learn from, and closed models built to go further.</p>
+        <p data-lang="zh">开放权重的版本供你学习，闭源模型则用于走得更远。</p>
       </div>
 
       <div class="models__grid">
         <article class="model model--live">
           <div class="model__status">
             <span class="dot" aria-hidden="true"></span>
-            Available now · Apache 2.0
+            <span data-lang="ru">Уже доступна &middot; Apache 2.0</span>
+            <span data-lang="en">Available now &middot; Apache 2.0</span>
+            <span data-lang="zh">现已提供 &middot; Apache 2.0</span>
           </div>
           <h3 class="model__name">Q-50M-Base</h3>
-          <p class="model__desc">
+          <p class="model__desc" data-lang="ru">
+            Декодерная языковая модель на 50.9M параметров, обученная с нуля на
+            5 миллиардах токенов FineWeb-Edu. Базовая модель для продолжения текста, изучения и
+            дообучения — достаточно маленькая, чтобы запустить где угодно.
+          </p>
+          <p class="model__desc" data-lang="en">
             A 50.9M-parameter decoder-only language model, pretrained from scratch on
             5 billion tokens of FineWeb-Edu. A base model for continuation, study, and
             fine-tuning — small enough to run anywhere.
           </p>
+          <p class="model__desc" data-lang="zh">
+            一个 5090 万参数的仅解码器语言模型，在 50 亿词元的 FineWeb-Edu 上从零预训练而成。
+            这是一个用于续写、研究和微调的基础模型 —— 足够小，可以在任何地方运行。
+          </p>
 
-          <dl class="spec">
+          <dl class="spec" data-lang="ru">
+            <div><dt>Параметры</dt><dd>50.9M</dd></div>
+            <div><dt>Токенов обучения</dt><dd>5B</dd></div>
+            <div><dt>Контекст</dt><dd>2 048</dd></div>
+            <div><dt>Словарь</dt><dd>32 768 BPE</dd></div>
+            <div><dt>Внимание</dt><dd>GQA &middot; QK-Norm</dd></div>
+            <div><dt>Val. perplexity</dt><dd>24.47</dd></div>
+          </dl>
+          <dl class="spec" data-lang="en">
             <div><dt>Parameters</dt><dd>50.9M</dd></div>
             <div><dt>Training tokens</dt><dd>5B</dd></div>
             <div><dt>Context</dt><dd>2,048</dd></div>
             <div><dt>Vocab</dt><dd>32,768 BPE</dd></div>
-            <div><dt>Attention</dt><dd>GQA · QK-Norm</dd></div>
+            <div><dt>Attention</dt><dd>GQA &middot; QK-Norm</dd></div>
+            <div><dt>Val. perplexity</dt><dd>24.47</dd></div>
+          </dl>
+          <dl class="spec" data-lang="zh">
+            <div><dt>参数量</dt><dd>50.9M</dd></div>
+            <div><dt>训练词元数</dt><dd>5B</dd></div>
+            <div><dt>上下文</dt><dd>2,048</dd></div>
+            <div><dt>词表</dt><dd>32,768 BPE</dd></div>
+            <div><dt>注意力</dt><dd>GQA &middot; QK-Norm</dd></div>
             <div><dt>Val. perplexity</dt><dd>24.47</dd></div>
           </dl>
 
-          <div class="model__foot">
+          <div class="model__foot" data-lang="ru">
+            <a class="btn btn--solid btn--sm" href="https://huggingface.co/q-project/Q-50M-Base" target="_blank" rel="noopener">Скачать веса</a>
+            <span class="model__meta">Decoder-only &middot; RoPE &middot; SwiGLU &middot; RMSNorm</span>
+          </div>
+          <div class="model__foot" data-lang="en">
             <a class="btn btn--solid btn--sm" href="https://huggingface.co/q-project/Q-50M-Base" target="_blank" rel="noopener">Download weights</a>
-            <span class="model__meta">Decoder-only · RoPE · SwiGLU · RMSNorm</span>
+            <span class="model__meta">Decoder-only &middot; RoPE &middot; SwiGLU &middot; RMSNorm</span>
+          </div>
+          <div class="model__foot" data-lang="zh">
+            <a class="btn btn--solid btn--sm" href="https://huggingface.co/q-project/Q-50M-Base" target="_blank" rel="noopener">下载权重</a>
+            <span class="model__meta">Decoder-only &middot; RoPE &middot; SwiGLU &middot; RMSNorm</span>
           </div>
         </article>
 
         <article class="model model--soon" aria-label="Next model — in training">
           <div class="model__status model__status--soon">
             <span class="dot dot--pulse" aria-hidden="true"></span>
-            In training
+            <span data-lang="ru">Обучается</span><span data-lang="en">In training</span><span data-lang="zh">训练中</span>
           </div>
           <div class="model__nameblock">
             <span class="name-blur" role="img" aria-label="Model name hidden"></span>
           </div>
-          <p class="model__desc">
+          <p class="model__desc" data-lang="ru">
+            Наша следующая модель уже на кластере — более крупная система, созданная для восприятия
+            и для действий через инструменты, а не только для предсказания текста. Детали остаются закрытыми
+            до её готовности. Живой ход обучения — уже в <a href="blog-q164m.html" style="color:var(--brand)">блоге</a>.
+          </p>
+          <p class="model__desc" data-lang="en">
             Our next model is on the cluster now — a larger system built for perception
             and for acting through tools, not just predicting text. Details stay under
-            wraps until it is ready.
+            wraps until it is ready. Live training progress is already on the <a href="blog-q164m.html" style="color:var(--brand)">blog</a>.
+          </p>
+          <p class="model__desc" data-lang="zh">
+            我们的下一个模型已经在集群上训练 —— 一个更大的系统，专注于感知
+            以及通过工具采取行动，而不只是预测文本。在准备就绪之前细节保密。
+            实时训练进度已经可以在<a href="blog-q164m.html" style="color:var(--brand)">博客</a>上查看。
           </p>
 
-          <ul class="teaser">
+          <ul class="teaser" data-lang="ru">
+            <li>Мультимодальность заложена изначально</li>
+            <li>Создана для агентов и вызова инструментов</li>
+            <li>Планируются открытые и закрытые варианты</li>
+          </ul>
+          <ul class="teaser" data-lang="en">
             <li>Multimodal by design</li>
             <li>Built for agents and tool use</li>
             <li>Open and closed variants planned</li>
           </ul>
+          <ul class="teaser" data-lang="zh">
+            <li>从设计上支持多模态</li>
+            <li>为智能体和工具调用而构建</li>
+            <li>计划提供开放和闭源两种版本</li>
+          </ul>
 
-          <div class="model__foot">
+          <div class="model__foot" data-lang="ru">
+            <a class="btn btn--ghost btn--sm" href="#access">Получить уведомление</a>
+            <span class="model__meta">Раскрытие скоро</span>
+          </div>
+          <div class="model__foot" data-lang="en">
             <a class="btn btn--ghost btn--sm" href="#access">Get notified</a>
             <span class="model__meta">Reveal coming soon</span>
+          </div>
+          <div class="model__foot" data-lang="zh">
+            <a class="btn btn--ghost btn--sm" href="#access">获取通知</a>
+            <span class="model__meta">即将揭晓</span>
           </div>
         </article>
       </div>
@@ -147,18 +241,42 @@
     <!-- QUICKSTART -->
     <section class="quickstart" id="quickstart" aria-labelledby="qs-title">
       <div class="section-head">
-        <h2 id="qs-title">Run Q-50M-Base in a minute</h2>
-        <p>It loads with the standard Transformers API. No sign-up, no gate — the weights are open.</p>
+        <h2 id="qs-title">
+          <span data-lang="ru">Запусти Q-50M-Base за минуту</span>
+          <span data-lang="en">Run Q-50M-Base in a minute</span>
+          <span data-lang="zh">一分钟运行 Q-50M-Base</span>
+        </h2>
+        <p data-lang="ru">Загружается через стандартный API Transformers. Без регистрации, без ограничений — веса открыты.</p>
+        <p data-lang="en">It loads with the standard Transformers API. No sign-up, no gate — the weights are open.</p>
+        <p data-lang="zh">通过标准的 Transformers API 加载。无需注册，没有门槛 —— 权重是开放的。</p>
       </div>
 
       <div class="quickstart__grid">
-        <div class="quickstart__copy">
+        <div class="quickstart__copy" data-lang="ru">
+          <p>Установи библиотеку, скачай чекпоинт с Hub и дай модели продолжить твой текст.</p>
+          <a class="btn btn--ghost" href="docs.html#quickstart">Полное руководство по быстрому старту</a>
+
+          <div class="qs-note">
+            <h4>Это базовая модель</h4>
+            <p>Q-50M-Base продолжает текст, а не следует инструкциям. Для диалогового поведения дообучи её на своих данных.</p>
+          </div>
+        </div>
+        <div class="quickstart__copy" data-lang="en">
           <p>Install the library, pull the checkpoint from the Hub, and let it continue your text.</p>
           <a class="btn btn--ghost" href="docs.html#quickstart">Full quickstart guide</a>
 
           <div class="qs-note">
             <h4>It's a base model</h4>
             <p>Q-50M-Base continues text rather than following instructions. For chat behavior, fine-tune it on your own data.</p>
+          </div>
+        </div>
+        <div class="quickstart__copy" data-lang="zh">
+          <p>安装这个库，从 Hub 拉取检查点，然后让它续写你的文本。</p>
+          <a class="btn btn--ghost" href="docs.html#quickstart">完整快速开始指南</a>
+
+          <div class="qs-note">
+            <h4>这是一个基础模型</h4>
+            <p>Q-50M-Base 只会续写文本，而不会遵循指令。若需要对话行为，请在自己的数据上进行微调。</p>
           </div>
         </div>
 
@@ -196,11 +314,35 @@ output = model.<span class="tok-fn">generate</span>(**inputs, max_new_tokens=<sp
     <!-- WHAT WE DO -->
     <section class="work" id="work" aria-labelledby="work-title">
       <div class="section-head">
-        <h2 id="work-title">What we work on</h2>
-        <p>Four threads that feed each other, from raw pretraining to models that take actions.</p>
+        <h2 id="work-title">
+          <span data-lang="ru">Чем мы занимаемся</span>
+          <span data-lang="en">What we work on</span>
+          <span data-lang="zh">我们的工作方向</span>
+        </h2>
+        <p data-lang="ru">Четыре направления, которые подпитывают друг друга — от чистого претрейна до моделей, совершающих действия.</p>
+        <p data-lang="en">Four threads that feed each other, from raw pretraining to models that take actions.</p>
+        <p data-lang="zh">四条相互支撑的主线，从原始的预训练到能够采取行动的模型。</p>
       </div>
 
-      <div class="work__grid">
+      <div class="work__grid" data-lang="ru">
+        <article class="pillar">
+          <h3>Претрейн</h3>
+          <p>Обучение основ с нуля — свои токенизаторы, смеси данных и стабильные, эффективные архитектуры.</p>
+        </article>
+        <article class="pillar">
+          <h3>Файнтюн</h3>
+          <p>Превращение базовых моделей в дееспособные и хорошо ведущие себя — через supervised и preference tuning.</p>
+        </article>
+        <article class="pillar">
+          <h3>Агенты</h3>
+          <p>Модели, которые используют инструменты, воспринимают окружение и надёжно выполняют многошаговые задачи.</p>
+        </article>
+        <article class="pillar">
+          <h3>Исследования</h3>
+          <p>Публикуем то, что узнаём — модели, датасеты и заметки о том, как заставить маленькие модели работать не по размеру.</p>
+        </article>
+      </div>
+      <div class="work__grid" data-lang="en">
         <article class="pillar">
           <h3>Pretrain</h3>
           <p>Training foundations from scratch — our own tokenizers, data mixes, and stable, efficient architectures.</p>
@@ -218,16 +360,80 @@ output = model.<span class="tok-fn">generate</span>(**inputs, max_new_tokens=<sp
           <p>Publishing what we learn — models, datasets, and notes on making small models punch above their size.</p>
         </article>
       </div>
+      <div class="work__grid" data-lang="zh">
+        <article class="pillar">
+          <h3>预训练</h3>
+          <p>从零训练基础能力 —— 我们自己的分词器、数据配比，以及稳定高效的架构。</p>
+        </article>
+        <article class="pillar">
+          <h3>微调</h3>
+          <p>通过监督微调和偏好调优，把基础模型变成能力强、表现得体的模型。</p>
+        </article>
+        <article class="pillar">
+          <h3>智能体</h3>
+          <p>能够使用工具、感知周围环境，并可靠完成多步任务的模型。</p>
+        </article>
+        <article class="pillar">
+          <h3>研究</h3>
+          <p>公开我们学到的一切 —— 模型、数据集，以及关于如何让小模型发挥超出其体量的能力的笔记。</p>
+        </article>
+      </div>
     </section>
 
     <!-- ACCESS / PRICING -->
     <section class="access" id="access" aria-labelledby="access-title">
       <div class="section-head">
-        <h2 id="access-title">Access</h2>
-        <p>Open weights stay free. Hosted access and private models are on the way — join the waitlist and we&rsquo;ll let you know.</p>
+        <h2 id="access-title">
+          <span data-lang="ru">Доступ</span><span data-lang="en">Access</span><span data-lang="zh">访问</span>
+        </h2>
+        <p data-lang="ru">Открытые веса остаются бесплатными. Хостинг и приватные модели уже в пути — запишись в лист ожидания, и мы дадим знать.</p>
+        <p data-lang="en">Open weights stay free. Hosted access and private models are on the way — join the waitlist and we&rsquo;ll let you know.</p>
+        <p data-lang="zh">开放权重将始终免费。托管访问和私有模型即将推出 —— 加入等待名单，我们会通知你。</p>
       </div>
 
-      <div class="plans">
+      <div class="plans" data-lang="ru">
+        <article class="plan">
+          <div class="plan__head">
+            <h3>Открытая</h3>
+            <p class="plan__price">Бесплатно<span>всегда</span></p>
+          </div>
+          <p class="plan__sub">Для разработчиков, студентов и исследователей.</p>
+          <ul class="plan__list">
+            <li>Модели с открытыми весами под Apache 2.0</li>
+            <li>Полные карточки моделей и заметки об обучении</li>
+            <li>Запуск локально, без аккаунта</li>
+          </ul>
+          <a class="btn btn--ghost btn--block" href="https://huggingface.co/q-project" target="_blank" rel="noopener">Смотреть на Hugging Face</a>
+        </article>
+        <article class="plan plan--feature">
+          <div class="plan__head">
+            <h3>Pro</h3>
+            <p class="plan__price">Скоро<span>цена при запуске</span></p>
+          </div>
+          <p class="plan__sub">Хостинг API для моделей Q, без своего железа.</p>
+          <ul class="plan__list">
+            <li>Управляемые endpoint'ы для моделей Q</li>
+            <li>Более высокие лимиты и приоритет</li>
+            <li>Ранний доступ к новым релизам</li>
+          </ul>
+          <a class="btn btn--solid btn--block" href="#waitlist">Записаться в лист ожидания</a>
+        </article>
+        <article class="plan">
+          <div class="plan__badge">Скоро</div>
+          <div class="plan__head">
+            <h3>Приватная</h3>
+            <p class="plan__price">Давай обсудим</p>
+          </div>
+          <p class="plan__sub">Закрытые модели, обучение под заказ и выделенная поддержка.</p>
+          <ul class="plan__list">
+            <li>Доступ к закрытым моделям Q</li>
+            <li>Кастомный претрейн и файнтюны</li>
+            <li>Выделенное развёртывание и поддержка</li>
+          </ul>
+          <a class="btn btn--ghost btn--block" href="#waitlist">Связаться с нами</a>
+        </article>
+      </div>
+      <div class="plans" data-lang="en">
         <article class="plan">
           <div class="plan__head">
             <h3>Open</h3>
@@ -241,7 +447,6 @@ output = model.<span class="tok-fn">generate</span>(**inputs, max_new_tokens=<sp
           </ul>
           <a class="btn btn--ghost btn--block" href="https://huggingface.co/q-project" target="_blank" rel="noopener">Browse on Hugging Face</a>
         </article>
-
         <article class="plan plan--feature">
           <div class="plan__head">
             <h3>Pro</h3>
@@ -255,7 +460,6 @@ output = model.<span class="tok-fn">generate</span>(**inputs, max_new_tokens=<sp
           </ul>
           <a class="btn btn--solid btn--block" href="#waitlist">Join the waitlist</a>
         </article>
-
         <article class="plan">
           <div class="plan__badge">Coming soon</div>
           <div class="plan__head">
@@ -271,16 +475,68 @@ output = model.<span class="tok-fn">generate</span>(**inputs, max_new_tokens=<sp
           <a class="btn btn--ghost btn--block" href="#waitlist">Get in touch</a>
         </article>
       </div>
+      <div class="plans" data-lang="zh">
+        <article class="plan">
+          <div class="plan__head">
+            <h3>开放</h3>
+            <p class="plan__price">免费<span>始终如此</span></p>
+          </div>
+          <p class="plan__sub">面向开发者、学生和研究人员。</p>
+          <ul class="plan__list">
+            <li>基于 Apache 2.0 的开放权重模型</li>
+            <li>完整的模型卡片和训练笔记</li>
+            <li>本地运行，无需账号</li>
+          </ul>
+          <a class="btn btn--ghost btn--block" href="https://huggingface.co/q-project" target="_blank" rel="noopener">在 Hugging Face 上浏览</a>
+        </article>
+        <article class="plan plan--feature">
+          <div class="plan__head">
+            <h3>Pro</h3>
+            <p class="plan__price">即将推出<span>发布时公布价格</span></p>
+          </div>
+          <p class="plan__sub">面向 Q 系列模型的托管 API，无需自己的硬件。</p>
+          <ul class="plan__list">
+            <li>Q 系列模型的托管端点</li>
+            <li>更高的速率限制与优先级</li>
+            <li>新版本的抢先体验</li>
+          </ul>
+          <a class="btn btn--solid btn--block" href="#waitlist">加入等待名单</a>
+        </article>
+        <article class="plan">
+          <div class="plan__badge">即将推出</div>
+          <div class="plan__head">
+            <h3>私有</h3>
+            <p class="plan__price">联系我们</p>
+          </div>
+          <p class="plan__sub">闭源模型、定制训练与专属支持。</p>
+          <ul class="plan__list">
+            <li>访问闭源 Q 模型</li>
+            <li>定制预训练与微调</li>
+            <li>专属部署与支持</li>
+          </ul>
+          <a class="btn btn--ghost btn--block" href="#waitlist">联系我们</a>
+        </article>
+      </div>
 
       <form class="waitlist" id="waitlist" novalidate>
-        <div class="waitlist__text">
+        <div class="waitlist__text" data-lang="ru">
+          <h3>Узнай первым, когда откроется доступ</h3>
+          <p>Одно письмо, когда Pro и приватные модели станут доступны. Без спама.</p>
+        </div>
+        <div class="waitlist__text" data-lang="en">
           <h3>Be first when access opens</h3>
           <p>One email when Pro and private models go live. No noise.</p>
+        </div>
+        <div class="waitlist__text" data-lang="zh">
+          <h3>抢先获知开放消息</h3>
+          <p>Pro 版和私有模型上线时，只发一封邮件通知你，不打扰。</p>
         </div>
         <div class="waitlist__field">
           <label class="visually-hidden" for="email">Email address</label>
           <input type="email" id="email" name="email" placeholder="you@domain.com" autocomplete="email" required />
-          <button type="submit" class="btn btn--solid">Notify me</button>
+          <button type="submit" class="btn btn--solid">
+            <span data-lang="ru">Уведомить меня</span><span data-lang="en">Notify me</span><span data-lang="zh">通知我</span>
+          </button>
         </div>
         <p class="waitlist__note" role="status" aria-live="polite"></p>
       </form>
@@ -292,15 +548,23 @@ output = model.<span class="tok-fn">generate</span>(**inputs, max_new_tokens=<sp
       <img src="assets/q-logo.svg" alt="" width="28" height="28" />
       <span>Q Project</span>
     </div>
-    <p class="footer__tag">Pretrain · Finetune · Agents · Research</p>
+    <p class="footer__tag">
+      <span data-lang="ru">Претрейн &middot; Файнтюн &middot; Агенты &middot; Исследования</span>
+      <span data-lang="en">Pretrain &middot; Finetune &middot; Agents &middot; Research</span>
+      <span data-lang="zh">预训练 &middot; 微调 &middot; 智能体 &middot; 研究</span>
+    </p>
     <nav class="footer__links" aria-label="Footer">
-      <a href="docs.html">Docs</a>
-      <a href="blog.html">Blog</a>
+      <a href="docs.html"><span data-lang="ru">Документация</span><span data-lang="en">Docs</span><span data-lang="zh">文档</span></a>
+      <a href="blog.html"><span data-lang="ru">Блог</span><span data-lang="en">Blog</span><span data-lang="zh">博客</span></a>
       <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a>
       <a href="https://github.com/Q-Project-LM" target="_blank" rel="noopener">GitHub</a>
-      <a href="#access">Access</a>
+      <a href="#access"><span data-lang="ru">Доступ</span><span data-lang="en">Access</span><span data-lang="zh">访问</span></a>
     </nav>
-    <p class="footer__copy">© <span id="year"></span> Q Project. Built independently.</p>
+    <p class="footer__copy">
+      <span data-lang="ru">&copy; <span class="year"></span> Q Project. Разрабатывается независимо.</span>
+      <span data-lang="en">&copy; <span class="year"></span> Q Project. Built independently.</span>
+      <span data-lang="zh">&copy; <span class="year"></span> Q Project。独立开发。</span>
+    </p>
   </footer>
 
   <script src="main.js"></script>
