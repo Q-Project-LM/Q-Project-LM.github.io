@@ -176,8 +176,7 @@ h1, h2, h3, h4 { font-family: var(--f-display); font-weight: 600; letter-spacing
 .nav__hf:hover { border-color: var(--brand); }
 
 /* ---------- Language toggle ---------- */
-[data-lang] { display: none !important; }
-[data-lang].is-active { display: revert !important; }
+[data-lang]:not(.is-active) { display: none !important; }
 .lang-group { display: flex; gap: 2px; background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 10px; padding: 3px; }
 .lang-group button {
   font: 600 12px var(--f-display); border: none; background: transparent; color: var(--muted);
