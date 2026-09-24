@@ -182,57 +182,126 @@
           </div>
         </article>
 
-        <article class="model model--soon" aria-label="Next model — in training">
+        <article class="model">
+          <div class="model__status">
+            <span class="dot" aria-hidden="true"></span>
+            <span data-lang="ru">Экспериментальный релиз</span>
+            <span data-lang="en">Experimental release</span>
+            <span data-lang="zh">实验性发布</span>
+          </div>
+          <h3 class="model__name">Q-Omni-53M</h3>
+          <p class="model__desc" data-lang="ru">
+            Модель на 53M параметров с полностью тернарными весами и замороженным
+            512-битным словарём отпечатков, общим для текста, изображений и звука —
+            без обучаемой embedding-таблицы вообще.
+          </p>
+          <p class="model__desc" data-lang="en">
+            A 53M-parameter model with fully ternary weights and a frozen 512-bit
+            fingerprint vocabulary shared across text, images, and audio — no trained
+            embedding table at all.
+          </p>
+          <p class="model__desc" data-lang="zh">
+            一个 5300 万参数的模型，权重完全三元化，使用一套在文本、图像、
+            音频之间共享的冻结 512 位指纹词表 —— 完全没有可训练的嵌入表。
+          </p>
+
+          <dl class="spec" data-lang="ru">
+            <div><dt>Параметры</dt><dd>53.2M</dd></div>
+            <div><dt>Веса</dt><dd>1.58-бит, тернарные</dd></div>
+            <div><dt>Упаковано</dt><dd>33 МБ (QPACK1)</dd></div>
+            <div><dt>Модальности</dt><dd>текст + изображение + звук</dd></div>
+            <div><dt>Точность circuits</dt><dd>98.7%</dd></div>
+            <div><dt>Embedding-таблица</dt><dd>отсутствует</dd></div>
+          </dl>
+          <dl class="spec" data-lang="en">
+            <div><dt>Parameters</dt><dd>53.2M</dd></div>
+            <div><dt>Weights</dt><dd>1.58-bit ternary</dd></div>
+            <div><dt>Packed size</dt><dd>33 MB (QPACK1)</dd></div>
+            <div><dt>Modalities</dt><dd>text + image + audio</dd></div>
+            <div><dt>Circuits accuracy</dt><dd>98.7%</dd></div>
+            <div><dt>Embedding table</dt><dd>none</dd></div>
+          </dl>
+          <dl class="spec" data-lang="zh">
+            <div><dt>参数量</dt><dd>53.2M</dd></div>
+            <div><dt>权重</dt><dd>1.58 比特三元</dd></div>
+            <div><dt>打包体积</dt><dd>33 MB（QPACK1）</dd></div>
+            <div><dt>模态</dt><dd>文本 + 图像 + 音频</dd></div>
+            <div><dt>circuits 准确率</dt><dd>98.7%</dd></div>
+            <div><dt>嵌入表</dt><dd>无</dd></div>
+          </dl>
+
+          <div class="model__foot" data-lang="ru">
+            <a class="btn btn--solid btn--sm" href="https://huggingface.co/q-project/Q-Omni-53M-Experimental" target="_blank" rel="noopener">Модель и веса</a>
+            <a href="blog-q-omni.html" style="color:var(--muted); font-size:0.85rem;">Читать разбор &rarr;</a>
+          </div>
+          <div class="model__foot" data-lang="en">
+            <a class="btn btn--solid btn--sm" href="https://huggingface.co/q-project/Q-Omni-53M-Experimental" target="_blank" rel="noopener">Model &amp; weights</a>
+            <a href="blog-q-omni.html" style="color:var(--muted); font-size:0.85rem;">Read the writeup &rarr;</a>
+          </div>
+          <div class="model__foot" data-lang="zh">
+            <a class="btn btn--solid btn--sm" href="https://huggingface.co/q-project/Q-Omni-53M-Experimental" target="_blank" rel="noopener">模型与权重</a>
+            <a href="blog-q-omni.html" style="color:var(--muted); font-size:0.85rem;">阅读详细介绍 &rarr;</a>
+          </div>
+        </article>
+
+        <article class="model model--soon" aria-label="Q-164M — in training">
           <div class="model__status model__status--soon">
             <span class="dot dot--pulse" aria-hidden="true"></span>
             <span data-lang="ru">Обучается</span><span data-lang="en">In training</span><span data-lang="zh">训练中</span>
           </div>
-          <div class="model__nameblock">
-            <span class="name-blur" role="img" aria-label="Model name hidden"></span>
-          </div>
+          <h3 class="model__name">Q-164M</h3>
           <p class="model__desc" data-lang="ru">
-            Наша следующая модель уже на кластере — более крупная система, созданная для восприятия
-            и для действий через инструменты, а не только для предсказания текста. Детали остаются закрытыми
-            до её готовности. Живой ход обучения — уже в <a href="blog-q164m.html" style="color:var(--brand)">блоге</a>.
+            Более крупный, только текстовый преемник Q-Omni — упор на диалог и обобщённый
+            механизм точных вызовов инструментов. Обучается сейчас, полностью прозрачно:
+            живой ход обучения — на <a href="http://lakomoor.com:8080" target="_blank" rel="noopener" style="color:var(--brand)">странице обучения</a>.
           </p>
           <p class="model__desc" data-lang="en">
-            Our next model is on the cluster now — a larger system built for perception
-            and for acting through tools, not just predicting text. Details stay under
-            wraps until it is ready. Live training progress is already on the <a href="blog-q164m.html" style="color:var(--brand)">blog</a>.
+            A larger, text-only successor to Q-Omni — dialogue-first, with a generalized
+            exact-tool-calling mechanism. Training now, fully transparently: watch it live
+            on the <a href="http://lakomoor.com:8080" target="_blank" rel="noopener" style="color:var(--brand)">training page</a>.
           </p>
           <p class="model__desc" data-lang="zh">
-            我们的下一个模型已经在集群上训练 —— 一个更大的系统，专注于感知
-            以及通过工具采取行动，而不只是预测文本。在准备就绪之前细节保密。
-            实时训练进度已经可以在<a href="blog-q164m.html" style="color:var(--brand)">博客</a>上查看。
+            一个更大、只面向文本的 Q-Omni 后继模型 —— 以对话为核心，配备通用化的
+            精确工具调用机制。目前正在训练，完全透明：可在
+            <a href="http://lakomoor.com:8080" target="_blank" rel="noopener" style="color:var(--brand)">训练页面</a>上实时查看。
           </p>
 
-          <ul class="teaser" data-lang="ru">
-            <li>Мультимодальность заложена изначально</li>
-            <li>Создана для агентов и вызова инструментов</li>
-            <li>Планируются открытые и закрытые варианты</li>
-          </ul>
-          <ul class="teaser" data-lang="en">
-            <li>Multimodal by design</li>
-            <li>Built for agents and tool use</li>
-            <li>Open and closed variants planned</li>
-          </ul>
-          <ul class="teaser" data-lang="zh">
-            <li>从设计上支持多模态</li>
-            <li>为智能体和工具调用而构建</li>
-            <li>计划提供开放和闭源两种版本</li>
-          </ul>
+          <dl class="spec" data-lang="ru">
+            <div><dt>Параметры</dt><dd>164.6M</dd></div>
+            <div><dt>Слои</dt><dd>10</dd></div>
+            <div><dt>Внимание</dt><dd>GQA 20q/4kv</dd></div>
+            <div><dt>Контекст</dt><dd>2 048</dd></div>
+            <div><dt>Словарь</dt><dd>32 768 BPE</dd></div>
+            <div><dt>Веса</dt><dd>тернарные (QAT)</dd></div>
+          </dl>
+          <dl class="spec" data-lang="en">
+            <div><dt>Parameters</dt><dd>164.6M</dd></div>
+            <div><dt>Layers</dt><dd>10</dd></div>
+            <div><dt>Attention</dt><dd>GQA 20q/4kv</dd></div>
+            <div><dt>Context</dt><dd>2,048</dd></div>
+            <div><dt>Vocab</dt><dd>32,768 BPE</dd></div>
+            <div><dt>Weights</dt><dd>ternary (QAT)</dd></div>
+          </dl>
+          <dl class="spec" data-lang="zh">
+            <div><dt>参数量</dt><dd>164.6M</dd></div>
+            <div><dt>层数</dt><dd>10</dd></div>
+            <div><dt>注意力</dt><dd>GQA 20q/4kv</dd></div>
+            <div><dt>上下文</dt><dd>2,048</dd></div>
+            <div><dt>词表</dt><dd>32,768 BPE</dd></div>
+            <div><dt>权重</dt><dd>三元（QAT）</dd></div>
+          </dl>
 
           <div class="model__foot" data-lang="ru">
-            <a class="btn btn--ghost btn--sm" href="#access">Получить уведомление</a>
-            <span class="model__meta">Раскрытие скоро</span>
+            <a class="btn btn--ghost btn--sm" href="http://lakomoor.com:8080" target="_blank" rel="noopener">Смотреть обучение вживую</a>
+            <a href="blog-q164m.html" style="color:var(--muted); font-size:0.85rem;">Читать разбор &rarr;</a>
           </div>
           <div class="model__foot" data-lang="en">
-            <a class="btn btn--ghost btn--sm" href="#access">Get notified</a>
-            <span class="model__meta">Reveal coming soon</span>
+            <a class="btn btn--ghost btn--sm" href="http://lakomoor.com:8080" target="_blank" rel="noopener">Watch it train live</a>
+            <a href="blog-q164m.html" style="color:var(--muted); font-size:0.85rem;">Read the writeup &rarr;</a>
           </div>
           <div class="model__foot" data-lang="zh">
-            <a class="btn btn--ghost btn--sm" href="#access">获取通知</a>
-            <span class="model__meta">即将揭晓</span>
+            <a class="btn btn--ghost btn--sm" href="http://lakomoor.com:8080" target="_blank" rel="noopener">实时观看训练</a>
+            <a href="blog-q164m.html" style="color:var(--muted); font-size:0.85rem;">阅读详细介绍 &rarr;</a>
           </div>
         </article>
       </div>

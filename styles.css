@@ -223,7 +223,7 @@ section { max-width: var(--maxw); margin: 0 auto; padding: 92px 28px; }
 }
 
 /* ---------- Models ---------- */
-.models__grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 24px; }
+.models__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 .model {
   background: linear-gradient(180deg, var(--surface), var(--surface-2));
   border: 1px solid var(--line); border-radius: var(--r);
@@ -276,20 +276,6 @@ section { max-width: var(--maxw); margin: 0 auto; padding: 92px 28px; }
 .model__foot { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: auto; padding-top: 26px; }
 .model__meta { font-size: 0.82rem; color: var(--faint); }
 
-/* ---------- Secret model: blurred (undecided) name ---------- */
-.model__nameblock { margin: 6px 0 2px; }
-.name-blur {
-  display: block; width: 240px; max-width: 68%; height: 44px; border-radius: 10px;
-  background: var(--grad); opacity: 0.92;
-  filter: blur(10px); animation: nameblur 4.6s ease-in-out infinite;
-}
-@keyframes nameblur {
-  0%, 100% { filter: blur(8px); }
-  50%      { filter: blur(13px); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .name-blur { animation: none; filter: blur(10px); }
-}
 
 /* ---------- Quickstart ---------- */
 .quickstart__grid { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 40px; align-items: start; }
