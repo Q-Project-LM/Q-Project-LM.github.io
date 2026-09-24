@@ -389,7 +389,8 @@ section { max-width: var(--maxw); margin: 0 auto; padding: 92px 28px; }
 }
 .footer__brand { display: flex; align-items: center; gap: 10px; font-family: var(--f-display); font-weight: 600; }
 .footer__tag { color: var(--muted); font-size: 0.92rem; margin: 0; justify-self: center; }
-.footer__links { display: flex; gap: 22px; font-size: 0.92rem; color: var(--muted); justify-self: end; }
+.footer__links { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 0.92rem; color: var(--muted); justify-self: end; }
+.footer__links a { white-space: nowrap; }
 .footer__links a:hover { color: var(--text); }
 .footer__copy { grid-column: 1 / -1; color: var(--faint); font-size: 0.85rem; margin: 8px 0 0; }
 
