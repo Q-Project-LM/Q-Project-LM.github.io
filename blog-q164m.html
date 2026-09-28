@@ -259,10 +259,6 @@
       <div class="callout">
         <div><strong>UPD — обучение завершено.</strong> Все 200 000 шагов пройдены: ≈92.4 часа чистого времени на одной Tesla V100, 13.1 млрд токенов по плану, без единого NaN за весь прогон. Финальные метрики: val perplexity 16.98 (было 24.9 на шаге 28 000), perplexity на отложенном FineWeb 25.61 (было 35.6). На фиксированном наборе из 8 задач с инструментами теперь 7 из 8 — путаница деления с умножением, о которой мы писали выше, за это время исчезла сама («What is 91 divided by 7?» теперь честно вызывает <code>91/7</code>, а не <code>91*7</code>). А вот «sort» не выучился так и не вышло: на финальном чекпоинте модель вызвала уже третий по счёту неправильный инструмент вместо него (<code>draxe</code> на шаге 34 500, <code>cmp</code> сейчас) — то есть она не сходится к одной устойчивой ошибке, а каждый раз путается по-новому.</div>
       </div>
-
-      <div class="callout">
-        <div><strong>UPD 2 — вышла инструктивная версия, Q-U-164M.</strong> Поверх чекпоинта выше сделали chat-SFT (3500 шагов, с оверсэмплингом «sort»-примеров в 4 раза — именно того навыка, что не сошёлся при предобучении), а затем RL-дообучение (300 шагов, GRPO-подобная схема: несколько ответов на один запрос, награда считается тем же детерминированным исполнителем инструментов, без модели-судьи и без DPO-пар). Результат: «sort» теперь решается верно (8 из 8 на тестовом наборе), а вдобавок нашли и честно чиним отдельную, ранее не описанную проблему — на второй реплике подряд базовая модель роняла вызов инструмента и начинала повторяться (претрейн почти не видел многоходовых диалогов); после SFT/RL диалог держится заметно устойчивее. Отдельная слабость осталась: свободные формулировки не из обучающей выборки («раздели счёт между друзьями» вместо «посчитай скидку») иногда всё ещё вызывают не тот инструмент. Попробовать: <a href="chat/">чат-демо</a> (теперь на Q-U-164M). Код, рецепт SFT/RL и веса обеих версий — на <a href="https://github.com/Q-Project-LM/Q-164M" target="_blank" rel="noopener">GitHub</a> и <a href="https://huggingface.co/q-project/Q-U-164M" target="_blank" rel="noopener">Hugging Face</a>.</div>
-      </div>
     </div>
   </div>
 
@@ -469,10 +465,6 @@
       <div class="callout">
         <div><strong>UPD &mdash; training is complete.</strong> All 200,000 steps finished: &asymp;92.4 hours of wall-clock training on a single Tesla V100, 13.1B tokens as planned, no NaNs across the entire run. Final metrics: val perplexity 16.98 (was 24.9 at step 28,000), held-out FineWeb perplexity 25.61 (was 35.6). On the same fixed 8-task tool-use set it's now 7 of 8: the division/multiplication mix-up we wrote about above quietly fixed itself somewhere along the way (&ldquo;What is 91 divided by 7?&rdquo; now correctly calls <code>91/7</code>, not <code>91*7</code>). <code>sort</code>, though, never got learned &mdash; at the final checkpoint the model reached for its <em>third</em> different wrong tool instead of it (<code>draxe</code> at step 34,500, <code>cmp</code> now), which reads less like a stable wrong answer and more like it never actually landed on the concept at all.</div>
       </div>
-
-      <div class="callout">
-        <div><strong>UPD 2 &mdash; an instruction-tuned version, Q-U-164M, is out.</strong> On top of the checkpoint above we ran chat-SFT (3,500 steps, oversampling &ldquo;sort&rdquo; examples 4x &mdash; the exact skill that never converged during pretraining), then an RL fine-tune (300 steps, GRPO-style: several completions per prompt, reward scored by the same deterministic tool executor, no judge model or DPO pairs). Result: &ldquo;sort&rdquo; is now solved correctly (8 of 8 on the test set), and along the way we found and honestly fixed a separate, previously-undocumented bug &mdash; the base model dropped its own tool calls and started repeating itself by the second turn of a conversation in a row (pretraining barely saw multi-turn dialogue); SFT/RL hold up noticeably better. One weak spot remains: free-form phrasing outside the training mix (&ldquo;split the bill between friends&rdquo; instead of &ldquo;compute a discount&rdquo;) can still trigger the wrong tool. Try it: <a href="chat/">the chat demo</a> (now running Q-U-164M). Code, the SFT/RL recipe, and both models' weights are on <a href="https://github.com/Q-Project-LM/Q-164M" target="_blank" rel="noopener">GitHub</a> and <a href="https://huggingface.co/q-project/Q-U-164M" target="_blank" rel="noopener">Hugging Face</a>.</div>
-      </div>
     </div>
   </div>
 
@@ -678,10 +670,6 @@
 
       <div class="callout">
         <div><strong>更新 —— 训练已完成。</strong>全部 200,000 步已跑完：在单张 Tesla V100 上累计约 92.4 小时，按计划处理了 131 亿词元，全程没有出现一次 NaN。最终指标：val 困惑度 16.98（第 28,000 步时为 24.9），留出的 FineWeb 困惑度为 25.61（此前为 35.6）。在同样固定的 8 个工具任务上，现在答对 7 个 —— 前面提到的除法与乘法混淆问题，在训练过程中不知不觉自己消失了（现在「What is 91 divided by 7?」会正确调用 <code>91/7</code>，而不是 <code>91*7</code>）。但「sort」始终没有学会：在最终检查点上，模型又调用了第三个不同的错误工具（第 34,500 步是 <code>draxe</code>，现在是 <code>cmp</code>）—— 这看起来不像是收敛到某个稳定的错误答案，更像是它压根没理解这个概念。</div>
-      </div>
-
-      <div class="callout">
-        <div><strong>更新 2 —— 指令微调版本 Q-U-164M 发布。</strong>在上面这个检查点基础上，先做了 chat-SFT（3500 步，「sort」相关样本过采样 4 倍 —— 正是预训练阶段始终没有收敛的那个技能），再做了 RL 微调（300 步，GRPO 风格：对同一提示采样多个回答，奖励由同一个确定性工具执行器计算，不需要评判模型，也不需要 DPO 偏好对）。结果：「sort」现在能正确完成（测试集 8 中 8），而且顺带发现并如实修复了另一个此前从未记录的问题 —— 连续对话到第二轮时，基础模型会丢掉工具调用、开始重复自己（预训练几乎没见过多轮对话）；SFT/RL 之后明显更稳定。仍然存在的弱点：训练数据之外的自由表达（比如「帮我和朋友们平摊账单」而不是「算一下折扣」）有时仍会触发错误的工具。亲自试试：<a href="chat/">聊天演示</a>（现在运行的是 Q-U-164M）。代码、SFT/RL 方案，以及两个版本的权重都发布在 <a href="https://github.com/Q-Project-LM/Q-164M" target="_blank" rel="noopener">GitHub</a> 和 <a href="https://huggingface.co/q-project/Q-U-164M" target="_blank" rel="noopener">Hugging Face</a> 上。</div>
       </div>
     </div>
   </div>
