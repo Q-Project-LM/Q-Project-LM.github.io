@@ -8,7 +8,8 @@ async function loadWasmModel(loaded, wasmBytes) {
   const ex = instance.exports;
   const write = (ptr, arr) => new Float32Array(ex.memory.buffer, ptr, arr.length).set(arr);
   const t = loaded.tensors;
-  write(ex.get_table(), loaded.table);
+  write(ex.get_table_in(), loaded.table_in);
+  write(ex.get_table_out(), loaded.table_out);
   write(ex.get_logit_bias(), t['logit_bias'].data);
   write(ex.get_w_in(), t['model.w_in.weight'].data);
   write(ex.get_w_out(), t['w_out.weight'].data);

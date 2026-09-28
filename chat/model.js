@@ -26,7 +26,7 @@ function sigmoid(v) { return 1 / (1 + Math.exp(-v)); }
 
 class QOmniJS {
   constructor(loaded) {
-    this.cfg = loaded.cfg; this.t = loaded.tensors; this.table = loaded.table;
+    this.cfg = loaded.cfg; this.t = loaded.tensors; this.table_in = loaded.table_in; this.table_out = loaded.table_out;
     const c = this.cfg;
     this.nh = c.num_attention_heads; this.nkv = c.num_key_value_heads; this.hd = c.head_dim;
     this.d = c.hidden_size; this.ff = c.intermediate_size; this.L = c.num_hidden_layers;
@@ -59,7 +59,7 @@ class QOmniJS {
   }
 
   embed(id) {
-    const bits = this.bits, row = this.table.subarray(id * bits, id * bits + bits);
+    const bits = this.bits, row = this.table_in.subarray(id * bits, id * bits + bits);
     return linear(row, this.t['model.w_in.weight'].data, this.d, bits);
   }
 
@@ -69,7 +69,7 @@ class QOmniJS {
     const bias = this.t['logit_bias'].data;
     for (let v = 0; v < vocab; v++) {
       let s = 0; const base = v * this.bits;
-      for (let k = 0; k < this.bits; k++) s += z[k] * this.table[base + k];
+      for (let k = 0; k < this.bits; k++) s += z[k] * this.table_out[base + k];
       out[v] = s * scale + bias[v];
     }
     return out;

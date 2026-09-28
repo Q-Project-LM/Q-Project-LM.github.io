@@ -109,9 +109,9 @@
       <p class="demo-hint" data-lang="zh">可以试试：<code>What is 347 times 86?</code> &middot; <code>An item costs 800 dollars with a 20 percent discount — what's the final price?</code>（一个两步链式工具调用）&middot; <code>How many days between January 1 and March 15, 2026?</code> &middot; <code>Sort these: 9, 3, 7, 1.</code> 或者直接打个招呼 —— 它也是一个正常的聊天模型。解码被强制为贪心模式，与测量精确匹配率时的设置一致；遇到不常见的表述，模型仍可能选错工具、甚至完全不调用工具 —— 这种失败模式是真实存在的，这里并未隐藏。</p>
     </div>
 
-    <p class="demo-note" id="placeholderNote" data-lang="ru">Временная сборка: сейчас на этой странице стоит <code>model.qpack</code>/<code>kernel.wasm</code> от более раннего родственника модели, чтобы сам интерфейс чата можно было протестировать целиком ещё до завершения обучения Q-164M (многодневный прогон, идёт сейчас). Как только реальный чекпоинт будет экспортирован — достаточно заменить эти два файла, больше ничего на странице менять не нужно. Демо только для текста (без токенов изображений/звука).</p>
-    <p class="demo-note" data-lang="en">Placeholder build: this page currently ships with an older sibling model's <code>model.qpack</code>/<code>kernel.wasm</code> so the chat UI itself is testable end-to-end before Q-164M finishes training (multi-day run, in progress). Swap those two files once the real checkpoint is exported — nothing else on this page needs to change. Text-only demo (no image/audio tokens).</p>
-    <p class="demo-note" data-lang="zh">临时版本：本页目前使用的是一个较早的同系列模型的 <code>model.qpack</code>/<code>kernel.wasm</code>，这样可以在 Q-164M 完成训练之前（多日训练，目前进行中）就把聊天界面本身端到端测试一遍。等真正的检查点导出后，只需替换这两个文件，页面上的其他内容都不需要改动。仅支持文本的演示（不含图像/音频词元）。</p>
+    <p class="demo-note" id="placeholderNote" data-lang="ru">Это финальный обученный чекпоинт Q-164M (200 000/200 000 шагов). Работает прямо в браузере — без сервера, без Python. Известная слабость: сортировка списков («sort») так и не выучилась за всё предобучение и вызывает не тот инструмент — показано как есть, без прикрас. Демо только для текста (без токенов изображений/звука).</p>
+    <p class="demo-note" data-lang="en">This is Q-164M's final trained checkpoint (200,000/200,000 steps). Runs entirely in your browser — no server, no Python. Known weak spot: sorting lists (&ldquo;sort&rdquo;) never converged during pretraining and calls the wrong tool &mdash; shown honestly as-is. Text-only demo (no image/audio tokens).</p>
+    <p class="demo-note" data-lang="zh">这是 Q-164M 的最终训练检查点（200,000/200,000 步）。完全在浏览器中运行 —— 不需要服务器，不需要 Python。已知弱点：列表排序（「sort」）在整个预训练过程中始终没有学会，会调用错误的工具 —— 如实展示，没有美化。仅支持文本的演示（不含图像/音频词元）。</p>
   </main>
 
   <footer class="footer">

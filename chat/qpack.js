@@ -73,7 +73,7 @@ function loadTensors(c) {
   const man = c.json('manifest.json');
   const cfg = c.json('config.json');
   const t = {};
-  let codesFlat = null, deltaFlat = null;
+  let codesFlat = null, deltaIn = null, deltaOut = null;
   for (const e of man.tensors) {
     const n = e.shape.reduce((a, b) => a * b, 1);
     let data;
@@ -95,18 +95,31 @@ function loadTensors(c) {
       continue;
     } else if (e.kind === 'f16') {
       data = readF16Array(c.blob(e.blob));
-      if (e.name.endsWith('mm_delta')) { deltaFlat = { data, shape: e.shape }; continue; }
+      // Q-Omni ships one tied correction ("mm_delta", covering only the multimodal id range, applied to
+      // both embed and readout). Q-164M ships UNTIED corrections over the WHOLE vocab ("mm_delta_in" for
+      // embedding, "mm_delta_out" for readout) -- checking endsWith('mm_delta') alone would silently miss
+      // both of these (neither string ends in exactly "mm_delta"), so each is matched explicitly.
+      if (e.name.endsWith('mm_delta_in')) { deltaIn = { data, shape: e.shape }; continue; }
+      if (e.name.endsWith('mm_delta_out')) { deltaOut = { data, shape: e.shape }; continue; }
+      if (e.name.endsWith('mm_delta')) { deltaIn = deltaOut = { data, shape: e.shape }; continue; }
     } else { data = readF32Array(c.blob(e.blob)); }
     t[e.name] = { data, shape: e.shape };
   }
-  // combined table: codes with mm_delta added at rows [special_offset, special_offset+len(delta))
-  const bits = cfg.code_bits, vocab = cfg.vocab_size;
-  const table = codesFlat.data.slice();
-  if (deltaFlat) {
-    const start = cfg.special_offset;
-    for (let r = 0; r < deltaFlat.shape[0]; r++) for (let cIdx = 0; cIdx < bits; cIdx++) table[(start + r) * bits + cIdx] += deltaFlat.data[r * bits + cIdx];
+  // table_in/table_out: frozen codes plus their respective learned correction, added starting at
+  // cfg.delta_offset (Q-164M: 0, whole vocab) or cfg.special_offset (Q-Omni: partial, multimodal range only).
+  const bits = cfg.code_bits;
+  const start = cfg.delta_offset != null ? cfg.delta_offset : cfg.special_offset;
+  function buildTable(delta) {
+    const table = codesFlat.data.slice();
+    if (delta) for (let r = 0; r < delta.shape[0]; r++) for (let cIdx = 0; cIdx < bits; cIdx++) table[(start + r) * bits + cIdx] += delta.data[r * bits + cIdx];
+    return table;
   }
-  return { tensors: t, table, cfg, selftest: c.toc['selftest.json'] ? c.json('selftest.json') : null };
+  const table_in = buildTable(deltaIn), table_out = buildTable(deltaOut);
+  return {
+    tensors: t, cfg, table_in, table_out,
+    table: table_in, // back-compat alias for callers that only know about one tied table (Q-Omni's case, where table_in === table_out)
+    selftest: c.toc['selftest.json'] ? c.json('selftest.json') : null,
+  };
 }
 
 window.QOmniLib = window.QOmniLib || {};
