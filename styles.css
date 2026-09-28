@@ -160,21 +160,24 @@ h1, h2, h3, h4 { font-family: var(--f-display); font-weight: 600; letter-spacing
 /* ---------- Nav ---------- */
 .nav {
   position: sticky; top: 0; z-index: 40;
-  display: flex; align-items: center; justify-content: space-between;
-  max-width: var(--maxw); margin: 0 auto; padding: 16px 28px;
+  width: 100%;
   background: var(--bg);
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
 }
-.nav__brand { display: flex; align-items: center; gap: 11px; font-family: var(--f-display); font-weight: 600; font-size: 1.12rem; }
+.nav__inner {
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: var(--maxw); margin: 0 auto; padding: 16px 28px;
+}
+.nav__brand { display: flex; align-items: center; gap: 11px; font-family: var(--f-display); font-weight: 600; font-size: 1.12rem; white-space: nowrap; }
 .nav__group { display: flex; align-items: center; gap: 10px; }
 .nav__links { display: flex; align-items: center; gap: 26px; font-size: 0.96rem; color: var(--muted); margin-right: 8px; }
-.nav__links a { transition: color 0.18s ease; }
+.nav__links a { transition: color 0.18s ease; white-space: nowrap; }
 .nav__links a:hover, .nav__links a[aria-current="page"] { color: var(--text); }
 .nav__hf {
   color: var(--text); padding: 9px 15px; border: 1px solid var(--line-2);
-  border-radius: 10px; font-size: 0.94rem; font-family: var(--f-display);
+  border-radius: 10px; font-size: 0.94rem; font-family: var(--f-display); white-space: nowrap;
 }
 .nav__hf:hover { border-color: var(--brand); }
 
@@ -443,7 +446,7 @@ section { max-width: var(--maxw); margin: 0 auto; padding: 92px 28px; }
   .quickstart__grid { grid-template-columns: 1fr; gap: 26px; }
 }
 @media (max-width: 860px) {
-  .nav { flex-wrap: wrap; row-gap: 10px; }
+  .nav__inner { flex-wrap: wrap; row-gap: 10px; }
   .nav__brand { flex: none; }
   .nav__group { width: 100%; flex-wrap: wrap; row-gap: 10px; justify-content: flex-end; gap: 14px; }
   .nav__links {
