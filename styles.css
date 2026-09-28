@@ -163,6 +163,14 @@ h1, h2, h3, h4 { font-family: var(--f-display); font-weight: 600; letter-spacing
   width: 100%;
   backdrop-filter: blur(10px);
 }
+/* Soft tail below the header so the blur fades out instead of cutting off sharply at the nav's edge. */
+.nav::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 28px;
+  backdrop-filter: blur(10px);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+  pointer-events: none;
+}
 .nav__inner {
   display: flex; align-items: center; justify-content: space-between;
   max-width: var(--maxw); margin: 0 auto; padding: 16px 28px;
@@ -442,7 +450,11 @@ section { max-width: var(--maxw); margin: 0 auto; padding: 92px 28px; }
   .docs__nav { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; }
   .quickstart__grid { grid-template-columns: 1fr; gap: 26px; }
 }
-@media (max-width: 860px) {
+/* Nav gets its own (wider) breakpoint: Russian nav labels ("Документация", "Исследования", ...) are
+   noticeably wider than the English/Chinese ones, so the inline layout runs out of room well before the
+   860px breakpoint used for the page's content grids -- without this, "Q Project" and "Модели" collide
+   on common laptop widths (~900-1100px) even though English fits fine at the same width. */
+@media (max-width: 1180px) {
   .nav__inner { flex-wrap: wrap; row-gap: 10px; }
   .nav__brand { flex: none; }
   .nav__group { width: 100%; flex-wrap: wrap; row-gap: 10px; justify-content: flex-end; gap: 14px; }
@@ -452,6 +464,8 @@ section { max-width: var(--maxw); margin: 0 auto; padding: 92px 28px; }
   }
   .nav__links::-webkit-scrollbar { display: none; }
   .nav__links a { flex: none; white-space: nowrap; }
+}
+@media (max-width: 860px) {
   section { padding: 66px 22px; }
   .models__grid { grid-template-columns: 1fr; }
   .work__grid { grid-template-columns: 1fr 1fr; }
