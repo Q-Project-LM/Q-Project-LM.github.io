@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chat with Q-164M — Q Project</title>
-  <meta name="description" content="Multi-turn chat with Q-164M, running entirely client-side via a hand-written WASM kernel — no server, no Python. Tool calls (exact arithmetic, dates, sorting, and more) are shown transparently, not hidden." />
+  <title>Chat with Q-U-164M — Q Project</title>
+  <meta name="description" content="Multi-turn chat with Q-U-164M (Q-164M fine-tuned with SFT then RL), running entirely client-side via a hand-written WASM kernel — no server, no Python. Tool calls (exact arithmetic, dates, sorting, and more) are shown transparently, not hidden." />
   <link rel="icon" type="image/svg+xml" href="../assets/q-logo.svg" />
 
   <script>
@@ -75,9 +75,9 @@
 
   <main class="run demo" id="demo">
     <h1>
-      <span data-lang="ru">Чат с Q-164M</span>
-      <span data-lang="en">Chat with Q-164M</span>
-      <span data-lang="zh">与 Q-164M 对话</span>
+      <span data-lang="ru">Чат с Q-U-164M</span>
+      <span data-lang="en">Chat with Q-U-164M</span>
+      <span data-lang="zh">与 Q-U-164M 对话</span>
     </h1>
     <p class="run__lede" data-lang="ru">Модель архитектуры Q, обучается с нуля, только текст: тернарные веса, замороженный словарь отпечатков и обобщённый механизм точных вызовов инструментов — арифметика, даты, сортировка, фильтрация и даже многошаговые цепочки — работает нативно прямо в этой вкладке, без сервера. Вызовы инструментов показаны, а не скрыты, чтобы было видно, когда сеть передаёт управление детерминированному исполнителю.</p>
     <p class="run__lede" data-lang="en">A from-scratch, text-only member of the Q architecture family: ternary weights, a frozen fingerprint vocabulary, and a generalized exact-tool-calling mechanism — arithmetic, dates, sorting, filtering, even chained multi-step lookups — running natively in this tab, no server involved. Tool calls are shown here, not hidden, so you can see when the network hands off to the deterministic executor.</p>
@@ -93,7 +93,7 @@
     <div class="demo-card">
       <div id="log" class="chat-log"></div>
       <div class="composer-row">
-        <textarea id="input" placeholder="Message Q-164M…" rows="1"></textarea>
+        <textarea id="input" placeholder="Message Q-U-164M…" rows="1"></textarea>
         <button id="send" class="btn btn--solid" disabled>
           <span data-lang="ru">Отправить</span><span data-lang="en">Send</span><span data-lang="zh">发送</span>
         </button>
@@ -109,9 +109,9 @@
       <p class="demo-hint" data-lang="zh">可以试试：<code>What is 347 times 86?</code> &middot; <code>An item costs 800 dollars with a 20 percent discount — what's the final price?</code>（一个两步链式工具调用）&middot; <code>How many days between January 1 and March 15, 2026?</code> &middot; <code>Sort these: 9, 3, 7, 1.</code> 或者直接打个招呼 —— 它也是一个正常的聊天模型。解码被强制为贪心模式，与测量精确匹配率时的设置一致；遇到不常见的表述，模型仍可能选错工具、甚至完全不调用工具 —— 这种失败模式是真实存在的，这里并未隐藏。</p>
     </div>
 
-    <p class="demo-note" id="placeholderNote" data-lang="ru">Это финальный обученный чекпоинт Q-164M (200 000/200 000 шагов). Работает прямо в браузере — без сервера, без Python. Известная слабость: сортировка списков («sort») так и не выучилась за всё предобучение и вызывает не тот инструмент — показано как есть, без прикрас. Демо только для текста (без токенов изображений/звука).</p>
-    <p class="demo-note" data-lang="en">This is Q-164M's final trained checkpoint (200,000/200,000 steps). Runs entirely in your browser — no server, no Python. Known weak spot: sorting lists (&ldquo;sort&rdquo;) never converged during pretraining and calls the wrong tool &mdash; shown honestly as-is. Text-only demo (no image/audio tokens).</p>
-    <p class="demo-note" data-lang="zh">这是 Q-164M 的最终训练检查点（200,000/200,000 步）。完全在浏览器中运行 —— 不需要服务器，不需要 Python。已知弱点：列表排序（「sort」）在整个预训练过程中始终没有学会，会调用错误的工具 —— 如实展示，没有美化。仅支持文本的演示（不含图像/音频词元）。</p>
+    <p class="demo-note" id="placeholderNote" data-lang="ru">Это Q-U-164M — Q-164M, дообученная в два этапа (chat-SFT, затем RL по верифицируемой награде) специально для диалога. Работает прямо в браузере — без сервера, без Python. Сортировка списков («sort»), не работавшая у базовой модели, теперь чинится SFT/RL. Известная слабость: свободные формулировки вне обучающей выборки (например, «раздели счёт между друзьями» вместо «посчитай процент скидки») иногда всё ещё вызывают не тот инструмент — показано как есть, без прикрас. Демо только для текста (без токенов изображений/звука).</p>
+    <p class="demo-note" data-lang="en">This is Q-U-164M — Q-164M fine-tuned in two stages (chat-SFT, then RL on a verifiable reward) specifically for dialogue. Runs entirely in your browser — no server, no Python. Sorting lists (&ldquo;sort&rdquo;), broken in the base model, is fixed by SFT/RL. Known weak spot: free-form phrasing outside the training mix (e.g. &ldquo;split the bill between friends&rdquo; instead of &ldquo;compute a discount&rdquo;) can still trigger the wrong tool &mdash; shown honestly as-is. Text-only demo (no image/audio tokens).</p>
+    <p class="demo-note" data-lang="zh">这是 Q-U-164M —— 专门为对话分两个阶段微调过的 Q-164M（先 chat-SFT，再基于可验证奖励的 RL）。完全在浏览器中运行 —— 不需要服务器，不需要 Python。基础模型没学会的列表排序（「sort」），经 SFT/RL 后已经修复。已知弱点：训练数据之外的自由表达（比如「帮我和朋友们平摊账单」而不是「算一下折扣」）有时仍会触发错误的工具 —— 如实展示，没有美化。仅支持文本的演示（不含图像/音频词元）。</p>
   </main>
 
   <footer class="footer">
