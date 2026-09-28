@@ -440,8 +440,15 @@ section { max-width: var(--maxw); margin: 0 auto; padding: 92px 28px; }
   .quickstart__grid { grid-template-columns: 1fr; gap: 26px; }
 }
 @media (max-width: 860px) {
-  .nav__links { gap: 16px; }
-  .nav__links a { display: none; }
+  .nav { flex-wrap: wrap; row-gap: 10px; }
+  .nav__brand { flex: none; }
+  .nav__group { width: 100%; flex-wrap: wrap; row-gap: 10px; justify-content: flex-end; gap: 14px; }
+  .nav__links {
+    order: 2; flex-basis: 100%; justify-content: flex-start; gap: 18px; margin-right: 0;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .nav__links::-webkit-scrollbar { display: none; }
+  .nav__links a { flex: none; white-space: nowrap; }
   section { padding: 66px 22px; }
   .models__grid { grid-template-columns: 1fr; }
   .work__grid { grid-template-columns: 1fr 1fr; }
