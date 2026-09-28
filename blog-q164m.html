@@ -60,18 +60,18 @@
   <div data-lang="ru">
     <p class="article__kicker">ЗАМЕТКИ С ИССЛЕДОВАНИЯ &middot; ПРЕДОБУЧЕНИЕ ЗАВЕРШЕНО</p>
     <h1 class="article__title">Q-164M: текст, диалог и точные вызовы инструментов</h1>
-    <p class="article__lede">Новая модель в архитектуре Q, обучается с нуля — крупнее текстовой ветки Q-Omni, только английский язык, с упором на диалог и обобщённый механизм точных вычислений: модель никогда сама не считает арифметику, поэтому не ошибается там, где обычно ошибаются маленькие модели.</p>
+    <p class="article__lede">Новая модель в архитектуре Q, обучена с нуля — крупнее текстовой ветки Q-Omni, только английский язык, с упором на диалог и обобщённый механизм точных вычислений: модель никогда сама не считает арифметику, поэтому не ошибается там, где обычно ошибаются маленькие модели.</p>
 
     <div class="article__stats">
       <div><b>164.6M</b><span>параметров</span></div>
       <div><b>1.58-бит</b><span>тернарные веса</span></div>
-      <div><b>13.1B</b><span>токенов, весь план обучения</span></div>
-      <div><b>12.5%</b><span>пройдено на сейчас</span></div>
+      <div><b>13.1B</b><span>токенов за весь прогон</span></div>
+      <div><b>7/8</b><span>задач с инструментами решает верно</span></div>
     </div>
 
     <div class="doc-block">
       <div class="callout">
-        <div><strong>Смотри вживую.</strong> Полная прозрачность обучения — реальные графики Loss/PPL, честные примеры генераций (включая ошибки, без прикрас) и живая демка в браузере на текущем чекпоинте: <a href="http://lakomoor.com:8080" target="_blank" rel="noopener">lakomoor.com:8080</a>.</div>
+        <div><strong>Попробуй сам.</strong> Обученная модель работает прямо в браузере — без сервера, без Python: <a href="chat/">чат-демо</a>. Код и веса — на <a href="https://github.com/Q-Project-LM/Q-164M" target="_blank" rel="noopener">GitHub</a> и <a href="https://huggingface.co/q-project/Q-164M" target="_blank" rel="noopener">Hugging Face</a>.</div>
       </div>
 
       <h2>Почему отдельная модель, а не Q-Omni</h2>
@@ -251,7 +251,7 @@
         <circle class="pulse" r="3"><animateMotion dur="1.8s" begin="1.1s" repeatCount="indefinite" path="M475,400 L475,420 L320,444"/></circle>
       </svg>
       </div>
-      <p>Оба пути численно сверены друг с другом и с оригинальной моделью на живом чекпоинте — расхождение логитов ~0.0002, топ-1 токен совпадает всегда. Второй путь (чистый JS, без сервера и GPU) означает, что модель в принципе может работать прямо в браузере — как уже устроено чат-демо на <a href="chat/">странице Chat</a> для более ранних моделей серии Q-Omni. Живой ход обучения самого Q-164M смотри на <a href="http://lakomoor.com:8080" target="_blank" rel="noopener">странице обучения</a>.</p>
+      <p>Оба пути численно сверены друг с другом и с оригинальной моделью на живом чекпоинте — расхождение логитов ~0.0002, топ-1 токен совпадает всегда. Второй путь (чистый JS, без сервера и GPU) означает, что модель в принципе может работать прямо в браузере — и <a href="chat/">чат-демо</a> теперь и правда гоняет именно этот, финальный чекпоинт Q-164M, а не более ранние модели серии Q-Omni, как раньше.</p>
 
       <h2>Честный статус на сейчас</h2>
       <p>Обучение шло: шаг 25 080 из 200 000 (12.5%), около 11.6 часов на одной Tesla V100. Loss 3.30, perplexity на eval 25.4, на полностью отложенном куске FineWeb (модель его не видела) — 36.4. На фиксированном наборе из 8 задач с инструментами модель тогда решала 6 из 8 верно: уверенно считала арифметику и находила максимум/минимум, но путала «sort» с другими инструментами и иногда искажала числа при пересказе результата словами. Свободная генерация текста местами зацикливалась на повторах — ожидаемо для такой ранней стадии.</p>
@@ -266,18 +266,18 @@
   <div data-lang="en">
     <p class="article__kicker">RESEARCH NOTES &middot; PRETRAINING COMPLETE</p>
     <h1 class="article__title">Q-164M: text, dialogue, and exact tool calls</h1>
-    <p class="article__lede">A from-scratch successor in the Q architecture family, training right now — bigger than Q-Omni's text branch, English-only, dialogue-first, and built around a generalized version of exact-arithmetic circuits: real tool calls a small model can pull off reliably because it never has to compute the answer itself.</p>
+    <p class="article__lede">A from-scratch successor in the Q architecture family, trained from scratch — bigger than Q-Omni's text branch, English-only, dialogue-first, and built around a generalized version of exact-arithmetic circuits: real tool calls a small model can pull off reliably because it never has to compute the answer itself.</p>
 
     <div class="article__stats">
       <div><b>164.6M</b><span>parameters</span></div>
       <div><b>1.58-bit</b><span>ternary weights</span></div>
-      <div><b>13.1B</b><span>tokens, full training budget</span></div>
-      <div><b>12.5%</b><span>done as of writing</span></div>
+      <div><b>13.1B</b><span>tokens over the full run</span></div>
+      <div><b>7/8</b><span>fixed tool-calling tasks solved</span></div>
     </div>
 
     <div class="doc-block">
       <div class="callout">
-        <div><strong>Watch it train, live.</strong> Full training transparency — real Loss/PPL curves, honest generation samples (mistakes included, nothing cleaned up), and a live in-browser demo running the current checkpoint: <a href="http://lakomoor.com:8080" target="_blank" rel="noopener">lakomoor.com:8080</a>.</div>
+        <div><strong>Try it yourself.</strong> The trained model runs right in your browser — no server, no Python: <a href="chat/">chat demo</a>. Code and weights are on <a href="https://github.com/Q-Project-LM/Q-164M" target="_blank" rel="noopener">GitHub</a> and <a href="https://huggingface.co/q-project/Q-164M" target="_blank" rel="noopener">Hugging Face</a>.</div>
       </div>
 
       <h2>Why a separate model from Q-Omni</h2>
@@ -457,7 +457,7 @@
         <circle class="pulse" r="3"><animateMotion dur="1.8s" begin="1.1s" repeatCount="indefinite" path="M475,400 L475,420 L320,444"/></circle>
       </svg>
       </div>
-      <p>Both paths are numerically checked against each other and against the original model on a live checkpoint — logits differ by ~0.0002, top-1 token always matches. The JS path (no server, no GPU) means the model can in principle run entirely in a browser tab — the same way the <a href="chat/">Chat page</a>'s demo already works for earlier Q-Omni models. For Q-164M itself, the actual training run is visible live on the <a href="http://lakomoor.com:8080" target="_blank" rel="noopener">training page</a>.</p>
+      <p>Both paths are numerically checked against each other and against the original model on a live checkpoint — logits differ by ~0.0002, top-1 token always matches. The JS path (no server, no GPU) means the model can in principle run entirely in a browser tab — and the <a href="chat/">Chat page</a>'s demo now actually runs this final Q-164M checkpoint, not an earlier Q-Omni model like it used to.</p>
 
       <h2>Honest status right now</h2>
       <p>Partway through training: step 25,080 of 200,000 (12.5%), about 11.6 hours in on a single Tesla V100. Loss was 3.30, eval perplexity 25.4, and 36.4 on a fully held-out slice of FineWeb the model had never seen. On a fixed set of 8 tool-use tasks it got 6 of 8 right at the time: reliable at arithmetic and finding a max/min, still confusing "sort" with other tools and occasionally garbling a number when restating a result in words. Free-running text generation looped into repetition sometimes — expected that early.</p>
@@ -472,18 +472,18 @@
   <div data-lang="zh">
     <p class="article__kicker">研究笔记 &middot; 预训练已完成</p>
     <h1 class="article__title">Q-164M：文本、对话与精确工具调用</h1>
-    <p class="article__lede">Q 架构家族的最新成员，目前正在从零开始训练 —— 比 Q-Omni 的文本分支更大，仅支持英文，以对话为核心，并围绕一种通用化的精确计算机制构建：真正的工具调用，一个小模型也能可靠完成，因为它从来不需要自己去算出答案。</p>
+    <p class="article__lede">Q 架构家族的最新成员，从零开始训练完成 —— 比 Q-Omni 的文本分支更大，仅支持英文，以对话为核心，并围绕一种通用化的精确计算机制构建：真正的工具调用，一个小模型也能可靠完成，因为它从来不需要自己去算出答案。</p>
 
     <div class="article__stats">
       <div><b>1.646亿</b><span>参数量</span></div>
       <div><b>1.58 比特</b><span>三元权重</span></div>
-      <div><b>131 亿</b><span>词元，完整训练预算</span></div>
-      <div><b>12.5%</b><span>撰写时已完成</span></div>
+      <div><b>131 亿</b><span>词元，完整训练量</span></div>
+      <div><b>7/8</b><span>固定工具调用测试通过数</span></div>
     </div>
 
     <div class="doc-block">
       <div class="callout">
-        <div><strong>实时观看训练。</strong> 完全透明的训练过程 —— 真实的 Loss/PPL 曲线、如实展示的生成示例（包括错误，未做任何美化），以及运行当前检查点的浏览器实时演示：<a href="http://lakomoor.com:8080" target="_blank" rel="noopener">lakomoor.com:8080</a>。</div>
+        <div><strong>亲自试试。</strong> 训练好的模型可以直接在浏览器中运行 —— 不需要服务器，不需要 Python：<a href="chat/">聊天演示</a>。代码与权重发布在 <a href="https://github.com/Q-Project-LM/Q-164M" target="_blank" rel="noopener">GitHub</a> 和 <a href="https://huggingface.co/q-project/Q-164M" target="_blank" rel="noopener">Hugging Face</a> 上。</div>
       </div>
 
       <h2>为什么不直接用 Q-Omni，而要做一个独立的模型</h2>
@@ -663,7 +663,7 @@
         <circle class="pulse" r="3"><animateMotion dur="1.8s" begin="1.1s" repeatCount="indefinite" path="M475,400 L475,420 L320,444"/></circle>
       </svg>
       </div>
-      <p>两条路径都在一个真实检查点上，相互之间以及与原始模型之间做过数值校验 —— logits 相差约 0.0002，top-1 词元始终一致。JS 这条路径（不需要服务器和 GPU）意味着模型原则上完全可以在浏览器标签页里运行 —— 早期 Q-Omni 模型在<a href="chat/">Chat 页面</a>上的演示就是这样工作的。Q-164M 本身的实时训练进度可以在<a href="http://lakomoor.com:8080" target="_blank" rel="noopener">训练页面</a>上查看。</p>
+      <p>两条路径都在一个真实检查点上，相互之间以及与原始模型之间做过数值校验 —— logits 相差约 0.0002，top-1 词元始终一致。JS 这条路径（不需要服务器和 GPU）意味着模型原则上完全可以在浏览器标签页里运行 —— 现在<a href="chat/">Chat 页面</a>上的演示运行的正是这个最终的 Q-164M 检查点，而不再是早期的 Q-Omni 模型。</p>
 
       <h2>此刻的真实状态</h2>
       <p>训练当时正在进行：第 25,080 步，共 200,000 步（12.5%），在单张 Tesla V100 上已运行约 11.6 小时。Loss 为 3.30，eval 困惑度为 25.4，在模型从未见过的 FineWeb 留出片段上为 36.4。在一组固定的 8 个工具调用任务中，当时答对 6 个：算术和求最大/最小值可靠，但会把「sort」和其他工具搞混，用文字复述结果时偶尔会写错数字。自由生成的文本有时会陷入重复循环 —— 在这么早的阶段是预料之中的。</p>
