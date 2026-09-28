@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Q-164M: text, dialogue, and exact tool calls — Q Project</title>
-  <meta name="description" content="A from-scratch text-only successor in the Q architecture family, training now: bigger, dialogue-first, with a generalized exact-tool-calling mechanism and a fully transparent live training page." />
+  <meta name="description" content="A from-scratch text-only successor in the Q architecture family: 164.6M ternary parameters, a generalized exact-tool-calling mechanism, and a fully transparent training run, now complete after 200,000 steps." />
   <link rel="icon" type="image/svg+xml" href="assets/q-logo.svg" />
 
   <script>
@@ -58,7 +58,7 @@
 
   <!-- ===================== RUSSIAN ===================== -->
   <div data-lang="ru">
-    <p class="article__kicker">ЗАМЕТКИ С ИССЛЕДОВАНИЯ &middot; ОБУЧЕНИЕ ИДЁТ СЕЙЧАС</p>
+    <p class="article__kicker">ЗАМЕТКИ С ИССЛЕДОВАНИЯ &middot; ПРЕДОБУЧЕНИЕ ЗАВЕРШЕНО</p>
     <h1 class="article__title">Q-164M: текст, диалог и точные вызовы инструментов</h1>
     <p class="article__lede">Новая модель в архитектуре Q, обучается с нуля — крупнее текстовой ветки Q-Omni, только английский язык, с упором на диалог и обобщённый механизм точных вычислений: модель никогда сама не считает арифметику, поэтому не ошибается там, где обычно ошибаются маленькие модели.</p>
 
@@ -254,13 +254,17 @@
       <p>Оба пути численно сверены друг с другом и с оригинальной моделью на живом чекпоинте — расхождение логитов ~0.0002, топ-1 токен совпадает всегда. Второй путь (чистый JS, без сервера и GPU) означает, что модель в принципе может работать прямо в браузере — как уже устроено чат-демо на <a href="chat/">странице Chat</a> для более ранних моделей серии Q-Omni. Живой ход обучения самого Q-164M смотри на <a href="http://lakomoor.com:8080" target="_blank" rel="noopener">странице обучения</a>.</p>
 
       <h2>Честный статус на сейчас</h2>
-      <p>Обучение идёт: шаг 25 080 из 200 000 (12.5%), около 11.6 часов на одной Tesla V100. Loss 3.30, perplexity на eval 25.4, на полностью отложенном куске FineWeb (модель его не видела) — 36.4. На фиксированном наборе из 8 задач с инструментами модель сейчас решает 6 из 8 верно: уверенно считает арифметику и находит максимум/минимум, но всё ещё путает «sort» с другими инструментами и иногда искажает числа при пересказе результата словами. Свободная генерация текста местами зацикливается на повторах — ожидаемо для такой ранней стадии. Ничего из этого не приукрашено — все актуальные цифры и живые примеры на <a href="http://lakomoor.com:8080" target="_blank" rel="noopener">странице обучения</a>.</p>
+      <p>Обучение шло: шаг 25 080 из 200 000 (12.5%), около 11.6 часов на одной Tesla V100. Loss 3.30, perplexity на eval 25.4, на полностью отложенном куске FineWeb (модель его не видела) — 36.4. На фиксированном наборе из 8 задач с инструментами модель тогда решала 6 из 8 верно: уверенно считала арифметику и находила максимум/минимум, но путала «sort» с другими инструментами и иногда искажала числа при пересказе результата словами. Свободная генерация текста местами зацикливалась на повторах — ожидаемо для такой ранней стадии.</p>
+
+      <div class="callout">
+        <div><strong>UPD — обучение завершено.</strong> Все 200 000 шагов пройдены: ≈92.4 часа чистого времени на одной Tesla V100, 13.1 млрд токенов по плану, без единого NaN за весь прогон. Финальные метрики: val perplexity 16.98 (было 24.9 на шаге 28 000), perplexity на отложенном FineWeb 25.61 (было 35.6). На фиксированном наборе из 8 задач с инструментами теперь 7 из 8 — путаница деления с умножением, о которой мы писали выше, за это время исчезла сама («What is 91 divided by 7?» теперь честно вызывает <code>91/7</code>, а не <code>91*7</code>). А вот «sort» не выучился так и не вышло: на финальном чекпоинте модель вызвала уже третий по счёту неправильный инструмент вместо него (<code>draxe</code> на шаге 34 500, <code>cmp</code> сейчас) — то есть она не сходится к одной устойчивой ошибке, а каждый раз путается по-новому. Дальше — SFT и RL-дообучение поверх этого чекпоинта для нормальной инструктивной версии, она будет называться <strong>Q-U-164M</strong>.</div>
+      </div>
     </div>
   </div>
 
   <!-- ===================== ENGLISH ===================== -->
   <div data-lang="en">
-    <p class="article__kicker">RESEARCH NOTES &middot; TRAINING IN PROGRESS</p>
+    <p class="article__kicker">RESEARCH NOTES &middot; PRETRAINING COMPLETE</p>
     <h1 class="article__title">Q-164M: text, dialogue, and exact tool calls</h1>
     <p class="article__lede">A from-scratch successor in the Q architecture family, training right now — bigger than Q-Omni's text branch, English-only, dialogue-first, and built around a generalized version of exact-arithmetic circuits: real tool calls a small model can pull off reliably because it never has to compute the answer itself.</p>
 
@@ -456,13 +460,17 @@
       <p>Both paths are numerically checked against each other and against the original model on a live checkpoint — logits differ by ~0.0002, top-1 token always matches. The JS path (no server, no GPU) means the model can in principle run entirely in a browser tab — the same way the <a href="chat/">Chat page</a>'s demo already works for earlier Q-Omni models. For Q-164M itself, the actual training run is visible live on the <a href="http://lakomoor.com:8080" target="_blank" rel="noopener">training page</a>.</p>
 
       <h2>Honest status right now</h2>
-      <p>Training is under way: step 25,080 of 200,000 (12.5%), about 11.6 hours in on a single Tesla V100. Loss is 3.30, eval perplexity 25.4, and 36.4 on a fully held-out slice of FineWeb the model has never seen. On a fixed set of 8 tool-use tasks it currently gets 6 of 8 right: reliable at arithmetic and finding a max/min, still confuses "sort" with other tools and occasionally garbles a number when restating a result in words. Free-running text generation loops into repetition sometimes — expected this early. None of this is dressed up — every current number and live sample lives on the <a href="http://lakomoor.com:8080" target="_blank" rel="noopener">training page</a>.</p>
+      <p>Partway through training: step 25,080 of 200,000 (12.5%), about 11.6 hours in on a single Tesla V100. Loss was 3.30, eval perplexity 25.4, and 36.4 on a fully held-out slice of FineWeb the model had never seen. On a fixed set of 8 tool-use tasks it got 6 of 8 right at the time: reliable at arithmetic and finding a max/min, still confusing "sort" with other tools and occasionally garbling a number when restating a result in words. Free-running text generation looped into repetition sometimes — expected that early.</p>
+
+      <div class="callout">
+        <div><strong>UPD &mdash; training is complete.</strong> All 200,000 steps finished: &asymp;92.4 hours of wall-clock training on a single Tesla V100, 13.1B tokens as planned, no NaNs across the entire run. Final metrics: val perplexity 16.98 (was 24.9 at step 28,000), held-out FineWeb perplexity 25.61 (was 35.6). On the same fixed 8-task tool-use set it's now 7 of 8: the division/multiplication mix-up we wrote about above quietly fixed itself somewhere along the way (&ldquo;What is 91 divided by 7?&rdquo; now correctly calls <code>91/7</code>, not <code>91*7</code>). <code>sort</code>, though, never got learned &mdash; at the final checkpoint the model reached for its <em>third</em> different wrong tool instead of it (<code>draxe</code> at step 34,500, <code>cmp</code> now), which reads less like a stable wrong answer and more like it never actually landed on the concept at all. Next up: SFT and RL fine-tuning on top of this checkpoint for a proper instruction-following version, which will be called <strong>Q-U-164M</strong>.</div>
+      </div>
     </div>
   </div>
 
   <!-- ===================== 中文 ===================== -->
   <div data-lang="zh">
-    <p class="article__kicker">研究笔记 &middot; 训练进行中</p>
+    <p class="article__kicker">研究笔记 &middot; 预训练已完成</p>
     <h1 class="article__title">Q-164M：文本、对话与精确工具调用</h1>
     <p class="article__lede">Q 架构家族的最新成员，目前正在从零开始训练 —— 比 Q-Omni 的文本分支更大，仅支持英文，以对话为核心，并围绕一种通用化的精确计算机制构建：真正的工具调用，一个小模型也能可靠完成，因为它从来不需要自己去算出答案。</p>
 
@@ -658,7 +666,11 @@
       <p>两条路径都在一个真实检查点上，相互之间以及与原始模型之间做过数值校验 —— logits 相差约 0.0002，top-1 词元始终一致。JS 这条路径（不需要服务器和 GPU）意味着模型原则上完全可以在浏览器标签页里运行 —— 早期 Q-Omni 模型在<a href="chat/">Chat 页面</a>上的演示就是这样工作的。Q-164M 本身的实时训练进度可以在<a href="http://lakomoor.com:8080" target="_blank" rel="noopener">训练页面</a>上查看。</p>
 
       <h2>此刻的真实状态</h2>
-      <p>训练正在进行：第 25,080 步，共 200,000 步（12.5%），在单张 Tesla V100 上已运行约 11.6 小时。Loss 为 3.30，eval 困惑度为 25.4，在模型从未见过的 FineWeb 留出片段上为 36.4。在一组固定的 8 个工具调用任务中，目前答对 6 个：算术和求最大/最小值可靠，但仍会把「sort」和其他工具搞混，用文字复述结果时偶尔会写错数字。自由生成的文本有时会陷入重复循环 —— 在这么早的阶段是预料之中的。这些都没有任何美化 —— 所有最新数字和实时示例都在<a href="http://lakomoor.com:8080" target="_blank" rel="noopener">训练页面</a>上。</p>
+      <p>训练当时正在进行：第 25,080 步，共 200,000 步（12.5%），在单张 Tesla V100 上已运行约 11.6 小时。Loss 为 3.30，eval 困惑度为 25.4，在模型从未见过的 FineWeb 留出片段上为 36.4。在一组固定的 8 个工具调用任务中，当时答对 6 个：算术和求最大/最小值可靠，但会把「sort」和其他工具搞混，用文字复述结果时偶尔会写错数字。自由生成的文本有时会陷入重复循环 —— 在这么早的阶段是预料之中的。</p>
+
+      <div class="callout">
+        <div><strong>更新 —— 训练已完成。</strong>全部 200,000 步已跑完：在单张 Tesla V100 上累计约 92.4 小时，按计划处理了 131 亿词元，全程没有出现一次 NaN。最终指标：val 困惑度 16.98（第 28,000 步时为 24.9），留出的 FineWeb 困惑度为 25.61（此前为 35.6）。在同样固定的 8 个工具任务上，现在答对 7 个 —— 前面提到的除法与乘法混淆问题，在训练过程中不知不觉自己消失了（现在「What is 91 divided by 7?」会正确调用 <code>91/7</code>，而不是 <code>91*7</code>）。但「sort」始终没有学会：在最终检查点上，模型又调用了第三个不同的错误工具（第 34,500 步是 <code>draxe</code>，现在是 <code>cmp</code>）—— 这看起来不像是收敛到某个稳定的错误答案，更像是它压根没理解这个概念。接下来会在这个检查点基础上做 SFT 和 RL 微调，做出一个真正能遵循指令的版本，命名为 <strong>Q-U-164M</strong>。</div>
+      </div>
     </div>
   </div>
 
