@@ -233,6 +233,10 @@
       <div class="callout">
         <div><strong>UPD — обучение завершено.</strong> Все 200 000 шагов пройдены: ≈92.4 часа чистого времени на одной Tesla V100, 13.1 млрд токенов по плану, без единого NaN за весь прогон. Финальные метрики: val perplexity 16.98 (было 24.9 на шаге 28 000), perplexity на отложенном FineWeb 25.61 (было 35.6). На фиксированном наборе из 8 задач с инструментами теперь 7 из 8 — путаница деления с умножением, о которой мы писали выше, за это время исчезла сама («What is 91 divided by 7?» теперь честно вызывает <code>91/7</code>, а не <code>91*7</code>). А вот «sort» не выучился так и не вышло: на финальном чекпоинте модель вызвала уже третий по счёту неправильный инструмент вместо него (<code>draxe</code> на шаге 34 500, <code>cmp</code> сейчас) — то есть она не сходится к одной устойчивой ошибке, а каждый раз путается по-новому.</div>
       </div>
+
+      <div class="callout">
+        <div><strong>UPD — Q-U-164M (chat-SFT + RL) готов, v5.</strong> Дообучили модель для диалога поверх этого же чекпоинта. Первые четыре попытки упирались в одну и ту же болезнь: в многоходовом разговоре модель бросала вызов инструмента уже на 2–3 ходу и уходила в несвязный текст. Причину нашли только в v5 — синтетические обучающие диалоги никогда не содержали разговорных связок («спасибо, а теперь…», «ещё один вопрос…»), только голые вопросы подряд, так что модель никогда не видела «поддержать разговор и всё равно вызвать инструмент» в одном примере, а реальные пользователи именно так и пишут. Добавили связки прямо в обучающий корпус — и на 8-ходовом стресс-тесте с естественными фразами получили 6 из 8 верно и ни одного срыва в повторяющуюся бессмыслицу за весь прогон обучения (раньше это было обычным исходом). Одиночные задачи — 6 из 6. Остаются мелкие огрехи: иногда путает похожие операции (например, деление с умножением) и может неверно классифицировать открытый, не про вычисления, вопрос. Обновлённая модель уже в <a href="chat/">чат-демо</a>; веса — в том же репозитории, релиз <a href="https://github.com/Q-Project-LM/Q-164M/releases/tag/qu164m-v5" target="_blank" rel="noopener">qu164m-v5</a>.</div>
+      </div>
     </div>
   </div>
 
@@ -439,6 +443,10 @@
       <div class="callout">
         <div><strong>UPD &mdash; training is complete.</strong> All 200,000 steps finished: &asymp;92.4 hours of wall-clock training on a single Tesla V100, 13.1B tokens as planned, no NaNs across the entire run. Final metrics: val perplexity 16.98 (was 24.9 at step 28,000), held-out FineWeb perplexity 25.61 (was 35.6). On the same fixed 8-task tool-use set it's now 7 of 8: the division/multiplication mix-up we wrote about above quietly fixed itself somewhere along the way (&ldquo;What is 91 divided by 7?&rdquo; now correctly calls <code>91/7</code>, not <code>91*7</code>). <code>sort</code>, though, never got learned &mdash; at the final checkpoint the model reached for its <em>third</em> different wrong tool instead of it (<code>draxe</code> at step 34,500, <code>cmp</code> now), which reads less like a stable wrong answer and more like it never actually landed on the concept at all.</div>
       </div>
+
+      <div class="callout">
+        <div><strong>UPD &mdash; Q-U-164M (chat-SFT + RL) is ready, v5.</strong> We fine-tuned this same checkpoint for dialogue. The first four attempts all hit the same wall: in a multi-turn conversation the model would drop tool-calling by turn 2-3 and drift into disconnected prose. The real cause only surfaced at v5 &mdash; the synthetic training conversations never included conversational connectives (&ldquo;thanks, now what's...&rdquo;, &ldquo;one more question...&rdquo;), just bare questions back to back, so the model had never seen &ldquo;acknowledge small talk and still call the tool&rdquo; in one example, and real users write exactly that way. Splicing connectives directly into the training corpus fixed it: 6 of 8 correct on an 8-turn natural-phrasing stress test, with zero collapses into repetitive nonsense across the entire training run (that used to be the normal outcome). Single-turn tasks: 6 of 6. Small rough edges remain &mdash; it occasionally confuses adjacent operations (e.g. division with multiplication) and can misclassify an open-ended, non-computational question. The updated model is already live in the <a href="chat/">chat demo</a>; weights are in the same repo, release <a href="https://github.com/Q-Project-LM/Q-164M/releases/tag/qu164m-v5" target="_blank" rel="noopener">qu164m-v5</a>.</div>
+      </div>
     </div>
   </div>
 
@@ -644,6 +652,10 @@
 
       <div class="callout">
         <div><strong>更新 —— 训练已完成。</strong>全部 200,000 步已跑完：在单张 Tesla V100 上累计约 92.4 小时，按计划处理了 131 亿词元，全程没有出现一次 NaN。最终指标：val 困惑度 16.98（第 28,000 步时为 24.9），留出的 FineWeb 困惑度为 25.61（此前为 35.6）。在同样固定的 8 个工具任务上，现在答对 7 个 —— 前面提到的除法与乘法混淆问题，在训练过程中不知不觉自己消失了（现在「What is 91 divided by 7?」会正确调用 <code>91/7</code>，而不是 <code>91*7</code>）。但「sort」始终没有学会：在最终检查点上，模型又调用了第三个不同的错误工具（第 34,500 步是 <code>draxe</code>，现在是 <code>cmp</code>）—— 这看起来不像是收敛到某个稳定的错误答案，更像是它压根没理解这个概念。</div>
+      </div>
+
+      <div class="callout">
+        <div><strong>更新 —— Q-U-164M（chat-SFT + RL）已就绪，v5。</strong>我们在同一个检查点上为对话做了微调。前四次尝试都卡在同一个问题上：多轮对话中，模型在第 2-3 轮就会放弃调用工具，转而生成不连贯的文字。直到 v5 才真正找到原因 —— 合成训练对话里从未出现过对话连接词（比如「谢谢，那……」「还有一个问题……」），全都是一个接一个的裸问题，模型从未在同一个例子里见过「先回应闲聊，再照样调用工具」，而真实用户恰恰就是这么说话的。把连接词直接拼接进训练语料后，问题解决了：在一个使用自然口语表达的 8 轮压力测试中答对 6 轮，整个训练过程中没有出现一次崩溃成重复胡言乱语的情况（这在以前是常态）。单轮任务：6 之 6 全对。仍有一些小瑕疵：偶尔会混淆相近的运算（比如把除法当成乘法），也可能误判一个开放式、与计算无关的问题。更新后的模型已经上线到<a href="chat/">聊天演示</a>；权重在同一个仓库，发布版本是 <a href="https://github.com/Q-Project-LM/Q-164M/releases/tag/qu164m-v5" target="_blank" rel="noopener">qu164m-v5</a>。</div>
       </div>
     </div>
   </div>
