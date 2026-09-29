@@ -218,63 +218,73 @@
           </div>
         </article>
 
-        <article class="model model--soon" aria-label="Q-164M — in training">
-          <div class="model__status model__status--soon">
-            <span class="dot dot--pulse" aria-hidden="true"></span>
-            <span data-lang="ru">Обучается</span><span data-lang="en">In training</span><span data-lang="zh">训练中</span>
+        <article class="model model--live" aria-label="Q-164M / Q-U-164M">
+          <div class="model__status">
+            <span class="dot" aria-hidden="true"></span>
+            <span data-lang="ru">Уже доступна &middot; Apache 2.0</span>
+            <span data-lang="en">Available now &middot; Apache 2.0</span>
+            <span data-lang="zh">现已提供 &middot; Apache 2.0</span>
           </div>
-          <h3 class="model__name">Q-164M</h3>
+          <h3 class="model__name">Q-164M / Q-U-164M</h3>
           <p class="model__desc" data-lang="ru">
-            Более крупный, только текстовый преемник Q-Omni — упор на диалог и обобщённый
-            механизм точных вызовов инструментов. Обучается сейчас, полностью прозрачно:
-            живой ход обучения — на <a href="http://lakomoor.com:8080" target="_blank" rel="noopener" style="color:var(--brand)">странице обучения</a>.
+            Более крупный, только текстовый преемник Q-Omni — обучен с нуля на 13.1 млрд токенов,
+            дообучение под диалог и обобщённый механизм точных вызовов инструментов
+            (SFT, затем RL). Инструктивная версия (Q-U-164M) — тот же чекпоинт, дообученный
+            для чата; работает в <a href="chat/" style="color:var(--brand)">чат-демо</a> прямо
+            в браузере.
           </p>
           <p class="model__desc" data-lang="en">
-            A larger, text-only successor to Q-Omni — dialogue-first, with a generalized
-            exact-tool-calling mechanism. Training now, fully transparently: watch it live
-            on the <a href="http://lakomoor.com:8080" target="_blank" rel="noopener" style="color:var(--brand)">training page</a>.
+            A larger, text-only successor to Q-Omni — pretrained from scratch on 13.1B tokens,
+            then fine-tuned for dialogue with a generalized exact-tool-calling mechanism (chat
+            SFT, then RL). The instruct variant (Q-U-164M) is the same checkpoint tuned for
+            chat; try it in the <a href="chat/" style="color:var(--brand)">chat demo</a> right
+            in your browser.
           </p>
           <p class="model__desc" data-lang="zh">
-            一个更大、只面向文本的 Q-Omni 后继模型 —— 以对话为核心，配备通用化的
-            精确工具调用机制。目前正在训练，完全透明：可在
-            <a href="http://lakomoor.com:8080" target="_blank" rel="noopener" style="color:var(--brand)">训练页面</a>上实时查看。
+            一个更大、只面向文本的 Q-Omni 后继模型 —— 在 131 亿词元上从零预训练，随后针对对话
+            做了微调，配备通用化的精确工具调用机制（先 chat-SFT，再 RL）。指令版本（Q-U-164M）
+            就是同一个检查点针对聊天微调而来；可以直接在<a href="chat/" style="color:var(--brand)">聊天演示</a>中
+            在浏览器里试用。
           </p>
 
           <dl class="spec" data-lang="ru">
             <div><dt>Параметры</dt><dd>164.6M</dd></div>
-            <div><dt>Слои</dt><dd>10</dd></div>
-            <div><dt>Внимание</dt><dd>GQA 20q/4kv</dd></div>
-            <div><dt>Контекст</dt><dd>2 048</dd></div>
-            <div><dt>Словарь</dt><dd>32 768 BPE</dd></div>
+            <div><dt>Токенов претрейна</dt><dd>13.1B</dd></div>
             <div><dt>Веса</dt><dd>тернарные (QAT)</dd></div>
+            <div><dt>Val. perplexity</dt><dd>16.98</dd></div>
+            <div><dt>Одиночные задачи (Q-U)</dt><dd>6/6</dd></div>
+            <div><dt>8-ходовой диалог (Q-U)</dt><dd>6/8</dd></div>
           </dl>
           <dl class="spec" data-lang="en">
             <div><dt>Parameters</dt><dd>164.6M</dd></div>
-            <div><dt>Layers</dt><dd>10</dd></div>
-            <div><dt>Attention</dt><dd>GQA 20q/4kv</dd></div>
-            <div><dt>Context</dt><dd>2,048</dd></div>
-            <div><dt>Vocab</dt><dd>32,768 BPE</dd></div>
+            <div><dt>Pretrain tokens</dt><dd>13.1B</dd></div>
             <div><dt>Weights</dt><dd>ternary (QAT)</dd></div>
+            <div><dt>Val. perplexity</dt><dd>16.98</dd></div>
+            <div><dt>Single-turn tasks (Q-U)</dt><dd>6/6</dd></div>
+            <div><dt>8-turn dialogue (Q-U)</dt><dd>6/8</dd></div>
           </dl>
           <dl class="spec" data-lang="zh">
             <div><dt>参数量</dt><dd>164.6M</dd></div>
-            <div><dt>层数</dt><dd>10</dd></div>
-            <div><dt>注意力</dt><dd>GQA 20q/4kv</dd></div>
-            <div><dt>上下文</dt><dd>2,048</dd></div>
-            <div><dt>词表</dt><dd>32,768 BPE</dd></div>
+            <div><dt>预训练词元数</dt><dd>131 亿</dd></div>
             <div><dt>权重</dt><dd>三元（QAT）</dd></div>
+            <div><dt>Val. perplexity</dt><dd>16.98</dd></div>
+            <div><dt>单轮任务（Q-U）</dt><dd>6/6</dd></div>
+            <div><dt>8 轮对话（Q-U）</dt><dd>6/8</dd></div>
           </dl>
 
           <div class="model__foot" data-lang="ru">
-            <a class="btn btn--ghost btn--sm" href="http://lakomoor.com:8080" target="_blank" rel="noopener">Смотреть обучение вживую</a>
+            <a class="btn btn--solid btn--sm" href="chat/">Чат-демо</a>
+            <a href="https://huggingface.co/q-project/Q-164M" target="_blank" rel="noopener" style="color:var(--muted); font-size:0.85rem;">Hugging Face &middot;</a>
             <a href="blog-q164m.html" style="color:var(--muted); font-size:0.85rem;">Читать разбор &rarr;</a>
           </div>
           <div class="model__foot" data-lang="en">
-            <a class="btn btn--ghost btn--sm" href="http://lakomoor.com:8080" target="_blank" rel="noopener">Watch it train live</a>
+            <a class="btn btn--solid btn--sm" href="chat/">Chat demo</a>
+            <a href="https://huggingface.co/q-project/Q-164M" target="_blank" rel="noopener" style="color:var(--muted); font-size:0.85rem;">Hugging Face &middot;</a>
             <a href="blog-q164m.html" style="color:var(--muted); font-size:0.85rem;">Read the writeup &rarr;</a>
           </div>
           <div class="model__foot" data-lang="zh">
-            <a class="btn btn--ghost btn--sm" href="http://lakomoor.com:8080" target="_blank" rel="noopener">实时观看训练</a>
+            <a class="btn btn--solid btn--sm" href="chat/">聊天演示</a>
+            <a href="https://huggingface.co/q-project/Q-164M" target="_blank" rel="noopener" style="color:var(--muted); font-size:0.85rem;">Hugging Face &middot;</a>
             <a href="blog-q164m.html" style="color:var(--muted); font-size:0.85rem;">阅读详细介绍 &rarr;</a>
           </div>
         </article>
