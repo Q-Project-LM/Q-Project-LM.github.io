@@ -4,3 +4,4 @@ exec-*.png
 _ss.html
 _darkpreview.html
 node_modules/
+.playwright-mcp/
