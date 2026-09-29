@@ -1,0 +1,130 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QBench — Q Project</title>
+  <meta name="description" content="QBench: a model-agnostic tool-use and general-knowledge benchmark for small (<1B parameter) language models, with a public leaderboard." />
+  <link rel="icon" type="image/svg+xml" href="assets/q-logo.svg" />
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("q-theme") || "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .qb-table-wrap { overflow-x: auto; margin-top: 28px; }
+    table.qb { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+    table.qb thead th { text-align: left; font-family: var(--f-display); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); padding: 13px 16px; background: var(--surface-2); white-space: nowrap; }
+    table.qb tbody td { padding: 12px 16px; border-top: 1px solid var(--line); font-size: 0.94rem; }
+    table.qb tbody tr:hover { background: var(--surface-2); }
+    table.qb .model-cell { font-family: var(--f-mono); font-size: 0.86rem; }
+    table.qb .num { font-variant-numeric: tabular-nums; }
+    table.qb .best { color: var(--brand); font-weight: 600; }
+    .qb-status { color: var(--muted); padding: 36px 0; text-align: center; }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#leaderboard"><span data-lang="ru">Перейти к таблице</span><span data-lang="en">Skip to leaderboard</span><span data-lang="zh">跳到排行榜</span></a>
+
+  {% include header.html active="qbench" %}
+
+  <main class="run" id="leaderboard">
+    <h1>QBench</h1>
+    <p class="run__lede" data-lang="ru">Модельно-независимый бенчмарк для маленьких (&lt;1B параметров) языковых моделей: вызов инструментов (одиночные задачи и 8-ходовой диалог с естественными связками) плюс общие знания (ARC-Easy) и правдивость (TruthfulQA MC1). Ни одна модель — включая наши собственные — не получает принудительной коррекции вызова инструмента; каждая оценка отражает только то, что модель сгенерировала сама. Прогнать бенчмарк на своей модели и отправить результат: <a href="https://github.com/Q-Project-LM/QBench" target="_blank" rel="noopener">репозиторий на GitHub</a>.</p>
+    <p class="run__lede" data-lang="en">A model-agnostic benchmark for small (&lt;1B parameter) language models: tool-use (single-turn tasks and an 8-turn natural-phrasing conversation) plus general knowledge (ARC-Easy) and truthfulness (TruthfulQA MC1). No model — including our own — gets forced-correct tool execution; every score reflects only what the model generated on its own. Run it on your own model and submit a result: <a href="https://github.com/Q-Project-LM/QBench" target="_blank" rel="noopener">GitHub repo</a>.</p>
+    <p class="run__lede" data-lang="zh">一个模型无关的小型（&lt;1B 参数）语言模型基准测试：工具调用（单轮任务 + 使用自然表达的 8 轮对话）加上通用知识（ARC-Easy）和真实性（TruthfulQA MC1）。没有任何模型——包括我们自己的——会得到强制修正的工具执行；每个分数只反映模型自己生成的内容。在你自己的模型上运行并提交结果：<a href="https://github.com/Q-Project-LM/QBench" target="_blank" rel="noopener">GitHub 仓库</a>。</p>
+
+    <div class="qb-table-wrap">
+      <table class="qb" id="qbTable" style="display:none">
+        <thead>
+          <tr>
+            <th data-lang="ru">Модель</th><th data-lang="en">Model</th><th data-lang="zh">模型</th>
+            <th>Params</th>
+            <th><span data-lang="ru">Одиночные</span><span data-lang="en">Single-turn</span><span data-lang="zh">单轮</span></th>
+            <th><span data-lang="ru">Многоходовые</span><span data-lang="en">Multi-turn</span><span data-lang="zh">多轮</span></th>
+            <th>ARC-Easy</th>
+            <th>TruthfulQA MC1</th>
+            <th><span data-lang="ru">Кто отправил</span><span data-lang="en">Submitted by</span><span data-lang="zh">提交者</span></th>
+          </tr>
+        </thead>
+        <tbody id="qbRows"></tbody>
+      </table>
+      <p class="qb-status" id="qbStatus" data-lang="ru">Загрузка таблицы&hellip;</p>
+      <p class="qb-status" id="qbStatusEn" data-lang="en">Loading leaderboard&hellip;</p>
+      <p class="qb-status" id="qbStatusZh" data-lang="zh">正在加载排行榜&hellip;</p>
+    </div>
+    <p class="demo-hint" style="margin-top:18px;">
+      <span data-lang="ru">Данные: <a href="https://huggingface.co/datasets/q-project/qbench-results" target="_blank" rel="noopener">q-project/qbench-results</a> на Hugging Face, обновляется при каждой отправке результата через CLI.</span>
+      <span data-lang="en">Data: <a href="https://huggingface.co/datasets/q-project/qbench-results" target="_blank" rel="noopener">q-project/qbench-results</a> on Hugging Face, updated whenever someone submits a run via the CLI.</span>
+      <span data-lang="zh">数据来源：Hugging Face 上的 <a href="https://huggingface.co/datasets/q-project/qbench-results" target="_blank" rel="noopener">q-project/qbench-results</a>，每次有人通过 CLI 提交结果时更新。</span>
+    </p>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__brand">
+      <img src="assets/q-logo.svg" alt="" width="28" height="28" />
+      <span>Q Project</span>
+    </div>
+    <p class="footer__tag">
+      <span data-lang="ru">Претрейн &middot; Файнтюн &middot; Агенты &middot; Исследования</span>
+      <span data-lang="en">Pretrain &middot; Finetune &middot; Agents &middot; Research</span>
+      <span data-lang="zh">预训练 &middot; 微调 &middot; 智能体 &middot; 研究</span>
+    </p>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="index.html"><span data-lang="ru">Главная</span><span data-lang="en">Home</span><span data-lang="zh">首页</span></a>
+      <a href="docs.html"><span data-lang="ru">Документация</span><span data-lang="en">Docs</span><span data-lang="zh">文档</span></a>
+      <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a>
+      <a href="https://github.com/Q-Project-LM" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <p class="footer__copy">
+      <span data-lang="ru">&copy; <span class="year"></span> Q Project. Разрабатывается независимо.</span>
+      <span data-lang="en">&copy; <span class="year"></span> Q Project. Built independently.</span>
+      <span data-lang="zh">&copy; <span class="year"></span> Q Project。独立开发。</span>
+    </p>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    (async function () {
+      var statusEls = [document.getElementById('qbStatus'), document.getElementById('qbStatusEn'), document.getElementById('qbStatusZh')];
+      try {
+        var res = await fetch('https://huggingface.co/datasets/q-project/qbench-results/raw/main/results.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var rows = await res.json();
+        rows.sort(function (a, b) {
+          return ((b.single_turn_score||0)+(b.multi_turn_score||0)) - ((a.single_turn_score||0)+(a.multi_turn_score||0));
+        });
+        var pct = function (x) { return x == null ? '—' : (x*100).toFixed(1) + '%'; };
+        var bestArc = Math.max.apply(null, rows.map(function (r) { return r.arc_easy_accuracy || 0; }));
+        var bestTqa = Math.max.apply(null, rows.map(function (r) { return r.truthfulqa_mc1_accuracy || 0; }));
+        document.getElementById('qbRows').innerHTML = rows.map(function (r) {
+          return '<tr>' +
+            '<td class="model-cell" colspan="3">' + r.model_id + '</td>' +
+            '<td class="num">' + (r.params || '—') + '</td>' +
+            '<td class="num">' + pct(r.single_turn_score) + '</td>' +
+            '<td class="num">' + pct(r.multi_turn_score) + '</td>' +
+            '<td class="num' + (r.arc_easy_accuracy === bestArc ? ' best' : '') + '">' + pct(r.arc_easy_accuracy) + '</td>' +
+            '<td class="num' + (r.truthfulqa_mc1_accuracy === bestTqa ? ' best' : '') + '">' + pct(r.truthfulqa_mc1_accuracy) + '</td>' +
+            '<td>' + (r.submitted_by || '—') + '</td>' +
+          '</tr>';
+        }).join('');
+        document.getElementById('qbTable').style.display = '';
+        statusEls.forEach(function (el) { el.style.display = 'none'; });
+      } catch (e) {
+        statusEls.forEach(function (el) { el.textContent = el.textContent.replace(/[\s\S]*/, 'Could not load the leaderboard (' + e.message + ').'); });
+      }
+    })();
+  </script>
+</body>
+</html>

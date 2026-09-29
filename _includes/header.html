@@ -16,6 +16,7 @@
         <a href="{% if include.active == 'chat' %}./{% else %}{{ base }}chat/{% endif %}"{% if include.active == "chat" %} aria-current="page"{% endif %}><span data-lang="ru">Чат</span><span data-lang="en">Chat</span><span data-lang="zh">聊天</span></a>
         <a href="{{ home_prefix }}#work"{% if include.active == "work" %} aria-current="page"{% endif %}><span data-lang="ru">Исследования</span><span data-lang="en">Research</span><span data-lang="zh">研究</span></a>
         <a href="{{ home_prefix }}#access"{% if include.active == "access" %} aria-current="page"{% endif %}><span data-lang="ru">Доступ</span><span data-lang="en">Access</span><span data-lang="zh">访问</span></a>
+        <a href="{{ base }}qbench.html"{% if include.active == "qbench" %} aria-current="page"{% endif %}>QBench</a>
       </nav>
       <div class="nav__tools">
         <a class="icon-btn" href="https://github.com/Q-Project-LM" target="_blank" rel="noopener" aria-label="Q Project on GitHub">
