@@ -39,6 +39,25 @@
     setLang(savedLang && KNOWN_LANGS.indexOf(savedLang) >= 0 ? savedLang : (KNOWN_LANGS.indexOf(navLang) >= 0 ? navLang : "en"));
   }
 
+  /* ---------- Nav "More" dropdown ---------- */
+  document.querySelectorAll(".nav__dropdown").forEach(function (dd) {
+    var btn = dd.querySelector(".nav__dropdown-btn");
+    var close = function () { dd.classList.remove("is-open"); btn.setAttribute("aria-expanded", "false"); };
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var willOpen = !dd.classList.contains("is-open");
+      document.querySelectorAll(".nav__dropdown.is-open").forEach(function (o) { if (o !== dd) o.classList.remove("is-open"); });
+      dd.classList.toggle("is-open", willOpen);
+      btn.setAttribute("aria-expanded", String(willOpen));
+    });
+    dd.addEventListener("keydown", function (e) { if (e.key === "Escape") { close(); btn.focus(); } });
+  });
+  document.addEventListener("click", function (e) {
+    document.querySelectorAll(".nav__dropdown.is-open").forEach(function (dd) {
+      if (!dd.contains(e.target)) { dd.classList.remove("is-open"); dd.querySelector(".nav__dropdown-btn").setAttribute("aria-expanded", "false"); }
+    });
+  });
+
   /* ---------- Footer year ---------- */
   var yearNow = new Date().getFullYear();
   document.querySelectorAll(".year, #year").forEach(function (el) { el.textContent = yearNow; });

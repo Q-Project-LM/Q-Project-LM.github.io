@@ -10,13 +10,21 @@
     <div class="nav__group">
       <nav class="nav__links" aria-label="Primary">
         <a href="{{ home_prefix }}#models"{% if include.active == "models" %} aria-current="page"{% endif %}><span data-lang="ru">Модели</span><span data-lang="en">Models</span><span data-lang="zh">模型</span></a>
-        <a href="{{ base }}docs.html"{% if include.active == "docs" %} aria-current="page"{% endif %}><span data-lang="ru">Документация</span><span data-lang="en">Docs</span><span data-lang="zh">文档</span></a>
         <a href="{{ base }}blog.html"{% if include.active == "blog" %} aria-current="page"{% endif %}><span data-lang="ru">Блог</span><span data-lang="en">Blog</span><span data-lang="zh">博客</span></a>
-        <a href="{% if include.active == 'run' %}./{% else %}{{ base }}run/{% endif %}"{% if include.active == "run" %} aria-current="page"{% endif %}><span data-lang="ru">Запустить</span><span data-lang="en">Run</span><span data-lang="zh">运行</span></a>
         <a href="{% if include.active == 'chat' %}./{% else %}{{ base }}chat/{% endif %}"{% if include.active == "chat" %} aria-current="page"{% endif %}><span data-lang="ru">Чат</span><span data-lang="en">Chat</span><span data-lang="zh">聊天</span></a>
-        <a href="{{ home_prefix }}#work"{% if include.active == "work" %} aria-current="page"{% endif %}><span data-lang="ru">Исследования</span><span data-lang="en">Research</span><span data-lang="zh">研究</span></a>
-        <a href="{{ home_prefix }}#access"{% if include.active == "access" %} aria-current="page"{% endif %}><span data-lang="ru">Доступ</span><span data-lang="en">Access</span><span data-lang="zh">访问</span></a>
-        <a href="{{ base }}qbench.html"{% if include.active == "qbench" %} aria-current="page"{% endif %}>QBench</a>
+        <div class="nav__dropdown">
+          <button type="button" class="nav__dropdown-btn" aria-haspopup="true" aria-expanded="false">
+            <span data-lang="ru">Ещё</span><span data-lang="en">More</span><span data-lang="zh">更多</span>
+            <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7.5 10 12.5 15 7.5"/></svg>
+          </button>
+          <div class="nav__dropdown-menu" role="menu">
+            <a href="{{ base }}docs.html"{% if include.active == "docs" %} aria-current="page"{% endif %}><span data-lang="ru">Документация</span><span data-lang="en">Docs</span><span data-lang="zh">文档</span></a>
+            <a href="{% if include.active == 'run' %}./{% else %}{{ base }}run/{% endif %}"{% if include.active == "run" %} aria-current="page"{% endif %}><span data-lang="ru">Запустить</span><span data-lang="en">Run</span><span data-lang="zh">运行</span></a>
+            <a href="{{ home_prefix }}#work"{% if include.active == "work" %} aria-current="page"{% endif %}><span data-lang="ru">Исследования</span><span data-lang="en">Research</span><span data-lang="zh">研究</span></a>
+            <a href="{{ home_prefix }}#access"{% if include.active == "access" %} aria-current="page"{% endif %}><span data-lang="ru">Доступ</span><span data-lang="en">Access</span><span data-lang="zh">访问</span></a>
+            <a href="{{ base }}qbench.html"{% if include.active == "qbench" %} aria-current="page"{% endif %}>QBench</a>
+          </div>
+        </div>
       </nav>
       <div class="nav__tools">
         <a class="icon-btn" href="https://github.com/Q-Project-LM" target="_blank" rel="noopener" aria-label="Q Project on GitHub">
