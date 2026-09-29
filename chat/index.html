@@ -65,8 +65,9 @@
     </div>
 
     <div class="demo-card">
-      <div id="log" class="chat-log"></div>
+      <div id="log" class="chat-log" role="log" aria-live="polite"></div>
       <div class="composer-row">
+        <label class="visually-hidden" for="input"><span data-lang="ru">Сообщение для Q-U-164M</span><span data-lang="en">Message Q-U-164M</span><span data-lang="zh">发送给 Q-U-164M 的消息</span></label>
         <textarea id="input" placeholder="Message Q-U-164M…" rows="1"></textarea>
         <button id="send" class="btn btn--solid" disabled>
           <span data-lang="ru">Отправить</span><span data-lang="en">Send</span><span data-lang="zh">发送</span>

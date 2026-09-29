@@ -1,8 +1,8 @@
 # Q Project — website
 
-Static marketing site for [Q Project](https://huggingface.co/q-project), served at **q.lakomoor.com**.
+Static marketing site for [Q Project](https://huggingface.co/q-project), published at **https://q-project-lm.github.io/**.
 
-No build step. Plain HTML/CSS/JS.
+GitHub Pages publishes `main` from the repository root and runs Jekyll to expand the shared header in `_includes/header.html`. The remaining site is plain HTML/CSS/JS.
 
 ## Files
 - `index.html` — landing page
@@ -16,23 +16,15 @@ No build step. Plain HTML/CSS/JS.
 Light is the default. The toggle in the nav flips light/dark and stores the choice in
 `localStorage` under `q-theme`; an inline script in each page's `<head>` applies it before
 paint to avoid a flash. To change the default, edit that `|| "light"` fallback in the head
-script of `index.html` and `docs.html`. Canvas particle colors are read from CSS variables,
+script of each page. Canvas particle colors are read from CSS variables,
 so they follow the theme automatically.
 
 ## Run locally
-```bash
-python3 -m http.server 8791
-# open http://localhost:8791
-```
+With Jekyll installed, run `jekyll serve` and open `http://localhost:4000`. A plain static server does not expand the shared header include.
 
 ## Deploy
-Upload the folder to any static host:
-- **Cloudflare Pages / Netlify / Vercel:** drag-and-drop the folder, or connect a repo. Build command: none. Output dir: `/`.
-- **GitHub Pages / nginx:** serve the folder root.
+GitHub Pages deploys `main` from `/` at `https://q-project-lm.github.io/`. No custom domain is configured.
 
-Then point `q.lakomoor.com` (CNAME) at the host.
-
-## To finish before launch
+## Known limitation
 - **Waitlist** (`main.js`) is a front-end stub — it validates the email and shows a confirmation but does not store anything. Wire the form `submit` to a real endpoint (Formspree, Buttondown, ConvertKit, or your own API) so emails are captured.
 - Update `og:url`/`og:image` if the domain changes.
-- The "Q · Next" card intentionally hides details of the model in training.

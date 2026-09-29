@@ -46,6 +46,7 @@
     </div>
 
     <div class="demo-card">
+      <label class="demo__label" for="prompt"><span data-lang="ru">Начало текста</span><span data-lang="en">Text prompt</span><span data-lang="zh">文本提示</span></label>
       <textarea id="prompt">Once upon a time,</textarea>
       <div class="demo__row">
         <button id="gen" class="btn btn--solid" disabled>
@@ -61,7 +62,7 @@
       <p class="demo-hint" data-lang="zh">开启 <strong>Ask</strong> 后，解码被强制为贪心模式（温度被禁用）&mdash; 已发布的 98.7% 数据就是在这种设置下测得的；采样会让 circuit 的调用可靠性大幅下降。可以试试：<code>347 times 86?</code> &middot; <code>15% of 240?</code> &middot; <code>Is 97 prime?</code> &middot; <code>Sort 5, 2, 9.</code> 模型自己写出计算式；一个确定性求值器（从 <code>circuits.py</code> 移植而来，与论文中完全相同的代码）会用精确答案覆盖这些数字。遇到不常见的表述时，模型仍可能选错 circuit —— 这是真实存在的失败模式，在<a href="../blog-q-omni.html">文章</a>中如实说明。</p>
     </div>
 
-    <div id="out" class="demo-out"></div>
+    <div id="out" class="demo-out" role="status" aria-live="polite"></div>
 
     <p class="demo-note" data-lang="ru">Демо только для текста (токены изображений/звука здесь подавлены). Карточка модели: <a href="https://huggingface.co/q-project/Q-Omni-53M-Experimental" target="_blank" rel="noopener">q-project/Q-Omni-53M-Experimental</a>. WebAssembly с SIMD поддерживается всеми современными браузерами. Как всё это устроено — читай в <a href="../blog-q-omni.html">блоге</a>.</p>
     <p class="demo-note" data-lang="en">Text-only demo (image/audio tokens are suppressed here). Model card: <a href="https://huggingface.co/q-project/Q-Omni-53M-Experimental" target="_blank" rel="noopener">q-project/Q-Omni-53M-Experimental</a>. WebAssembly with SIMD is supported by every current browser. Read how it all works on the <a href="../blog-q-omni.html">blog</a>.</p>
