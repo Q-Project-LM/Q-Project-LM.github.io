@@ -19,6 +19,7 @@
           </button>
           <div class="nav__dropdown-menu" role="menu">
             <a href="{% if include.active == 'chat-q-u-164m' %}./{% else %}{{ base }}chat-q-u-164m/{% endif %}"{% if include.active == "chat-q-u-164m" %} aria-current="page"{% endif %}><span data-lang="ru">Чат Q-U-164M</span><span data-lang="en">Q-U-164M chat</span><span data-lang="zh">Q-U-164M 聊天</span></a>
+            <a href="{% if include.active == 'chat-exp' %}./{% else %}{{ base }}chat_exp/{% endif %}"{% if include.active == "chat-exp" %} aria-current="page"{% endif %}><span data-lang="ru">Чат + JEV (эксперимент)</span><span data-lang="en">Chat + JEV (experiment)</span><span data-lang="zh">聊天 + JEV（实验）</span></a>
             <a href="{% if include.active == 'jev' %}./{% else %}{{ base }}jev/{% endif %}"{% if include.active == "jev" %} aria-current="page"{% endif %}><span data-lang="ru">JEV: модель решений</span><span data-lang="en">JEV: decision model</span><span data-lang="zh">JEV：决策模型</span></a>
             <a href="{{ base }}docs.html"{% if include.active == "docs" %} aria-current="page"{% endif %}><span data-lang="ru">Документация</span><span data-lang="en">Docs</span><span data-lang="zh">文档</span></a>
             <a href="{% if include.active == 'run' %}./{% else %}{{ base }}run/{% endif %}"{% if include.active == "run" %} aria-current="page"{% endif %}><span data-lang="ru">Запустить</span><span data-lang="en">Run</span><span data-lang="zh">运行</span></a>

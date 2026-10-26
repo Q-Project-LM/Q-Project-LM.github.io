@@ -1,0 +1,128 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
+  <title>Experimental chat: N-Q-26M + JEV — Q Project</title>
+  <meta name="description" content="Chat with N-Q-26M, a 26M-class Russian/English model trained from scratch on one V100 (Gated DeltaNet + gated attention, exact tool calls), running entirely in your browser — no server, no Python." />
+  <link rel="icon" type="image/svg+xml" href="../assets/q-logo.svg" />
+  <script>
+    (function () { try { document.documentElement.setAttribute("data-theme", localStorage.getItem("q-theme") || "light"); } catch (e) {} })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="../chat/chat.css?v=nq26m-8" />
+  <style>
+    .jev-pill { cursor: pointer; border-color: var(--brand); color: var(--brand); }
+    .jev-pill.is-off { border-color: var(--line); color: var(--faint); }
+    .jev-banner { max-width: 780px; margin: 12px auto 0; width: calc(100% - 32px); display: flex; gap: 10px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line-2); border-left: 3px solid var(--brand); border-radius: 12px; padding: 10px 14px; font-size: .84rem; color: var(--muted); line-height: 1.5; }
+    .jev-banner b { color: var(--text); }
+    .jev-banner[hidden] { display: none; }
+    .jev-banner button { margin-left: auto; border: 0; background: none; color: var(--faint); font-size: 1.1rem; cursor: pointer; }
+    .jev-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-top: 6px; }
+    .jev-tag, .jev-check { display: inline-flex; align-items: center; gap: 6px; font-size: .74rem; border-radius: 999px; padding: 2px 9px; border: 1px solid var(--line-2); color: var(--muted); background: var(--surface); }
+    .jev-tag b, .jev-check b { font-family: var(--f-mono); font-size: .7rem; color: var(--brand); }
+    .jev-check.is-good b { color: #16b866; } .jev-check.is-bad b { color: #e5484d; }
+    .jev-check.is-pending { opacity: .6; }
+    .set-group { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .set-group h4 { margin: 0; font-family: var(--f-display); font-size: .85rem; color: var(--text); }
+    .set-sub { padding-left: 22px; display: flex; flex-direction: column; gap: 8px; }
+    .set-sub.is-off { opacity: .45; pointer-events: none; }
+  </style>
+</head>
+<body class="chat-page">
+  {% include header.html base="../" active="chat-exp" %}
+
+  <div class="app" id="app">
+    <aside class="side" id="side" aria-label="Conversations">
+      <button class="btn btn--solid side__new" id="newChat" type="button">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span data-lang="ru">Новый диалог</span><span data-lang="en">New chat</span><span data-lang="zh">新对话</span>
+      </button>
+      <div class="side__list" id="convList"></div>
+      <div class="side__model">
+        <div class="side__model-name"><img src="../assets/q-logo.svg" alt="" width="20" height="20" /> N-Q-26M-Chat</div>
+        <div class="side__model-meta" id="modelMeta">
+          <span data-lang="ru">загрузка…</span><span data-lang="en">loading…</span><span data-lang="zh">加载中…</span>
+        </div>
+        <div class="side__links">
+          <a href="../blog-nq26m.html"><span data-lang="ru">О модели</span><span data-lang="en">About</span><span data-lang="zh">关于模型</span></a>
+          <a href="../chat/"><span data-lang="ru">Обычный чат</span><span data-lang="en">Regular chat</span><span data-lang="zh">普通聊天</span></a>
+          <a href="../jev/">JEV</a>
+          <a href="../chat-q-u-164m/">Q-U-164M</a>
+        </div>
+      </div>
+    </aside>
+    <div class="side-scrim" id="scrim"></div>
+
+    <main class="main">
+      <div class="topbar">
+        <button class="icon-btn topbar__menu" id="menuBtn" type="button" aria-label="Conversations">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="topbar__title">N-Q-26M-Chat <span class="pill jev-pill" id="jevPill" title="JEV"><span class="pill__dot"></span><span id="jevText">JEV</span></span> <span class="pill" id="statusPill"><span class="pill__dot"></span><span id="statusText">loading</span></span></div>
+        <button class="icon-btn" id="settingsBtn" type="button" aria-label="Settings" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+        </button>
+        <div class="settings" id="settings" hidden>
+          <label class="set-row"><span><span data-lang="ru">Температура</span><span data-lang="en">Temperature</span><span data-lang="zh">温度</span> <b id="tempVal">0.40</b></span>
+            <input type="range" id="temp" min="0.1" max="1.5" step="0.05" value="0.4" /></label>
+          <label class="set-row"><span>top-p <b id="topPVal">0.9</b></span>
+            <input type="range" id="topP" min="0.5" max="1" step="0.01" value="0.9" /></label>
+          <label class="set-row"><span><span data-lang="ru">Длина ответа</span><span data-lang="en">Max tokens</span><span data-lang="zh">最大长度</span> <b id="maxNewVal">320</b></span>
+            <input type="range" id="maxNew" min="64" max="768" step="32" value="320" /></label>
+          <label class="set-row"><span><span data-lang="ru">Штраф за повторы</span><span data-lang="en">Repetition penalty</span><span data-lang="zh">重复惩罚</span> <b id="repVal">1.15</b></span>
+            <input type="range" id="rep" min="1" max="1.5" step="0.01" value="1.15" /></label>
+          <label class="set-check"><input type="checkbox" id="greedy" /> <span data-lang="ru">Жадное декодирование</span><span data-lang="en">Greedy decoding</span><span data-lang="zh">贪心解码</span></label>
+          <label class="set-check"><input type="checkbox" id="think" /> <span data-lang="ru">Сначала думать (&lt;THINK&gt;)</span><span data-lang="en">Think first (&lt;THINK&gt;)</span><span data-lang="zh">先思考（&lt;THINK&gt;）</span></label>
+          <label class="set-check"><input type="checkbox" id="memory" /> <span data-lang="ru">Помнить диалог (экспериментально)</span><span data-lang="en">Remember the conversation (experimental)</span><span data-lang="zh">记住对话（实验性）</span></label>
+          <div class="set-group">
+            <h4>JEV</h4>
+            <label class="set-check"><input type="checkbox" id="jevOn" checked /> <span data-lang="ru">Использовать модель решений JEV</span><span data-lang="en">Use the JEV decision model</span><span data-lang="zh">使用 JEV 决策模型</span></label>
+            <div class="set-sub" id="jevSub">
+              <label class="set-check"><input type="checkbox" id="jevCheck" checked /> <span data-lang="ru">Проверять, отвечает ли ответ на вопрос</span><span data-lang="en">Check whether each answer addresses the question</span><span data-lang="zh">检查回答是否切题</span></label>
+              <label class="set-check"><input type="checkbox" id="jevRetry" checked /> <span data-lang="ru">Перегенерировать ответы не по делу (до 2 раз)</span><span data-lang="en">Regenerate off-topic answers (up to 2 times)</span><span data-lang="zh">重新生成不切题的回答（最多 2 次）</span></label>
+              <label class="set-check"><input type="checkbox" id="jevTags" checked /> <span data-lang="ru">Метки запроса: тема, сложность, токсичность</span><span data-lang="en">Request tags: topic, difficulty, toxicity</span><span data-lang="zh">请求标签：主题、难度、毒性</span></label>
+            </div>
+            <p class="set-note"><span data-lang="ru">JEV — вторая модель (47 МБ), работает в отдельном потоке. Она хорошо отличает ответ по делу от ответа не по теме (98% на тесте), но не проверяет, верны ли числа и факты.</span><span data-lang="en">JEV is a second model (47 MB) running in its own thread. It tells an on-topic answer from an off-topic one well (98% on the test set), but it does not check whether numbers or facts are right.</span><span data-lang="zh">JEV 是第二个模型（47 MB），在独立线程中运行。它能很好地区分切题和不切题的回答（测试集 98%），但不检查数字或事实是否正确。</span></p>
+          </div>
+          <p class="set-note"><span data-lang="ru">Размышления и выражения для инструментов декодируются жадно, видимый ответ — с выбранной температурой; размышления ограничены 128 токенами. По умолчанию каждое сообщение решается с чистого контекста: 26M-модель плохо держит длинный диалог — прошлые ответы сбивают её.</span><span data-lang="en">Thinking and tool expressions are decoded greedily, the visible answer at the chosen temperature; thinking is capped at 128 tokens. By default each message is answered from a clean context: the 26M model holds long conversations poorly — earlier answers throw it off.</span><span data-lang="zh">思考过程和工具表达式使用贪心解码，可见回答使用所选温度；思考限制在 128 个词元以内。默认情况下每条消息都从干净的上下文回答：26M 模型不擅长长对话 —— 之前的回答会干扰它。</span></p>
+        </div>
+      </div>
+
+      <div class="jev-banner" id="jevBanner"><span>🧪</span><span><span data-lang="ru"><b>Экспериментальный чат.</b> Кроме чат-модели здесь работает вторая модель — <a href="../blog-nq26m-jev.html">JEV</a>: она проверяет каждый ответ, при необходимости просит перегенерировать его и помечает запросы. Всё, что она делает, видно на плашках «JEV». Отключить — в настройках (⚙) или нажав на «JEV» вверху.</span><span data-lang="en"><b>Experimental chat.</b> Besides the chat model, a second model runs here — <a href="../blog-nq26m-jev.html">JEV</a>: it checks every answer, asks for a regeneration when needed and tags requests. Everything it does is shown on the "JEV" chips. Turn it off in settings (⚙) or by clicking "JEV" at the top.</span><span data-lang="zh"><b>实验性聊天。</b>除了聊天模型，这里还运行着第二个模型 —— <a href="../blog-nq26m-jev.html">JEV</a>：它检查每个回答，必要时要求重新生成，并给请求打标签。它做的一切都显示在"JEV"标签上。可在设置（⚙）中关闭，或点击顶部的"JEV"。</span></span><button type="button" id="bannerClose" aria-label="close">×</button></div>
+      <div class="thread" id="thread">
+        <div class="loading" id="loading">
+          <img src="../assets/q-logo.svg" alt="" width="44" height="44" />
+          <div class="loading__text" id="loadText">Downloading the model…</div>
+          <div class="bar"><div class="bar__fill" id="loadBar"></div></div>
+          <div class="loading__hint"><span data-lang="ru">47 МБ, один раз — дальше модель берётся из кеша браузера.</span><span data-lang="en">47 MB, once — after that the model loads from the browser cache.</span><span data-lang="zh">47 MB，只需下载一次 —— 之后从浏览器缓存加载。</span></div>
+        </div>
+        <div class="empty" id="empty" hidden>
+          <img src="../assets/q-logo.svg" alt="" width="52" height="52" />
+          <h1>N-Q-26M-Chat</h1>
+          <p><span data-lang="ru">Маленькая русско-английская модель, обученная с нуля на одной V100. Работает прямо в этой вкладке. Точные вычисления делает исполнитель — их видно как отдельные плашки.</span><span data-lang="en">A small Russian/English model trained from scratch on one V100, running right in this tab. Exact computation is done by an executor — you'll see it as separate chips.</span><span data-lang="zh">一个在单张 V100 上从零训练的小型俄英双语模型，直接在这个标签页里运行。精确计算由执行器完成 —— 会以单独的标签显示。</span></p>
+          <div class="suggest" id="suggest"></div>
+        </div>
+        <div class="msgs" id="msgs"></div>
+      </div>
+
+      <form class="composer" id="composer">
+        <textarea id="input" rows="1" placeholder="Message N-Q-26M…" aria-label="Message"></textarea>
+        <button class="send" id="send" type="submit" disabled aria-label="Send">
+          <svg class="send__go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          <svg class="send__stop" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        </button>
+      </form>
+      <p class="disclaimer"><span data-lang="ru">26M параметров: часто путает факты и зацикливается. Работает локально, ничего не отправляется на сервер.</span><span data-lang="en">26M parameters: often gets facts wrong and loops. Runs locally — nothing is sent to a server.</span><span data-lang="zh">26M 参数：经常弄错事实、陷入重复。在本地运行 —— 不会向服务器发送任何内容。</span></p>
+    </main>
+  </div>
+
+  <script src="../main.js"></script>
+  <script src="chat_exp.js?v=nq26m-8"></script>
+</body>
+</html>
