@@ -44,11 +44,12 @@ async function load(url, version) {
   postMessage({ type: 'status', text: 'unpacking' });
   const c = Lib.readContainer(buf), loaded = Lib.loadNQ(c);
   tok = new Lib.NQTokenizer(c.json('tokenizer.json')); model = new Lib.NQ4JS(loaded);
+  // fastest available backend: the whole step in WASM (nq_core) -> only the matrix products in WASM (nq_kernel) -> plain JS
   let backend = 'js';
-  try {   // WASM SIMD kernel for the matrix products; browsers without WASM SIMD keep the plain-JS path
-    const wasm = await (await fetch(`nq_kernel.wasm?v=${V}`)).arrayBuffer();
-    model.attachKernel((await WebAssembly.instantiate(wasm, {})).instance); backend = 'wasm';
-  } catch (e) { postMessage({ type: 'status', text: 'WASM kernel unavailable, plain JS: ' + e.message }); }
+  for (const [file, attach, name] of [['nq_core.wasm', 'attachCore', 'wasm-core'], ['nq_kernel.wasm', 'attachKernel', 'wasm']]) {
+    try { const wasm = await (await fetch(`${file}?v=${V}`)).arrayBuffer(); model[attach]((await WebAssembly.instantiate(wasm, {})).instance); backend = name; break; }
+    catch (e) { postMessage({ type: 'status', text: `${file} unavailable: ${e.message}` }); }
+  }
   let ok = 0, n = 0;
   if (loaded.selftest) for (const cs of loaded.selftest.cases) {
     n++; model.reset(); let lg = null; cs.ids.forEach((id, i) => { lg = model.step(id, i === cs.ids.length - 1); });
@@ -58,7 +59,7 @@ async function load(url, version) {
   resetChat();
   const cfg = loaded.cfg;
   postMessage({ type: 'ready', selftest: [ok, n], decision: !!loaded.tensors['decide_head.weight'], layers: cfg.num_hidden_layers, hidden: cfg.hidden_size, vocab: cfg.vocab_size,
-                backend, format: c.toc['manifest.json'] && c.json('manifest.json').quant ? 'QPACK2 q8' : 'QPACK1' });
+                backend, format: c.json('manifest.json').quant ? 'QPACK2 ' + c.json('manifest.json').quant : 'QPACK1' });
 }
 
 function resetChat() { model.reset(); history = [ID.BOS]; model.step(ID.BOS, false); synced = []; beforeAnswer = null; }
@@ -74,22 +75,25 @@ function syncTo(turns) {
   }
 }
 
-// forced = greedy without the repetition penalty (thinking / tool expressions, where repeated numbers are legitimate)
+// forced = greedy without the repetition penalty (thinking / tool expressions, where repeated numbers are legitimate).
+// Sampling looks at the 64 best tokens only (one pass, no sort of the vocabulary): top-p 0.9 at T <= 1.5 never needs more.
+const scratch = { l: null, idx: new Int32Array(64), val: new Float64Array(64) };
 function pick(logits, o, forced, recent) {
-  const V = logits.length, l = new Float64Array(V);
-  for (let i = 0; i < V; i++) l[i] = logits[i];
+  const V = logits.length; if (!scratch.l || scratch.l.length !== V) scratch.l = new Float32Array(V);
+  const l = scratch.l; l.set(logits);
   for (let i = 8203; i < V; i++) l[i] = -Infinity;
   l[ID.USER] = l[ID.MODEL] = -Infinity;
-  const argmax = () => { let b = 0; for (let i = 1; i < V; i++) if (l[i] > l[b]) b = i; return b; };
-  if (forced) return argmax();
-  for (const t of new Set(recent)) if (t < 8192) l[t] = l[t] > 0 ? l[t] / o.rep : l[t] * o.rep;
-  if (o.greedy) return argmax();
-  let mx = -Infinity; for (let i = 0; i < V; i++) { l[i] /= o.temperature; if (l[i] > mx) mx = l[i]; }
-  const idx = []; for (let i = 0; i < V; i++) { l[i] = Math.exp(l[i] - mx); if (l[i] > 1e-9) idx.push(i); }
-  idx.sort((a, b) => l[b] - l[a]); const sum = idx.reduce((s, i) => s + l[i], 0);
-  let cum = 0, cut = idx.length; for (let k = 0; k < idx.length; k++) { cum += l[idx[k]] / sum; if (cum >= o.top_p) { cut = k + 1; break; } }
-  let r = Math.random() * idx.slice(0, cut).reduce((s, i) => s + l[i], 0);
-  for (let k = 0; k < cut; k++) { r -= l[idx[k]]; if (r <= 0) return idx[k]; }
+  if (!forced) for (const t of new Set(recent)) if (t < 8192) l[t] = l[t] > 0 ? l[t] / o.rep : l[t] * o.rep;
+  if (forced || o.greedy) { let b = 0; for (let i = 1; i < V; i++) if (l[i] > l[b]) b = i; return b; }
+  const K = 64, idx = scratch.idx, val = scratch.val; let m = 0;
+  for (let i = 0; i < V; i++) {
+    const v = l[i]; if (m === K && v <= val[K - 1]) continue;
+    let p = m < K ? m++ : K - 1; while (p > 0 && val[p - 1] < v) { val[p] = val[p - 1]; idx[p] = idx[p - 1]; p--; } val[p] = v; idx[p] = i;
+  }
+  let sum = 0; const pr = new Float64Array(m); for (let k = 0; k < m; k++) { pr[k] = Math.exp((val[k] - val[0]) / o.temperature); sum += pr[k]; }
+  let cum = 0, cut = m; for (let k = 0; k < m; k++) { cum += pr[k] / sum; if (cum >= o.top_p) { cut = k + 1; break; } }
+  let tot = 0; for (let k = 0; k < cut; k++) tot += pr[k];
+  let r = Math.random() * tot; for (let k = 0; k < cut; k++) { r -= pr[k]; if (r <= 0) return idx[k]; }
   return idx[0];
 }
 

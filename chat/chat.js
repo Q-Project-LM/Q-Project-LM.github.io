@@ -3,7 +3,7 @@
 // A conversation: {id, title, updated, messages: [{role:'user', content} | {role:'assistant', raw, segs:[{kind, text}], tools:[...], meta}]}
 // `raw` is the assistant turn with its control tokens (<THINK>, <CALC>…) — that is what the model re-reads.
 (function () {
-  const V = 'nq26m-8', MODEL_V = 'nq26m-q8-1';   // code version / weights version (bumping MODEL_V forces a re-download)
+  const V = 'nq26m-9', MODEL_V = 'nq26m-q8-1';   // code version / weights version (bumping MODEL_V forces a re-download)
   const $ = (id) => document.getElementById(id);
   const lang = () => (document.documentElement.lang || 'en').slice(0, 2);
   // a trilingual label that follows the site's language switch (main.js toggles .is-active on [data-lang])
@@ -112,7 +112,7 @@
     } else if (m.type === 'status' && !ready) { $('loadText').textContent = 'Unpacking and self-testing…'; }
     else if (m.type === 'ready') {
       ready = true; $('loading').hidden = true; setStatus('ready');
-      $('modelMeta').innerHTML = `${m.layers} layers · hidden ${m.hidden} · vocab ${m.vocab.toLocaleString()}<br>self-test ${m.selftest[0]}/${m.selftest[1]} ${m.selftest[0] === m.selftest[1] ? '✓' : '✗'} · ${m.format} · ${m.backend === 'wasm' ? 'WASM SIMD' : 'JS'}`;
+      $('modelMeta').innerHTML = `${m.layers} layers · hidden ${m.hidden} · vocab ${m.vocab.toLocaleString()}<br>self-test ${m.selftest[0]}/${m.selftest[1]} ${m.selftest[0] === m.selftest[1] ? '✓' : '✗'} · ${m.format} · ${({ 'wasm-core': 'WASM SIMD core', wasm: 'WASM SIMD', js: 'JS' })[m.backend]}`;
       updateSend(); renderAll(); $('input').focus();
     } else if (m.type === 'seg' && live) {
       let s = live.segs.find((x) => x.i === m.i && x.kind === m.kind);

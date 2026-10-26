@@ -141,6 +141,48 @@
       out.set(t.data.subarray(i * cols, (i + 1) * cols)); return out;
     }
 
+    // the whole decode step in WebAssembly (nq_core.c): every tensor goes into linear memory, step()/reset()/snapshot()
+    // become calls into the core. Same results as the JS path (float32 everywhere, like the PyTorch reference).
+    attachCore(instance, maxCtx = 4096) {
+      const ex = instance.exports, c = this.cfg, t = this.t;
+      const LS = ['gr_mix.norm.weight', 'gr_mix.down.weight', 'gr_mix.up.weight', 'gr_mix.inject.weight', 'gr_ffn.norm.weight', 'gr_ffn.down.weight',
+        'gr_ffn.up.weight', 'gr_ffn.inject.weight', 'ffn.gate_up.weight', 'ffn.down.weight', 'mixer.in_qkvz.weight', 'mixer.in_ba.weight', 'mixer.conv.weight',
+        'mixer.A_log', 'mixer.dt_bias', 'mixer.norm.weight', 'mixer.out.weight', 'mixer.q.weight', 'mixer.k.weight', 'mixer.v.weight', 'mixer.o.weight',
+        'mixer.q_norm.weight', 'mixer.k_norm.weight', 'ple.table.weight', 'ple.key.weight', 'ple.value.weight', 'ple.norm_k.weight', 'ple.norm_q.weight',
+        'ple.norm_c.weight', 'ple.conv.weight', 'ple.sizes', 'ple.offsets', 'ple.mult'];
+      const put = (slot, name) => {
+        const x = t[name]; if (!x) return;
+        const rows = x.shape[0], cols = x.shape.slice(1).reduce((a, b) => a * b, 1);
+        if (x.q8) { const p = ex.alloc(x.q8.length), sp = ex.alloc(4 * rows); new Int8Array(ex.memory.buffer, p, x.q8.length).set(x.q8); new Float32Array(ex.memory.buffer, sp, rows).set(x.scale); ex.nq_set(slot, p, sp, rows, cols); }
+        else if (x.data instanceof BigInt64Array) { const p = ex.alloc(8 * x.data.length); new BigInt64Array(ex.memory.buffer, p, x.data.length).set(x.data); ex.nq_set(slot, p, 0, rows, cols); }
+        else { const p = ex.alloc(4 * x.data.length); new Float32Array(ex.memory.buffer, p, x.data.length).set(x.data); ex.nq_set(slot, p, 0, rows, cols); }
+      };
+      put(0, 'embed.weight'); put(1, 'lm_head.weight'); put(2, 'mixer.norm.weight'); put(3, 'mixer.down.weight'); put(4, 'mixer.up.weight');
+      for (let l = 0; l < this.L; l++) LS.forEach((n, id) => put(8 + l * 40 + id, `layers.${l}.${n}`));
+      const ple = this.pleLayer >= 0;
+      const ints = [this.d, this.hc, this.L, this.rank, this.ff, this.V, this.nk, this.nv, this.dk, this.dv, this.K, this.nh, this.nkv, this.hd, this.rot,
+        this.pleLayer, ple ? this.pHeads : 0, ple ? this.pHpn : 0, ple ? this.pHdim : 0, ple ? this.pDil : 1, ple ? this.pK : 1, this.docEos, maxCtx];
+      const cp = ex.nq_cfg(), I = new Int32Array(ex.memory.buffer, cp, 64), F = new Float32Array(ex.memory.buffer, cp, 64);
+      ints.forEach((v, i) => { I[i] = v; }); F[23] = c.rms_norm_eps; F[24] = c.rope_theta;
+      this.types.forEach((ty, l) => { I[25 + l] = ty === 'attn' ? 1 : 0; });
+      if (!ex.nq_init()) throw new Error('out of WASM memory');
+      new Float32Array(ex.memory.buffer, ex.nq_inv(), this.inv.length).set(this.inv);   // RoPE inverse frequencies (no pow() without libc)
+      this.core = { ex, maxCtx, statePtr: ex.nq_state_ptr(), stateBytes: Number(ex.nq_state_bytes()) };
+      for (const k of Object.keys(t)) if (!k.startsWith('decide_head')) { t[k].data = null; t[k].q8 = null; t[k].scale = null; }   // released: the core owns them
+      const mem = () => ex.memory.buffer;
+      this.step = (tok, want = true) => {
+        const ptr = ex.nq_step(tok, want === 'hidden' ? 2 : want ? 1 : 0);
+        if (!want) return null;
+        return want === 'hidden' ? new Float32Array(mem(), ptr, this.d).slice() : new Float32Array(mem(), ptr, this.V);   // logits: a view, valid until the next step
+      };
+      this.reset = () => ex.nq_reset();
+      this.snapshot = () => new Uint8Array(mem(), this.core.statePtr, this.core.stateBytes).slice();
+      this.restore = (sn) => new Uint8Array(mem(), this.core.statePtr, this.core.stateBytes).set(sn);
+      Object.defineProperty(this, 'pos', { get: () => ex.nq_pos(), configurable: true });
+      ex.nq_reset();
+      return this.core.stateBytes;
+    }
+
     // move every sizeable matrix into WASM linear memory (once); afterwards mv()/row() run in the SIMD kernel
     attachKernel(instance) {
       const ex = instance.exports, big = Object.entries(this.t).filter(([, t]) => t.shape.length === 2 && t.shape[0] * t.shape[1] >= 4096 && (t.data instanceof Float32Array || t.q8));

@@ -1,7 +1,7 @@
 'use strict';
 // N-Q-26M-JEV demo page: builds {name: {kind, question, options}} from the form and asks the worker to decide.
 (function () {
-  const V = 'nq26m-8', MODEL_V = 'nq26m-q8-1';   // code version / weights version (bumping MODEL_V forces a re-download)
+  const V = 'nq26m-9', MODEL_V = 'nq26m-q8-1';   // code version / weights version (bumping MODEL_V forces a re-download)
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const PRESETS = [
@@ -47,7 +47,7 @@
     else if (m.type === 'status' && !ready) $('status').textContent = 'unpacking, self-test…';
     else if (m.type === 'status' && pending) $('timing').textContent = `… ${m.text}`;
     else if (m.type === 'ready') {
-      ready = true; $('run').disabled = false; $('status').textContent = `ready · runs in this tab (${m.format}, ${m.backend === 'wasm' ? 'WebAssembly SIMD' : 'plain JavaScript'}, Web Worker)`;
+      ready = true; $('run').disabled = false; $('status').textContent = `ready · runs in this tab (${m.format}, ${({ 'wasm-core': 'WebAssembly SIMD core', wasm: 'WebAssembly SIMD', js: 'plain JavaScript' })[m.backend]}, Web Worker)`;
       $('selftest').textContent = `self-test ${m.selftest[0]}/${m.selftest[1]} ${m.selftest[0] === m.selftest[1] ? '✓' : '✗'}${m.decision ? '' : ' · ✗ no decision head in this model'}`;
     } else if (m.type === 'decision' && pending) { render(pending, m.result); $('timing').textContent = `${(m.ms / 1000).toFixed(1)} s`; pending = null; $('run').disabled = false; }
     else if (m.type === 'error') { $('status').textContent = 'error: ' + m.message; pending = null; $('run').disabled = !ready; }
