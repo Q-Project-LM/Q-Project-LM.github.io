@@ -1,0 +1,443 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>N-Q-26M: a small Russian/English model with exact computation — Q Project</title>
+  <meta name="description" content="N-Q-26M: the first model of the N-Q ladder — 29.7M parameters, trained from scratch on one V100 in 6.6 hours, Russian and English, exact computation through a deterministic executor, chat running in the browser." />
+  <link rel="icon" type="image/svg+xml" href="assets/q-logo.svg" />
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("q-theme") || "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Release-page additions on top of the shared article styles */
+    .model-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 28px 0 8px; }
+    @media (max-width: 720px) { .model-pair { grid-template-columns: 1fr; } }
+    .model-pair .model { display: flex; flex-direction: column; gap: 10px; }
+    .model-pair .model__logo { width: 40px; height: 40px; margin-bottom: 2px; }
+    .model-pair .model__name { font-size: 1.2rem; }
+    .model-pair .model__desc { color: var(--muted); font-size: 0.92rem; margin: 0; }
+    .model-pair .model__foot { margin-top: auto; padding-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s cubic-bezier(0.2,0.7,0.2,1), transform 0.6s cubic-bezier(0.2,0.7,0.2,1); }
+    .reveal.is-in { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+    .stat-num { display: inline-block; font-variant-numeric: tabular-nums; }
+
+    .qbench-table-wrap { overflow-x: auto; margin-top: 18px; }
+    .qbench-table-wrap .doc-table td.best { color: var(--brand); font-weight: 600; }
+    .qbench-table-wrap .doc-table tr.us td { background: var(--surface-2); }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#intro"><span data-lang="ru">Перейти к статье</span><span data-lang="en">Skip to article</span><span data-lang="zh">跳到正文</span></a>
+
+  {% include header.html active="blog" %}
+
+  <article class="article" id="intro">
+
+  <!-- ===================== RUSSIAN ===================== -->
+  <div data-lang="ru">
+    <p class="article__kicker">РЕЛИЗ &middot; ЛИНЕЙКА N-Q</p>
+    <h1 class="article__title">N-Q-26M: маленькая русско-английская модель с точными вычислениями</h1>
+    <p class="article__lede">Первая модель новой линейки N-Q — 26M-класс, обучена с нуля на одной V100 за 6.6 часа. Понимает русский и английский, считает через детерминированный исполнитель, работает прямо в браузере. Крупные модели линейки ещё обучаются.</p>
+
+    <div class="article__stats reveal">
+      <div><b class="stat-num" data-count="29.7" data-suffix="M">0M</b><span>параметров основы</span></div>
+      <div><b class="stat-num" data-count="2" data-suffix="B">0B</b><span>токенов претрейна</span></div>
+      <div><b>6.6 ч</b><span>на одной V100</span></div>
+      <div><b>15/16</b><span>задач с инструментами</span></div>
+    </div>
+
+    <div class="doc-block">
+      <div class="model-pair reveal">
+        <article class="model model--live">
+          <img class="model__logo" src="assets/q-logo.svg" alt="" width="40" height="40" />
+          <div class="model__status"><span class="dot"></span>N-Q-26M &middot; база</div>
+          <h3 class="model__name">N-Q-26M</h3>
+          <p class="model__desc">Претрейн с нуля: 2 млрд токенов русского и английского текста. Продолжает текст.</p>
+          <div class="model__foot">
+            <a class="btn btn--ghost btn--sm" href="https://huggingface.co/q-project/N-Q-26M" target="_blank" rel="noopener">Hugging Face</a>
+          </div>
+        </article>
+        <article class="model model--live">
+          <img class="model__logo" src="assets/q-logo.svg" alt="" width="40" height="40" />
+          <div class="model__status"><span class="dot"></span>N-Q-26M-Chat &middot; диалог</div>
+          <h3 class="model__name">N-Q-26M-Chat</h3>
+          <p class="model__desc">SFT, обучение рассуждениям и DPO. Ведёт диалог и вызывает точные вычисления.</p>
+          <div class="model__foot">
+            <a class="btn btn--solid btn--sm" href="chat/">Чат</a>
+            <a class="btn btn--ghost btn--sm" href="https://huggingface.co/q-project/N-Q-26M-Chat" target="_blank" rel="noopener">Hugging Face</a>
+          </div>
+        </article>
+      </div>
+
+      <h2>Архитектуру выбрали абляцией</h2>
+      <p>Вместо того чтобы сразу брать нашу тернарную Q-архитектуру, мы обучили три кандидата одного размера на одинаковых данных (0.5 млрд токенов, одно расписание) и сравнили loss на отложенных данных:</p>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Вариант</th><th>Loss (EN / RU-edu / RU-wiki)</th><th>Среднее</th></tr></thead>
+          <tbody>
+            <tr><td>A — архитектура Q-164M (тернарные веса, замороженный словарь-отпечаток)</td><td>2.92 / 3.29 / 2.98</td><td>3.06</td></tr>
+            <tr class="us"><td><b>B — мини-Qwen3.8-Flash-Next</b></td><td>2.52 / 2.83 / 2.50</td><td class="best">2.62</td></tr>
+            <tr><td>C — B + тернарные веса + словарь-отпечаток</td><td colspan="2">на 0.2 хуже B на каждой точке, остановлен досрочно</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>B выиграл с большим отрывом и стал архитектурой всей линейки. Тернарные веса на таком размере стоят слишком дорого по качеству.</p>
+
+      <h2>Архитектура</h2>
+      <ul>
+        <li>8 слоёв: три слоя <b>Gated DeltaNet</b> (линейное внимание с рекуррентным состоянием) на один слой обычного внимания с гейтом, и так дважды.</li>
+        <li><b>Gated Residual</b>: четыре параллельных residual-потока вместо одного.</li>
+        <li><b>n-грамм-эмбеддинг</b> после второго слоя: хеши 2- и 3-грамм в отдельные таблицы, 16.8M параметров считаем отдельно от основы.</li>
+        <li>Словарь 8 256 токенов: byte-level BPE для русского и английского, цифры по одной + управляющие токены.</li>
+        <li><b>Точные вычисления</b>, как в Q-164M: модель пишет <code>&lt;CALC&gt;4821*37&lt;EQ&gt;</code>, исполнитель вписывает <code>178377</code>. Арифметика, даты, дни недели, единицы, сортировка, проценты, простые числа.</li>
+      </ul>
+
+      <h2>Обучение</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Стадия</th><th>Данные</th><th>Время на V100</th></tr></thead>
+          <tbody>
+            <tr><td>Претрейн</td><td>2 млрд токенов: FineWeb-Edu 50%, Cultura-Ru-Edu 40%, русская Википедия 10%; 5% строк — диалоги и вычисления с первого шага</td><td>6.6 ч</td></tr>
+            <tr><td>SFT</td><td>150 тыс. диалогов</td><td>49 мин</td></tr>
+            <tr><td>Рассуждения</td><td>60 тыс. примеров с <code>&lt;THINK&gt;</code></td><td>18 мин</td></tr>
+            <tr><td>DPO</td><td>19.6 тыс. пар предпочтений</td><td>50 мин</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Скорость претрейна — 85 тыс. токенов/с: без <code>torch.compile</code> видеокарта простаивала половину времени, с ним обучение стало в 4.4 раза быстрее. Мы также прогнали GRPO, PPO и агентный RL — на 26M параметрах они не дали прироста, поэтому в релиз пошла DPO-версия.</p>
+
+      <h2>Результаты</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Проверка</th><th>Результат</th></tr></thead>
+          <tbody>
+            <tr><td>Задачи с инструментами, с исполнителем (16 задач, RU + EN)</td><td class="best">15/16</td></tr>
+            <tr><td>GSM8K, многошаговые задачи (EN / RU)</td><td>2.0% / 2.2%</td></tr>
+            <tr><td>Loss базы на отложенных данных (EN / RU-edu / RU-wiki)</td><td>2.38 / 2.65 / 2.32</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Модель уверенно держит форму диалога и правильно вызывает калькулятор, но путает факты, зацикливается в длинных ответах и не решает многошаговые задачи: калькулятор делает каждое вычисление точным, но план решения модель составить не может. В длинном диалоге она реже решает позвать инструмент.</p>
+
+      <h2>QBench</h2>
+      <p>В <a href="https://huggingface.co/spaces/q-project/QBench" target="_blank" rel="noopener">QBench</a> модели сравниваются без исполнителя инструментов — только то, что сеть генерирует сама.</p>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Модель</th><th>Параметры</th><th>Одиночные</th><th>Многоходовые</th><th>ARC-Easy</th><th>TruthfulQA MC1</th></tr></thead>
+          <tbody>
+            <tr class="us"><td><b>N-Q-26M-Chat</b></td><td><b>46.5M</b></td><td>0%</td><td>6%</td><td>32%</td><td>27%</td></tr>
+            <tr class="us"><td><b>N-Q-26M</b></td><td><b>46.5M</b></td><td>5%</td><td>6%</td><td>37%</td><td class="best">29%</td></tr>
+            <tr><td>GPT-2</td><td>124M</td><td>0%</td><td>0%</td><td>42%</td><td>26%</td></tr>
+            <tr><td>SmolLM2-135M-Instruct</td><td>135M</td><td>5%</td><td>6%</td><td>53%</td><td>23%</td></tr>
+            <tr><td>Q-U-164M</td><td>164M</td><td>35%</td><td>25%</td><td>43%</td><td>26%</td></tr>
+            <tr><td>Qwen2.5-0.5B-Instruct</td><td>500M</td><td class="best">45%</td><td class="best">50%</td><td class="best">62%</td><td>24%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>По знаниям N-Q-26M на уровне distilgpt2, на TruthfulQA — наравне с моделями в 5–20 раз крупнее (разница в пределах погрешности при 100 вопросах). Задачи с инструментами без исполнителя модель не решает: она правильно записывает выражение, но число угадывает сама.</p>
+
+      <h2>Чат в браузере</h2>
+      <p><a href="chat/">Чат на сайте</a> теперь работает на N-Q-26M-Chat. Модель, токенизатор и исполнитель переписаны на обычный JavaScript: 89 МБ весов в формате qpack, никакого сервера. Прогон в браузере сверен с PyTorch: логиты расходятся не больше чем на 2·10⁻⁵, жадная генерация совпадает токен в токен. Прошлый чат с Q-U-164M — <a href="chat-q-u-164m/">на отдельной странице</a>.</p>
+
+      <h2>Что дальше</h2>
+      <p>N-Q-26M — младшая модель линейки. Сейчас обучается N-Q-164M (8 млрд токенов), за ней — 64M и MoE-вариант. Будут обновления.</p>
+    </div>
+  </div>
+
+  <!-- ===================== ENGLISH ===================== -->
+  <div data-lang="en">
+    <p class="article__kicker">RELEASE &middot; THE N-Q LADDER</p>
+    <h1 class="article__title">N-Q-26M: a small Russian/English model with exact computation</h1>
+    <p class="article__lede">The first model of the new N-Q ladder — 26M class, trained from scratch on one V100 in 6.6 hours. Understands Russian and English, computes through a deterministic executor, and runs right in the browser. The larger models of the ladder are still training.</p>
+
+    <div class="article__stats reveal">
+      <div><b class="stat-num" data-count="29.7" data-suffix="M">0M</b><span>backbone parameters</span></div>
+      <div><b class="stat-num" data-count="2" data-suffix="B">0B</b><span>pretraining tokens</span></div>
+      <div><b>6.6 h</b><span>on one V100</span></div>
+      <div><b>15/16</b><span>tool-call tasks</span></div>
+    </div>
+
+    <div class="doc-block">
+      <div class="model-pair reveal">
+        <article class="model model--live">
+          <img class="model__logo" src="assets/q-logo.svg" alt="" width="40" height="40" />
+          <div class="model__status"><span class="dot"></span>N-Q-26M &middot; base</div>
+          <h3 class="model__name">N-Q-26M</h3>
+          <p class="model__desc">Pretrained from scratch on 2B tokens of Russian and English text. Continues text.</p>
+          <div class="model__foot">
+            <a class="btn btn--ghost btn--sm" href="https://huggingface.co/q-project/N-Q-26M" target="_blank" rel="noopener">Hugging Face</a>
+          </div>
+        </article>
+        <article class="model model--live">
+          <img class="model__logo" src="assets/q-logo.svg" alt="" width="40" height="40" />
+          <div class="model__status"><span class="dot"></span>N-Q-26M-Chat &middot; dialogue</div>
+          <h3 class="model__name">N-Q-26M-Chat</h3>
+          <p class="model__desc">SFT, reasoning training and DPO. Holds a dialogue and calls exact computation.</p>
+          <div class="model__foot">
+            <a class="btn btn--solid btn--sm" href="chat/">Chat</a>
+            <a class="btn btn--ghost btn--sm" href="https://huggingface.co/q-project/N-Q-26M-Chat" target="_blank" rel="noopener">Hugging Face</a>
+          </div>
+        </article>
+      </div>
+
+      <h2>The architecture was chosen by an ablation</h2>
+      <p>Instead of reaching for our ternary Q architecture by default, we trained three candidates of the same size on identical data (0.5B tokens, one schedule) and compared held-out loss:</p>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Candidate</th><th>Loss (EN / RU-edu / RU-wiki)</th><th>Mean</th></tr></thead>
+          <tbody>
+            <tr><td>A — the Q-164M design (ternary weights, frozen fingerprint vocabulary)</td><td>2.92 / 3.29 / 2.98</td><td>3.06</td></tr>
+            <tr class="us"><td><b>B — mini Qwen3.8-Flash-Next</b></td><td>2.52 / 2.83 / 2.50</td><td class="best">2.62</td></tr>
+            <tr><td>C — B + ternary weights + fingerprint vocabulary</td><td colspan="2">0.2 behind B at every checkpoint, stopped early</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>B won by a wide margin and became the architecture of the whole ladder. At this size, ternary weights cost too much quality.</p>
+
+      <h2>Architecture</h2>
+      <ul>
+        <li>8 layers: three <b>Gated DeltaNet</b> layers (linear attention with a recurrent state) per one gated full-attention layer, twice.</li>
+        <li><b>Gated Residual</b>: four parallel residual streams instead of one.</li>
+        <li><b>n-gram embedding</b> after layer 2: 2- and 3-gram hashes into separate tables; its 16.8M parameters are counted apart from the backbone.</li>
+        <li>An 8,256-token vocabulary: byte-level BPE for Russian and English, digits one per token, plus control tokens.</li>
+        <li><b>Exact computation</b>, as in Q-164M: the model writes <code>&lt;CALC&gt;4821*37&lt;EQ&gt;</code> and the executor fills in <code>178377</code>. Arithmetic, dates, weekdays, units, sorting, percentages, primes.</li>
+      </ul>
+
+      <h2>Training</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Stage</th><th>Data</th><th>V100 time</th></tr></thead>
+          <tbody>
+            <tr><td>Pretraining</td><td>2B tokens: FineWeb-Edu 50%, Cultura-Ru-Edu 40%, Russian Wikipedia 10%; 5% of rows are dialogue and computation from step one</td><td>6.6 h</td></tr>
+            <tr><td>SFT</td><td>150k conversations</td><td>49 min</td></tr>
+            <tr><td>Reasoning</td><td>60k examples with <code>&lt;THINK&gt;</code></td><td>18 min</td></tr>
+            <tr><td>DPO</td><td>19.6k preference pairs</td><td>50 min</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Pretraining ran at 85k tokens/s: without <code>torch.compile</code> the GPU sat idle half the time; with it, training got 4.4× faster. We also ran GRPO, PPO and agentic RL — at 26M parameters they gave no gain, so the DPO checkpoint is the release.</p>
+
+      <h2>Results</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Check</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>Tool-call tasks with the executor (16 tasks, RU + EN)</td><td class="best">15/16</td></tr>
+            <tr><td>GSM8K multi-step problems (EN / RU)</td><td>2.0% / 2.2%</td></tr>
+            <tr><td>Base model held-out loss (EN / RU-edu / RU-wiki)</td><td>2.38 / 2.65 / 2.32</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The model holds the shape of a dialogue and calls the calculator correctly, but it gets facts wrong, loops in long answers and does not solve multi-step problems: the calculator makes each computation exact, but the model cannot plan a solution. Deep into a conversation it is less likely to call a tool.</p>
+
+      <h2>QBench</h2>
+      <p><a href="https://huggingface.co/spaces/q-project/QBench" target="_blank" rel="noopener">QBench</a> compares models without a tool executor — only what the network generates itself.</p>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Model</th><th>Params</th><th>Single-turn</th><th>Multi-turn</th><th>ARC-Easy</th><th>TruthfulQA MC1</th></tr></thead>
+          <tbody>
+            <tr class="us"><td><b>N-Q-26M-Chat</b></td><td><b>46.5M</b></td><td>0%</td><td>6%</td><td>32%</td><td>27%</td></tr>
+            <tr class="us"><td><b>N-Q-26M</b></td><td><b>46.5M</b></td><td>5%</td><td>6%</td><td>37%</td><td class="best">29%</td></tr>
+            <tr><td>GPT-2</td><td>124M</td><td>0%</td><td>0%</td><td>42%</td><td>26%</td></tr>
+            <tr><td>SmolLM2-135M-Instruct</td><td>135M</td><td>5%</td><td>6%</td><td>53%</td><td>23%</td></tr>
+            <tr><td>Q-U-164M</td><td>164M</td><td>35%</td><td>25%</td><td>43%</td><td>26%</td></tr>
+            <tr><td>Qwen2.5-0.5B-Instruct</td><td>500M</td><td class="best">45%</td><td class="best">50%</td><td class="best">62%</td><td>24%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>On knowledge N-Q-26M is at the level of distilgpt2; on TruthfulQA it is level with models 5–20× larger (the difference is within the error of a 100-question set). Without an executor it does not solve tool tasks: it writes the expression correctly but guesses the number itself.</p>
+
+      <h2>Chat in the browser</h2>
+      <p>The <a href="chat/">site chat</a> now runs N-Q-26M-Chat. The model, tokenizer and executor were rewritten in plain JavaScript: 89 MB of weights in qpack format, no server. The in-browser forward pass is checked against PyTorch: logits within 2·10⁻⁵, greedy generation identical token for token. The previous Q-U-164M chat is <a href="chat-q-u-164m/">on its own page</a>.</p>
+
+      <h2>What's next</h2>
+      <p>N-Q-26M is the smallest model of the ladder. N-Q-164M (8B tokens) is training now, followed by 64M and an MoE variant. More updates soon.</p>
+    </div>
+  </div>
+
+  <!-- ===================== CHINESE ===================== -->
+  <div data-lang="zh">
+    <p class="article__kicker">发布 &middot; N-Q 系列</p>
+    <h1 class="article__title">N-Q-26M：带精确计算的小型俄英双语模型</h1>
+    <p class="article__lede">新 N-Q 系列的第一个模型 —— 26M 级别，在一张 V100 上用 6.6 小时从零训练。理解俄语和英语，通过确定性执行器进行计算，直接在浏览器中运行。系列中更大的模型仍在训练。</p>
+
+    <div class="article__stats reveal">
+      <div><b class="stat-num" data-count="29.7" data-suffix="M">0M</b><span>主干参数</span></div>
+      <div><b class="stat-num" data-count="2" data-suffix="B">0B</b><span>预训练词元</span></div>
+      <div><b>6.6 小时</b><span>单张 V100</span></div>
+      <div><b>15/16</b><span>工具调用任务</span></div>
+    </div>
+
+    <div class="doc-block">
+      <div class="model-pair reveal">
+        <article class="model model--live">
+          <img class="model__logo" src="assets/q-logo.svg" alt="" width="40" height="40" />
+          <div class="model__status"><span class="dot"></span>N-Q-26M &middot; 基础模型</div>
+          <h3 class="model__name">N-Q-26M</h3>
+          <p class="model__desc">在 20 亿俄语和英语词元上从零预训练。用于文本续写。</p>
+          <div class="model__foot">
+            <a class="btn btn--ghost btn--sm" href="https://huggingface.co/q-project/N-Q-26M" target="_blank" rel="noopener">Hugging Face</a>
+          </div>
+        </article>
+        <article class="model model--live">
+          <img class="model__logo" src="assets/q-logo.svg" alt="" width="40" height="40" />
+          <div class="model__status"><span class="dot"></span>N-Q-26M-Chat &middot; 对话</div>
+          <h3 class="model__name">N-Q-26M-Chat</h3>
+          <p class="model__desc">SFT、推理训练和 DPO。能进行对话并调用精确计算。</p>
+          <div class="model__foot">
+            <a class="btn btn--solid btn--sm" href="chat/">聊天</a>
+            <a class="btn btn--ghost btn--sm" href="https://huggingface.co/q-project/N-Q-26M-Chat" target="_blank" rel="noopener">Hugging Face</a>
+          </div>
+        </article>
+      </div>
+
+      <h2>架构由消融实验选出</h2>
+      <p>我们没有直接采用自己的三元 Q 架构，而是在相同数据（5 亿词元、同一训练计划）上训练了三个同等规模的候选，并比较留出数据上的 loss：</p>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>候选</th><th>Loss（EN / RU-edu / RU-wiki）</th><th>平均</th></tr></thead>
+          <tbody>
+            <tr><td>A —— Q-164M 设计（三元权重、冻结指纹词表）</td><td>2.92 / 3.29 / 2.98</td><td>3.06</td></tr>
+            <tr class="us"><td><b>B —— 迷你版 Qwen3.8-Flash-Next</b></td><td>2.52 / 2.83 / 2.50</td><td class="best">2.62</td></tr>
+            <tr><td>C —— B + 三元权重 + 指纹词表</td><td colspan="2">每个检查点都落后 B 0.2，提前停止</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>B 以明显优势胜出，成为整个系列的架构。在这个规模上，三元权重对质量的代价太大。</p>
+
+      <h2>架构</h2>
+      <ul>
+        <li>8 层：每三层 <b>Gated DeltaNet</b>（带循环状态的线性注意力）配一层带门控的全注意力，重复两次。</li>
+        <li><b>Gated Residual</b>：四条并行的残差流，而不是一条。</li>
+        <li>第 2 层之后的 <b>n-gram 嵌入</b>：2-gram 和 3-gram 的哈希映射到独立的表中，其 16.8M 参数与主干分开统计。</li>
+        <li>8,256 词元的词表：面向俄语和英语的字节级 BPE，数字逐个切分，另有控制词元。</li>
+        <li>与 Q-164M 相同的<b>精确计算</b>：模型写出 <code>&lt;CALC&gt;4821*37&lt;EQ&gt;</code>，执行器填入 <code>178377</code>。支持算术、日期、星期、单位换算、排序、百分比、质数。</li>
+      </ul>
+
+      <h2>训练</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>阶段</th><th>数据</th><th>V100 用时</th></tr></thead>
+          <tbody>
+            <tr><td>预训练</td><td>20 亿词元：FineWeb-Edu 50%、Cultura-Ru-Edu 40%、俄语维基百科 10%；从第一步起 5% 的样本是对话和计算</td><td>6.6 小时</td></tr>
+            <tr><td>SFT</td><td>15 万段对话</td><td>49 分钟</td></tr>
+            <tr><td>推理</td><td>6 万条带 <code>&lt;THINK&gt;</code> 的样本</td><td>18 分钟</td></tr>
+            <tr><td>DPO</td><td>1.96 万对偏好数据</td><td>50 分钟</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>预训练速度为每秒 8.5 万词元：不用 <code>torch.compile</code> 时 GPU 一半时间在空转，用了之后训练快了 4.4 倍。我们也跑了 GRPO、PPO 和智能体 RL —— 在 26M 参数上没有带来提升，所以发布的是 DPO 版本。</p>
+
+      <h2>结果</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>检查项</th><th>结果</th></tr></thead>
+          <tbody>
+            <tr><td>带执行器的工具调用任务（16 个任务，俄语 + 英语）</td><td class="best">15/16</td></tr>
+            <tr><td>GSM8K 多步应用题（EN / RU）</td><td>2.0% / 2.2%</td></tr>
+            <tr><td>基础模型留出数据 loss（EN / RU-edu / RU-wiki）</td><td>2.38 / 2.65 / 2.32</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>模型能保持对话形式并正确调用计算器，但会弄错事实，在长回答中陷入重复，也解不了多步应用题：计算器让每一步计算都精确，但模型无法规划解题步骤。在较长的对话中，它调用工具的可能性会降低。</p>
+
+      <h2>QBench</h2>
+      <p><a href="https://huggingface.co/spaces/q-project/QBench" target="_blank" rel="noopener">QBench</a> 在没有工具执行器的情况下比较模型 —— 只看网络自己生成的内容。</p>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>模型</th><th>参数量</th><th>单轮</th><th>多轮</th><th>ARC-Easy</th><th>TruthfulQA MC1</th></tr></thead>
+          <tbody>
+            <tr class="us"><td><b>N-Q-26M-Chat</b></td><td><b>46.5M</b></td><td>0%</td><td>6%</td><td>32%</td><td>27%</td></tr>
+            <tr class="us"><td><b>N-Q-26M</b></td><td><b>46.5M</b></td><td>5%</td><td>6%</td><td>37%</td><td class="best">29%</td></tr>
+            <tr><td>GPT-2</td><td>124M</td><td>0%</td><td>0%</td><td>42%</td><td>26%</td></tr>
+            <tr><td>SmolLM2-135M-Instruct</td><td>135M</td><td>5%</td><td>6%</td><td>53%</td><td>23%</td></tr>
+            <tr><td>Q-U-164M</td><td>164M</td><td>35%</td><td>25%</td><td>43%</td><td>26%</td></tr>
+            <tr><td>Qwen2.5-0.5B-Instruct</td><td>500M</td><td class="best">45%</td><td class="best">50%</td><td class="best">62%</td><td>24%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>在知识类测试上，N-Q-26M 与 distilgpt2 相当；在 TruthfulQA 上与大 5–20 倍的模型持平（在 100 道题的样本下，差异处于误差范围内）。没有执行器时，它解不了工具类任务：表达式写得对，但数字是自己猜的。</p>
+
+      <h2>浏览器中的聊天</h2>
+      <p><a href="chat/">网站聊天</a>现在运行的是 N-Q-26M-Chat。模型、分词器和执行器都用普通 JavaScript 重写：qpack 格式的 89 MB 权重，不需要服务器。浏览器中的前向计算已与 PyTorch 对齐：logits 误差在 2·10⁻⁵ 以内，贪心生成逐词元一致。之前的 Q-U-164M 聊天在<a href="chat-q-u-164m/">单独的页面</a>。</p>
+
+      <h2>接下来</h2>
+      <p>N-Q-26M 是这个系列中最小的模型。N-Q-164M（80 亿词元）正在训练，之后是 64M 和 MoE 版本。后续会有更新。</p>
+    </div>
+  </div>
+
+  </article>
+
+  <footer class="footer">
+    <div class="footer__brand">
+      <img src="assets/q-logo.svg" alt="" width="28" height="28" />
+      <span>Q Project</span>
+    </div>
+    <p class="footer__tag">
+      <span data-lang="ru">Претрейн &middot; Файнтюн &middot; Агенты &middot; Исследования</span>
+      <span data-lang="en">Pretrain &middot; Finetune &middot; Agents &middot; Research</span>
+      <span data-lang="zh">预训练 &middot; 微调 &middot; 智能体 &middot; 研究</span>
+    </p>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="index.html"><span data-lang="ru">Главная</span><span data-lang="en">Home</span><span data-lang="zh">首页</span></a>
+      <a href="blog.html"><span data-lang="ru">Блог</span><span data-lang="en">Blog</span><span data-lang="zh">博客</span></a>
+      <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a>
+      <a href="https://github.com/Q-Project-LM" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <p class="footer__copy">
+      <span data-lang="ru">&copy; <span class="year"></span> Q Project. Разрабатывается независимо.</span>
+      <span data-lang="en">&copy; <span class="year"></span> Q Project. Built independently.</span>
+      <span data-lang="zh">&copy; <span class="year"></span> Q Project。独立开发。</span>
+    </p>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    (function () {
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var els = document.querySelectorAll(".reveal");
+      if (!("IntersectionObserver" in window) || reduce) {
+        els.forEach(function (el) { el.classList.add("is-in"); });
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          en.target.classList.add("is-in");
+          io.unobserve(en.target);
+          en.target.querySelectorAll(".stat-num[data-count]").forEach(function (num) {
+            var target = parseFloat(num.getAttribute("data-count"));
+            var suffix = num.getAttribute("data-suffix") || "";
+            var start = performance.now(), dur = 900;
+            function frame(t) {
+              var p = Math.min(1, (t - start) / dur);
+              var eased = 1 - Math.pow(1 - p, 3);
+              num.textContent = (target * eased).toFixed(target % 1 ? 1 : 0) + suffix;
+              if (p < 1) requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+          });
+        });
+      }, { threshold: 0.25 });
+      els.forEach(function (el) { io.observe(el); });
+    })();
+  </script>
+</body>
+</html>
