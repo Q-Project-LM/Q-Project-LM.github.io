@@ -4,138 +4,96 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
   <title>Chat with N-Q-26M — Q Project</title>
-  <meta name="description" content="Chat with N-Q-26M, a 26M-class Russian/English model trained from scratch on one V100 (Gated DeltaNet + gated attention, exact tool calls), running entirely in your browser in plain JavaScript — no server, no Python." />
+  <meta name="description" content="Chat with N-Q-26M, a 26M-class Russian/English model trained from scratch on one V100 (Gated DeltaNet + gated attention, exact tool calls), running entirely in your browser — no server, no Python." />
   <link rel="icon" type="image/svg+xml" href="../assets/q-logo.svg" />
-
   <script>
-    (function () {
-      try {
-        var t = localStorage.getItem("q-theme") || "light";
-        document.documentElement.setAttribute("data-theme", t);
-      } catch (e) {}
-    })();
+    (function () { try { document.documentElement.setAttribute("data-theme", localStorage.getItem("q-theme") || "light"); } catch (e) {} })();
   </script>
-
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../styles.css" />
-  <style>
-    /* Chat-specific additions on top of the shared site tokens/components (same as the Q-U-164M chat) */
-    .chat-log { display: flex; flex-direction: column; gap: 12px; max-height: 56vh; overflow-y: auto; padding: 4px 2px; margin-bottom: 4px; }
-    .chat-log:empty::before { content: "Say hello, ask it to compute something, or try one of the prompts below."; color: var(--faint); font-size: 0.9rem; }
-    html:lang(ru) .chat-log:empty::before { content: "Поздоровайся, попроси что-нибудь посчитать или попробуй один из промптов ниже."; }
-    html:lang(zh) .chat-log:empty::before { content: "打个招呼，让它算点东西，或者试试下面的提示词。"; }
-    .msg { max-width: 86%; padding: 10px 14px; border-radius: 14px; line-height: 1.55; font-size: 0.95rem; white-space: pre-wrap; overflow-wrap: anywhere; }
-    .msg.user { align-self: flex-end; background: var(--brand); color: var(--on-grad); border-bottom-right-radius: 4px; }
-    .msg.model { align-self: flex-start; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
-    .msg.model.pending::after { content: "▍"; opacity: .6; animation: blink 1s step-start infinite; }
-    @keyframes blink { 50% { opacity: 0; } }
-    .tool-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--code-bg); color: var(--code-text); border: 1px solid var(--code-line);
-      border-radius: 8px; padding: 3px 9px; font-family: var(--f-mono); font-size: 0.82em; margin: 4px 0; white-space: normal; }
-    .tool-chip__tag { color: var(--cyan); font-weight: 600; }
-    details.think { margin: 0 0 6px; font-size: 0.85em; color: var(--muted); }
-    details.think summary { cursor: pointer; user-select: none; }
-    .msg .tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 6px; }
-    details.think > div { border-left: 2px solid var(--line); padding-left: 10px; margin-top: 4px; white-space: pre-wrap; }
-    .composer-row { display: flex; gap: 10px; align-items: flex-end; margin-top: 14px; }
-    .composer-row textarea { flex: 1; min-height: 44px; max-height: 140px; }
-    .chat-actions { display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: space-between; align-items: center; margin-top: 10px; }
-    .chat-actions .btn--ghost { padding: 7px 14px; font-size: 0.82rem; }
-    .chat-opts { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 0.85rem; color: var(--muted); }
-    .chat-opts select { font: inherit; color: var(--text); background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
-    .try { cursor: pointer; }
-    .try:hover { text-decoration: underline; }
-  </style>
+  <link rel="stylesheet" href="chat.css?v=nq26m-6" />
 </head>
-<body>
-  <a class="skip" href="#demo">Skip to chat</a>
-
+<body class="chat-page">
   {% include header.html base="../" active="chat" %}
 
-  <main class="run demo" id="demo">
-    <h1>
-      <span data-lang="ru">Чат с N-Q-26M</span>
-      <span data-lang="en">Chat with N-Q-26M</span>
-      <span data-lang="zh">与 N-Q-26M 对话</span>
-    </h1>
-    <p class="run__lede" data-lang="ru">N-Q — линейка маленьких русско-английских моделей, обученных с нуля на одной видеокарте V100. Это младшая из них: 29.7M параметров основы + 16.8M в таблице n-грамм, архитектура мини-Qwen3.8-Flash-Next — Gated DeltaNet вперемешку с gated attention, — выбранная абляцией против тернарной архитектуры Q. Фишка Q сохранена: модель сама пишет выражение <code>&lt;CALC&gt;…&lt;EQ&gt;</code>, а детерминированный исполнитель подставляет точный результат. Всё работает прямо в этой вкладке на обычном JavaScript — без сервера и без Python.</p>
-    <p class="run__lede" data-lang="en">N-Q is a ladder of small Russian/English models trained from scratch on a single V100 GPU. This is the smallest one: 29.7M backbone parameters + 16.8M in an n-gram table, a mini Qwen3.8-Flash-Next architecture — Gated DeltaNet interleaved with gated attention — chosen by an ablation against the ternary Q design. The Q trick is kept: the model writes the expression <code>&lt;CALC&gt;…&lt;EQ&gt;</code> and a deterministic executor fills in the exact result. Everything runs in this tab in plain JavaScript — no server, no Python.</p>
-    <p class="run__lede" data-lang="zh">N-Q 是一组在单张 V100 上从零训练的小型俄英双语模型。这是其中最小的一个：29.7M 主干参数 + 16.8M n-gram 表参数，架构是迷你版 Qwen3.8-Flash-Next —— Gated DeltaNet 与 gated attention 交替 —— 通过与三元 Q 架构的消融实验选出。Q 的特色保留了下来：模型自己写出表达式 <code>&lt;CALC&gt;…&lt;EQ&gt;</code>，由确定性执行器填入精确结果。全部在这个标签页里用普通 JavaScript 运行 —— 没有服务器，没有 Python。</p>
-
-    <div class="demo-card">
-      <div id="status" class="demo-status">loading&hellip;</div>
-      <div id="params" class="demo-status"></div>
-      <div id="selftest" class="demo-status"></div>
-      <div id="backend" class="demo-status"></div>
-    </div>
-
-    <div class="demo-card">
-      <div id="log" class="chat-log" role="log" aria-live="polite"></div>
-      <div class="composer-row">
-        <label class="visually-hidden" for="input"><span data-lang="ru">Сообщение для N-Q-26M</span><span data-lang="en">Message N-Q-26M</span><span data-lang="zh">发送给 N-Q-26M 的消息</span></label>
-        <textarea id="input" placeholder="Message N-Q-26M…" rows="1"></textarea>
-        <button id="send" class="btn btn--solid" disabled>
-          <span data-lang="ru">Отправить</span><span data-lang="en">Send</span><span data-lang="zh">发送</span>
-        </button>
-      </div>
-      <div class="chat-actions">
-        <div class="chat-opts">
-          <button id="newChat" class="btn btn--ghost" type="button">
-            <span data-lang="ru">Новый диалог</span><span data-lang="en">New conversation</span><span data-lang="zh">新对话</span>
-          </button>
-          <label><input type="checkbox" id="memory" checked /> <span data-lang="ru">помнить диалог</span><span data-lang="en">remember the conversation</span><span data-lang="zh">记住对话</span></label>
-          <label><input type="checkbox" id="think" /> <span data-lang="ru">думать вслух (&lt;THINK&gt;)</span><span data-lang="en">think first (&lt;THINK&gt;)</span><span data-lang="zh">先思考（&lt;THINK&gt;）</span></label>
-          <label><span data-lang="ru">декодирование</span><span data-lang="en">decoding</span><span data-lang="zh">解码</span>
-            <select id="decoding">
-              <option value="sample">T=0.7 · top-p 0.9</option>
-              <option value="greedy">greedy</option>
-            </select>
-          </label>
+  <div class="app" id="app">
+    <aside class="side" id="side" aria-label="Conversations">
+      <button class="btn btn--solid side__new" id="newChat" type="button">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span data-lang="ru">Новый диалог</span><span data-lang="en">New chat</span><span data-lang="zh">新对话</span>
+      </button>
+      <div class="side__list" id="convList"></div>
+      <div class="side__model">
+        <div class="side__model-name"><img src="../assets/q-logo.svg" alt="" width="20" height="20" /> N-Q-26M-Chat</div>
+        <div class="side__model-meta" id="modelMeta">
+          <span data-lang="ru">загрузка…</span><span data-lang="en">loading…</span><span data-lang="zh">加载中…</span>
         </div>
-        <span id="tps" class="demo__tps"></span>
+        <div class="side__links">
+          <a href="../blog-nq26m.html"><span data-lang="ru">О модели</span><span data-lang="en">About</span><span data-lang="zh">关于模型</span></a>
+          <a href="../jev/">JEV</a>
+          <a href="../chat-q-u-164m/">Q-U-164M</a>
+        </div>
       </div>
-      <p class="demo-hint" data-lang="ru">Попробуй (нажми, чтобы вставить): <code class="try">Сколько будет 4821 умножить на 37?</code> &middot; <code class="try">Какой день недели 9 мая 2027 года?</code> &middot; <code class="try">Отсортируй по возрастанию: 42, 7, 19, 3.</code> &middot; <code class="try">Переведи 42 километра в мили.</code> &middot; <code class="try">Является ли 221 простым числом?</code> &middot; <code class="try">Привет! Кто ты?</code> Выражения внутри вызова инструмента всегда выбираются жадно; обычный текст — сэмплингом (можно переключить). В длинном диалоге 26M-модель хуже решает, когда звать инструмент (особенно на «а теперь…»): если вызова нет, начни новый диалог или выключи «помнить диалог» — тогда каждое сообщение решается с чистого контекста.</p>
-      <p class="demo-hint" data-lang="en">Try (click to insert): <code class="try">What is 4821 times 37?</code> &middot; <code class="try">What day of the week is March 5, 2027?</code> &middot; <code class="try">Sort these numbers from smallest to largest: 88, 12, 45.</code> &middot; <code class="try">Convert 100 kilograms to pounds.</code> &middot; <code class="try">Is 97 a prime number?</code> &middot; <code class="try">Hi! Who are you?</code> Tool-call expressions are always decoded greedily; ordinary text is sampled (switchable). Deep into a conversation the 26M model is worse at deciding to call a tool (especially on "and now…" follow-ups): if no call happens, start a new conversation or turn off "remember the conversation" so each message is answered from a clean context.</p>
-      <p class="demo-hint" data-lang="zh">可以试试（点击插入）：<code class="try">What is 4821 times 37?</code> &middot; <code class="try">Сколько будет 4821 умножить на 37?</code> &middot; <code class="try">Sort these numbers from smallest to largest: 88, 12, 45.</code> &middot; <code class="try">Is 97 a prime number?</code> &middot; <code class="try">Hi! Who are you?</code> 模型只训练了俄语和英语。工具调用里的表达式总是贪心解码；普通文本用采样（可切换）。在较长的对话中，26M 模型更难判断何时调用工具（尤其是"那现在……"这类追问）：如果没有调用工具，请开始新对话，或关闭"记住对话"，让每条消息都从干净的上下文回答。</p>
-    </div>
+    </aside>
+    <div class="side-scrim" id="scrim"></div>
 
-    <p class="demo-note" data-lang="ru">Честно о модели: при 26M параметрах она уверенно держит форму диалога и надёжно вызывает калькулятор (15/16 на нашем тесте вызовов инструментов), но часто выдумывает факты, зацикливается в длинных ответах и почти не решает многошаговые текстовые задачи (GSM8K ≈ 2%). Иногда она получает от исполнителя правильный результат, но в финальной фразе пишет другое. Без фильтров безопасности. Веса — <code>model.qpack</code> (89 МБ, формат QPACK1), прогон в браузере сверен с PyTorch: расхождение логитов ~2·10⁻⁵, жадная генерация совпадает токен в токен. Предыдущий чат с Q-U-164M переехал на <a href="../chat-q-u-164m/" style="color:var(--brand)">отдельную страницу</a>.</p>
-    <p class="demo-note" data-lang="en">An honest note: at 26M parameters it holds the shape of a dialogue and calls the calculator reliably (15/16 on our tool-call probe), but it often invents facts, loops in long answers and essentially does not solve multi-step word problems (GSM8K ≈ 2%). Sometimes it receives the correct result from the executor and still writes something else in its final sentence. No safety tuning. Weights: <code>model.qpack</code> (89 MB, QPACK1 format); the in-browser forward pass is checked against PyTorch: logits within ~2·10⁻⁵, greedy generation identical token for token. The previous Q-U-164M chat moved to <a href="../chat-q-u-164m/" style="color:var(--brand)">its own page</a>.</p>
-    <p class="demo-note" data-lang="zh">坦白说明：在 26M 参数规模下，它能稳定地保持对话形式并可靠地调用计算器（我们的工具调用测试 15/16），但经常编造事实，在长回答中会陷入重复，基本不能解决多步文字题（GSM8K ≈ 2%）。有时它从执行器拿到了正确结果，却在最后一句里写成别的。没有安全调优。权重：<code>model.qpack</code>（89 MB，QPACK1 格式）；浏览器中的前向计算已与 PyTorch 对齐：logits 误差约 2·10⁻⁵，贪心生成逐词元一致。之前的 Q-U-164M 聊天已移到<a href="../chat-q-u-164m/" style="color:var(--brand)">单独的页面</a>。</p>
-  </main>
+    <main class="main">
+      <div class="topbar">
+        <button class="icon-btn topbar__menu" id="menuBtn" type="button" aria-label="Conversations">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="topbar__title">N-Q-26M-Chat <span class="pill" id="statusPill"><span class="pill__dot"></span><span id="statusText">loading</span></span></div>
+        <button class="icon-btn" id="settingsBtn" type="button" aria-label="Settings" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+        </button>
+        <div class="settings" id="settings" hidden>
+          <label class="set-row"><span><span data-lang="ru">Температура</span><span data-lang="en">Temperature</span><span data-lang="zh">温度</span> <b id="tempVal">0.40</b></span>
+            <input type="range" id="temp" min="0.1" max="1.5" step="0.05" value="0.4" /></label>
+          <label class="set-row"><span>top-p <b id="topPVal">0.9</b></span>
+            <input type="range" id="topP" min="0.5" max="1" step="0.01" value="0.9" /></label>
+          <label class="set-row"><span><span data-lang="ru">Длина ответа</span><span data-lang="en">Max tokens</span><span data-lang="zh">最大长度</span> <b id="maxNewVal">320</b></span>
+            <input type="range" id="maxNew" min="64" max="768" step="32" value="320" /></label>
+          <label class="set-row"><span><span data-lang="ru">Штраф за повторы</span><span data-lang="en">Repetition penalty</span><span data-lang="zh">重复惩罚</span> <b id="repVal">1.15</b></span>
+            <input type="range" id="rep" min="1" max="1.5" step="0.01" value="1.15" /></label>
+          <label class="set-check"><input type="checkbox" id="greedy" /> <span data-lang="ru">Жадное декодирование</span><span data-lang="en">Greedy decoding</span><span data-lang="zh">贪心解码</span></label>
+          <label class="set-check"><input type="checkbox" id="think" /> <span data-lang="ru">Сначала думать (&lt;THINK&gt;)</span><span data-lang="en">Think first (&lt;THINK&gt;)</span><span data-lang="zh">先思考（&lt;THINK&gt;）</span></label>
+          <label class="set-check"><input type="checkbox" id="memory" /> <span data-lang="ru">Помнить диалог (экспериментально)</span><span data-lang="en">Remember the conversation (experimental)</span><span data-lang="zh">记住对话（实验性）</span></label>
+          <p class="set-note"><span data-lang="ru">Размышления и выражения для инструментов декодируются жадно, видимый ответ — с выбранной температурой; размышления ограничены 128 токенами. По умолчанию каждое сообщение решается с чистого контекста: 26M-модель плохо держит длинный диалог — прошлые ответы сбивают её.</span><span data-lang="en">Thinking and tool expressions are decoded greedily, the visible answer at the chosen temperature; thinking is capped at 128 tokens. By default each message is answered from a clean context: the 26M model holds long conversations poorly — earlier answers throw it off.</span><span data-lang="zh">思考过程和工具表达式使用贪心解码，可见回答使用所选温度；思考限制在 128 个词元以内。默认情况下每条消息都从干净的上下文回答：26M 模型不擅长长对话 —— 之前的回答会干扰它。</span></p>
+        </div>
+      </div>
 
-  <footer class="footer">
-    <div class="footer__brand">
-      <img src="../assets/q-logo.svg" alt="" width="28" height="28" />
-      <span>Q Project</span>
-    </div>
-    <p class="footer__tag">
-      <span data-lang="ru">Претрейн &middot; Файнтюн &middot; Агенты &middot; Исследования</span>
-      <span data-lang="en">Pretrain &middot; Finetune &middot; Agents &middot; Research</span>
-      <span data-lang="zh">预训练 &middot; 微调 &middot; 智能体 &middot; 研究</span>
-    </p>
-    <nav class="footer__links" aria-label="Footer">
-      <a href="../index.html"><span data-lang="ru">Главная</span><span data-lang="en">Home</span><span data-lang="zh">首页</span></a>
-      <a href="../blog.html"><span data-lang="ru">Блог</span><span data-lang="en">Blog</span><span data-lang="zh">博客</span></a>
-      <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a>
-      <a href="https://github.com/Q-Project-LM" target="_blank" rel="noopener">GitHub</a>
-    </nav>
-    <p class="footer__copy">
-      <span data-lang="ru">&copy; <span class="year"></span> Q Project. Разрабатывается независимо.</span>
-      <span data-lang="en">&copy; <span class="year"></span> Q Project. Built independently.</span>
-      <span data-lang="zh">&copy; <span class="year"></span> Q Project。独立开发。</span>
-    </p>
-  </footer>
+      <div class="thread" id="thread">
+        <div class="loading" id="loading">
+          <img src="../assets/q-logo.svg" alt="" width="44" height="44" />
+          <div class="loading__text" id="loadText">Downloading the model…</div>
+          <div class="bar"><div class="bar__fill" id="loadBar"></div></div>
+          <div class="loading__hint"><span data-lang="ru">89 МБ, один раз — дальше модель берётся из кеша браузера.</span><span data-lang="en">89 MB, once — after that the model loads from the browser cache.</span><span data-lang="zh">89 MB，只需下载一次 —— 之后从浏览器缓存加载。</span></div>
+        </div>
+        <div class="empty" id="empty" hidden>
+          <img src="../assets/q-logo.svg" alt="" width="52" height="52" />
+          <h1>N-Q-26M-Chat</h1>
+          <p><span data-lang="ru">Маленькая русско-английская модель, обученная с нуля на одной V100. Работает прямо в этой вкладке. Точные вычисления делает исполнитель — их видно как отдельные плашки.</span><span data-lang="en">A small Russian/English model trained from scratch on one V100, running right in this tab. Exact computation is done by an executor — you'll see it as separate chips.</span><span data-lang="zh">一个在单张 V100 上从零训练的小型俄英双语模型，直接在这个标签页里运行。精确计算由执行器完成 —— 会以单独的标签显示。</span></p>
+          <div class="suggest" id="suggest"></div>
+        </div>
+        <div class="msgs" id="msgs"></div>
+      </div>
+
+      <form class="composer" id="composer">
+        <textarea id="input" rows="1" placeholder="Message N-Q-26M…" aria-label="Message"></textarea>
+        <button class="send" id="send" type="submit" disabled aria-label="Send">
+          <svg class="send__go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          <svg class="send__stop" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        </button>
+      </form>
+      <p class="disclaimer"><span data-lang="ru">26M параметров: часто путает факты и зацикливается. Работает локально, ничего не отправляется на сервер.</span><span data-lang="en">26M parameters: often gets facts wrong and loops. Runs locally — nothing is sent to a server.</span><span data-lang="zh">26M 参数：经常弄错事实、陷入重复。在本地运行 —— 不会向服务器发送任何内容。</span></p>
+    </main>
+  </div>
 
   <script src="../main.js"></script>
-  <script src="qpack.js?v=nq26m-2"></script>
-  <script src="tokenizer.js?v=nq26m-2"></script>
-  <script src="nq_tokenizer.js?v=nq26m-2"></script>
-  <script src="nq_model.js?v=nq26m-2"></script>
-  <script src="nq_circuits.js?v=nq26m-2"></script>
-  <script src="chat.js?v=nq26m-2"></script>
+  <script src="chat.js?v=nq26m-6"></script>
 </body>
 </html>

@@ -1,0 +1,115 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>N-Q-26M-JEV: decisions in the browser — Q Project</title>
+  <meta name="description" content="N-Q-26M-JEV, a 26M-class decision model: a choice, a score or a yes/no with calibrated probabilities in one forward pass, running in your browser." />
+  <link rel="icon" type="image/svg+xml" href="../assets/q-logo.svg" />
+  <script>
+    (function () { try { document.documentElement.setAttribute("data-theme", localStorage.getItem("q-theme") || "light"); } catch (e) {} })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 16px; }
+    .presets button { border: 1px solid var(--line-2); background: var(--surface-2); color: var(--text); border-radius: 999px; padding: 7px 14px; font: inherit; font-size: .85rem; cursor: pointer; }
+    .presets button:hover, .presets button.is-on { border-color: var(--brand); color: var(--brand); }
+    .field-label { display: block; font-size: .8rem; color: var(--muted); margin: 0 0 6px; letter-spacing: .02em; }
+    #state { width: 100%; min-height: 96px; resize: vertical; }
+    .qrow { display: grid; grid-template-columns: 120px 1fr 1fr 34px; gap: 8px; align-items: start; margin-top: 8px; }
+    .qrow select, .qrow input { width: 100%; font: inherit; font-size: .9rem; color: var(--text); background: var(--surface); border: 1px solid var(--line-2); border-radius: 10px; padding: 8px 10px; }
+    .qrow input:disabled { opacity: .5; }
+    .qrow .del { border: 0; background: none; color: var(--faint); font-size: 1.2rem; cursor: pointer; padding: 6px; }
+    .qrow .del:hover { color: #e5484d; }
+    .jev-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-top: 14px; }
+    .jev-actions label { font-size: .85rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .results { display: grid; gap: 12px; margin-top: 16px; }
+    .res { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: var(--surface); }
+    .res__q { font-size: .85rem; color: var(--muted); margin-bottom: 8px; }
+    .res__a { font-family: var(--f-display); font-weight: 600; font-size: 1.15rem; margin-bottom: 10px; }
+    .res__a small { font-family: var(--f-body); font-weight: 400; font-size: .8rem; color: var(--faint); margin-left: 8px; }
+    .pbar { display: grid; grid-template-columns: minmax(80px, 30%) 1fr 52px; gap: 10px; align-items: center; font-size: .85rem; margin: 5px 0; }
+    .pbar__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+    .pbar__track { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--line); }
+    .pbar__fill { height: 100%; background: var(--line-2); border-radius: 99px; }
+    .pbar.is-top .pbar__fill { background: var(--grad); }
+    .pbar__p { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+    .jev-table { font-size: .88rem; }
+    @media (max-width: 640px) { .qrow { grid-template-columns: 1fr 34px; } .qrow select { grid-column: 1 / 2; } .qrow input { grid-column: 1 / 2; } .qrow .del { grid-row: 1; grid-column: 2; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#demo">Skip to demo</a>
+  {% include header.html base="../" active="jev" %}
+
+  <main class="run demo" id="demo">
+    <h1>N-Q-26M-JEV</h1>
+    <p class="run__lede" data-lang="ru">Модель решений: вместо текста она за один проход выдаёт выбор из вариантов, оценку по шкале или вероятность «да» — с откалиброванными вероятностями. Это N-Q-26M-Chat с головой решений, работает прямо в этой вкладке.</p>
+    <p class="run__lede" data-lang="en">A decision model: instead of text it returns, in one forward pass, a choice among options, a level on a scale or a probability of "yes" — with calibrated probabilities. It is N-Q-26M-Chat with a decision head, running right in this tab.</p>
+    <p class="run__lede" data-lang="zh">一个决策模型：它不生成文本，而是一次前向计算给出选项中的选择、量表上的等级或"是"的概率 —— 概率经过校准。它是带决策头的 N-Q-26M-Chat，直接在这个标签页里运行。</p>
+
+    <div class="demo-card">
+      <div id="status" class="demo-status">loading&hellip;</div>
+      <div id="selftest" class="demo-status"></div>
+    </div>
+
+    <div class="demo-card">
+      <span class="field-label"><span data-lang="ru">Примеры</span><span data-lang="en">Examples</span><span data-lang="zh">示例</span></span>
+      <div class="presets" id="presets"></div>
+      <label class="field-label" for="state"><span data-lang="ru">Текст</span><span data-lang="en">Text (state)</span><span data-lang="zh">文本（状态）</span></label>
+      <textarea id="state"></textarea>
+      <div style="margin-top:14px"><span class="field-label"><span data-lang="ru">Вопросы: тип · вопрос · варианты через запятую</span><span data-lang="en">Questions: type · question · comma-separated options</span><span data-lang="zh">问题：类型 · 问题 · 逗号分隔的选项</span></span></div>
+      <div id="questions"></div>
+      <div class="jev-actions">
+        <button class="btn btn--ghost btn--sm" id="addQ" type="button">+ <span data-lang="ru">вопрос</span><span data-lang="en">question</span><span data-lang="zh">问题</span></button>
+        <label><input type="checkbox" id="sym" checked /> <span data-lang="ru">симметричный режим (оба порядка вариантов)</span><span data-lang="en">symmetric (both option orders)</span><span data-lang="zh">对称模式（两种选项顺序）</span></label>
+        <button class="btn btn--solid btn--sm" id="run" type="button" disabled><span data-lang="ru">Решить</span><span data-lang="en">Decide</span><span data-lang="zh">决策</span></button>
+        <span id="timing" class="demo__tps"></span>
+      </div>
+      <div class="results" id="results"></div>
+    </div>
+
+    <h2 style="font-family:var(--f-display);margin-top:36px" data-lang="ru">Где модель сильна, а где нет</h2>
+    <h2 style="font-family:var(--f-display);margin-top:36px" data-lang="en">Where it is good, and where it is not</h2>
+    <h2 style="font-family:var(--f-display);margin-top:36px" data-lang="zh">它擅长什么，不擅长什么</h2>
+    <div class="qbench-table-wrap" style="overflow-x:auto">
+      <table class="doc-table jev-table">
+        <thead><tr><th data-lang="ru">Задача</th><th data-lang="en">Task</th><th data-lang="zh">任务</th><th>%</th><th data-lang="ru">Случайно</th><th data-lang="en">Chance</th><th data-lang="zh">随机</th></tr></thead>
+        <tbody>
+          <tr><td>reply ↔ question / ответ ↔ вопрос</td><td><b>98–99</b></td><td>25–50</td></tr>
+          <tr><td>news topic / тематика новостей</td><td><b>88.8</b></td><td>25</td></tr>
+          <tr><td>request topic / тема запроса (6)</td><td><b>81.1</b></td><td>17</td></tr>
+          <tr><td>toxicity (ru) / токсичность</td><td><b>80.0</b></td><td>50</td></tr>
+          <tr><td>sentiment / тональность</td><td><b>78.1</b></td><td>~40</td></tr>
+          <tr><td>which answer is better / какой ответ лучше</td><td>68.7</td><td>50</td></tr>
+          <tr><td>NLI (ru+en)</td><td>64.5</td><td>33</td></tr>
+          <tr><td>emotion, never trained / эмоции, вне обучения</td><td>29.9</td><td>17</td></tr>
+          <tr><td>OpenBookQA, never trained / вне обучения</td><td>26.3</td><td>25</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="demo-note" data-lang="ru">Модель хорошо решает задачи тех типов, на которых обучена, и её вероятности честные (ошибка калибровки 0.005–0.055). Новые типы вопросов, особенно требующие знаний и рассуждения, она решает около случайного уровня — для этого 26M мало. Веса — <code>model.qpack</code> (89 МБ); расчёт в браузере сверен с PyTorch (расхождение вероятностей &lt; 10⁻⁴). Подробнее — в <a href="../blog-nq26m.html" style="color:var(--brand)">разборе N-Q-26M</a>.</p>
+    <p class="demo-note" data-lang="en">The model is good at the task families it was trained on, and its probabilities are honest (calibration error 0.005–0.055). New kinds of questions, especially ones that need knowledge or reasoning, it answers near chance — 26M is too small for that. Weights: <code>model.qpack</code> (89 MB); the in-browser computation is checked against PyTorch (probabilities within 10⁻⁴). More in the <a href="../blog-nq26m.html" style="color:var(--brand)">N-Q-26M writeup</a>.</p>
+    <p class="demo-note" data-lang="zh">模型擅长它训练过的任务类型，概率也是真实可信的（校准误差 0.005–0.055）。对于新类型的问题，尤其是需要知识或推理的问题，它的表现接近随机 —— 26M 对此太小了。权重：<code>model.qpack</code>（89 MB）；浏览器中的计算已与 PyTorch 对齐（概率误差小于 10⁻⁴）。详见 <a href="../blog-nq26m.html" style="color:var(--brand)">N-Q-26M 介绍</a>。</p>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__brand"><img src="../assets/q-logo.svg" alt="" width="28" height="28" /><span>Q Project</span></div>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="../index.html"><span data-lang="ru">Главная</span><span data-lang="en">Home</span><span data-lang="zh">首页</span></a>
+      <a href="../chat/"><span data-lang="ru">Чат</span><span data-lang="en">Chat</span><span data-lang="zh">聊天</span></a>
+      <a href="../blog.html"><span data-lang="ru">Блог</span><span data-lang="en">Blog</span><span data-lang="zh">博客</span></a>
+      <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a>
+    </nav>
+    <p class="footer__copy"><span data-lang="ru">&copy; <span class="year"></span> Q Project. Разрабатывается независимо.</span><span data-lang="en">&copy; <span class="year"></span> Q Project. Built independently.</span><span data-lang="zh">&copy; <span class="year"></span> Q Project。独立开发。</span></p>
+  </footer>
+
+  <script src="../main.js"></script>
+  <script src="jev.js?v=nq26m-5"></script>
+</body>
+</html>

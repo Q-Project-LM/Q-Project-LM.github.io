@@ -231,7 +231,8 @@
     }
 
     // one decode step: token id -> logits (Float32Array, reused between calls: copy it if you keep it).
-    // wantLogits=false skips the 8256x512 output matmul (prompt prefill: only the state matters).
+    // wantLogits=false skips the 8256x512 output matmul (prompt prefill: only the state matters);
+    // wantLogits='hidden' returns the final hidden state (d floats, a copy) instead — what the JEV decision head reads.
     step(tok, wantLogits = true) {
       const D = this.d, HC = this.hc, emb = this.W('embed.weight'), h = new Float32Array(HC * D);
       for (let c = 0; c < HC; c++) for (let j = 0; j < D; j++) h[c * D + j] = emb[tok * D + j];
@@ -246,7 +247,15 @@
       this.pos += 1;
       if (!wantLogits) return null;
       const fin = this.gatedResidual('mixer.', h, false);
+      if (wantLogits === 'hidden') return fin.slice();
       return matvec(this.W('lm_head.weight'), fin, this.V, D, this.buf.logits);
+    }
+
+    // JEV decision head on a final hidden state (NQ4ForDecision.decide_head, clamped like option_logits)
+    decisionScore(hidden) {
+      const w = this.W('decide_head.weight'), b = this.W('decide_head.bias');
+      let s = b[0]; for (let i = 0; i < hidden.length; i++) s += w[i] * hidden[i];
+      return Math.max(-30, Math.min(30, s));
     }
   }
 

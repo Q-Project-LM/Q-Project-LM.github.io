@@ -156,6 +156,9 @@
       <h2>Чат в браузере</h2>
       <p><a href="chat/">Чат на сайте</a> теперь работает на N-Q-26M-Chat. Модель, токенизатор и исполнитель переписаны на обычный JavaScript: 89 МБ весов в формате qpack, никакого сервера. Прогон в браузере сверен с PyTorch: логиты расходятся не больше чем на 2·10⁻⁵, жадная генерация совпадает токен в токен. Прошлый чат с Q-U-164M — <a href="chat-q-u-164m/">на отдельной странице</a>.</p>
 
+      <h2>N-Q-26M-JEV: модель решений</h2>
+      <p>Из того же чекпоинта сделали вариант в духе Jev: вместо текста он за один проход выдаёт выбор из вариантов, оценку по шкале или вероятность «да» с откалиброванными вероятностями. Хорошо работает на задачах, на которых обучен (сопоставление вопроса и ответа — 98–99%, тематика — 81–89%, токсичность и тональность — 78–80%); новые типы вопросов решает около случайного уровня. <a href="jev/">Демо в браузере</a>.</p>
+
       <h2>Что дальше</h2>
       <p>N-Q-26M — младшая модель линейки. Сейчас обучается N-Q-164M (8 млрд токенов), за ней — 64M и MoE-вариант. Будут обновления.</p>
     </div>
@@ -267,6 +270,9 @@
       <h2>Chat in the browser</h2>
       <p>The <a href="chat/">site chat</a> now runs N-Q-26M-Chat. The model, tokenizer and executor were rewritten in plain JavaScript: 89 MB of weights in qpack format, no server. The in-browser forward pass is checked against PyTorch: logits within 2·10⁻⁵, greedy generation identical token for token. The previous Q-U-164M chat is <a href="chat-q-u-164m/">on its own page</a>.</p>
 
+      <h2>N-Q-26M-JEV: a decision model</h2>
+      <p>From the same checkpoint we made a Jev-style variant: instead of text it returns, in one forward pass, a choice among options, a level on a scale or a probability of "yes", with calibrated probabilities. It is good at the tasks it was trained on (question–answer matching 98–99%, topics 81–89%, toxicity and sentiment 78–80%); new kinds of questions it answers near chance. <a href="jev/">Demo in the browser</a>.</p>
+
       <h2>What's next</h2>
       <p>N-Q-26M is the smallest model of the ladder. N-Q-164M (8B tokens) is training now, followed by 64M and an MoE variant. More updates soon.</p>
     </div>
@@ -377,6 +383,9 @@
 
       <h2>浏览器中的聊天</h2>
       <p><a href="chat/">网站聊天</a>现在运行的是 N-Q-26M-Chat。模型、分词器和执行器都用普通 JavaScript 重写：qpack 格式的 89 MB 权重，不需要服务器。浏览器中的前向计算已与 PyTorch 对齐：logits 误差在 2·10⁻⁵ 以内，贪心生成逐词元一致。之前的 Q-U-164M 聊天在<a href="chat-q-u-164m/">单独的页面</a>。</p>
+
+      <h2>N-Q-26M-JEV：决策模型</h2>
+      <p>我们用同一个检查点做了一个类似 Jev 的版本：它不生成文本，而是一次前向计算给出选项中的选择、量表上的等级或"是"的概率，概率经过校准。在训练过的任务上表现良好（问答匹配 98–99%、主题 81–89%、毒性和情感 78–80%）；新类型的问题则接近随机。<a href="jev/">浏览器演示</a>。</p>
 
       <h2>接下来</h2>
       <p>N-Q-26M 是这个系列中最小的模型。N-Q-164M（80 亿词元）正在训练，之后是 64M 和 MoE 版本。后续会有更新。</p>

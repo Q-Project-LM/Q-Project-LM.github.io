@@ -1,144 +1,206 @@
 'use strict';
-// Multi-turn chat driver for N-Q-26M-Chat (runtime: nq_model.js, tokenizer: nq_tokenizer.js, tools: nq_circuits.js).
-// The decode state (Gated DeltaNet matrices, attention K/V, n-gram history) lives across turns, so each turn only feeds its
-// own tokens. Chat format: <bos> <USER>text<EOT><MODEL>[<THINK>…<ETHINK>]answer<EOT> <USER>…
-// Tool calls: when the model writes <CALC>expr<EQ>, the executor forces the exact result + <ECALC>; shown as a chip.
-const Lib = window.QOmniLib;
-const $ = (id) => document.getElementById(id);
-const ID = Lib.NQ_IDS;
-let model = null, tok = null, generating = false, stopFlag = false, history = null;
+// N-Q-26M-Chat page: UI only. The model runs in ../nq-runtime/nq_worker.js (Web Worker); conversations live in localStorage.
+// A conversation: {id, title, updated, messages: [{role:'user', content} | {role:'assistant', raw, segs:[{kind, text}], tools:[...], meta}]}
+// `raw` is the assistant turn with its control tokens (<THINK>, <CALC>…) — that is what the model re-reads.
+(function () {
+  const V = 'nq26m-6', MODEL_V = 'nq26m-3';   // code version / weights version (bumping MODEL_V forces a re-download)
+  const $ = (id) => document.getElementById(id);
+  const lang = () => (document.documentElement.lang || 'en').slice(0, 2);
+  // a trilingual label that follows the site's language switch (main.js toggles .is-active on [data-lang])
+  const L = (ru, en, zh) => ['ru', 'en', 'zh'].map((l, i) => `<span data-lang="${l}"${lang() === l ? ' class="is-active"' : ''}>${esc([ru, en, zh || en][i])}</span>`).join('');
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-function log(msg) { $('status').textContent = msg; }
+  const SUGGEST = [
+    ['Сколько будет 4821 умножить на 37?', 'точный калькулятор', 'exact calculator'],
+    ['Какой день недели 9 мая 2027 года?', 'даты', 'dates'],
+    ['Привет! Кто ты?', 'знакомство', 'say hi'],
+    ['Convert 100 kilograms to pounds.', 'units', 'units'],
+    ['Отсортируй по возрастанию: 42, 7, 19, 3.', 'сортировка', 'sorting'],
+    ['Напиши короткое стихотворение про осень.', 'текст', 'writing'],
+  ];
 
-async function fetchWithProgress(url, onProgress, timeoutMs = 120000) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(new Error(`timed out after ${timeoutMs / 1000}s`)), timeoutMs);
-  let resp;
-  try { resp = await fetch(url, { signal: ctrl.signal }); } finally { clearTimeout(timer); }
-  if (!resp.ok) throw new Error(`fetch ${url} failed: ${resp.status}`);
-  const total = Number(resp.headers.get('content-length')) || 0;
-  if (!resp.body) return await resp.arrayBuffer();
-  const reader = resp.body.getReader(); const chunks = []; let got = 0;
-  for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); got += value.byteLength; onProgress(got, total); }
-  const out = new Uint8Array(got); let off = 0; for (const c of chunks) { out.set(c, off); off += c.byteLength; }
-  return out.buffer;
-}
-
-async function loadModel() {
-  const t0 = performance.now();
-  const buf = await fetchWithProgress('./model.qpack?v=nq26m-2', (got, total) =>
-    log(total ? `downloading model.qpack ${(got / 1e6).toFixed(1)}/${(total / 1e6).toFixed(1)} MB (${Math.round(100 * got / total)}%)…` : `downloading model.qpack ${(got / 1e6).toFixed(1)} MB…`));
-  log(`unpacking (${(buf.byteLength / 1e6).toFixed(1)} MB in ${((performance.now() - t0) / 1000).toFixed(1)}s)…`);
-  await new Promise((r) => setTimeout(r, 0));
-  const c = Lib.readContainer(buf), loaded = Lib.loadNQ(c);
-  tok = new Lib.NQTokenizer(c.json('tokenizer.json'));
-  model = new Lib.NQ4JS(loaded);
-  const cfg = loaded.cfg;
-  $('params').textContent = `${cfg.num_hidden_layers} layers (${cfg.layer_pattern} ×${cfg.num_hidden_layers / cfg.layer_pattern.length}: Gated DeltaNet + gated attention) · hidden ${cfg.hidden_size} · vocab ${cfg.vocab_size.toLocaleString()}`;
-  log('running self-test…'); await new Promise((r) => setTimeout(r, 0));
-  const st = loaded.selftest; let ok = 0;
-  if (st) for (const cs of st.cases) {
-    model.reset(); let lg = null; cs.ids.forEach((id, i) => { lg = model.step(id, i === cs.ids.length - 1); });
-    let a = 0; for (let v = 1; v < lg.length; v++) if (lg[v] > lg[a]) a = v;
-    if (a === cs.top5[0] && Math.abs(lg[a] - cs.top5_logits[0]) < 5e-2) ok++;
+  // ---------------------------------------------------------------- storage
+  const KEY = 'nq-chat-convs';
+  let convs = [], cur = null;
+  function loadConvs() { try { convs = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { convs = []; } }
+  function saveConvs() { try { localStorage.setItem(KEY, JSON.stringify(convs.slice(0, 50))); } catch (e) {} }
+  function newConv() { cur = { id: Date.now().toString(36), title: '', updated: Date.now(), messages: [] }; renderAll(); }
+  function touch() {
+    cur.updated = Date.now();
+    if (!cur.title) { const u = cur.messages.find((m) => m.role === 'user'); if (u) cur.title = u.content.slice(0, 60); }
+    if (!convs.includes(cur)) convs.unshift(cur);
+    convs.sort((a, b) => b.updated - a.updated); saveConvs(); renderList();
   }
-  if (st) $('selftest').textContent = `self-test: ${ok}/${st.cases.length} ${ok === st.cases.length ? '✓' : '✗ (results may be unreliable)'}`;
-  $('backend').textContent = 'plain JavaScript (CPU, this tab)';
-  resetConversation(); log('ready.'); $('send').disabled = false;
-}
 
-function resetConversation() {
-  if (generating) stopFlag = true;
-  model.reset(); history = [ID.BOS]; model.step(ID.BOS, false);
-  $('log').innerHTML = '';
-}
-
-function addBubble(role, text) {
-  const div = document.createElement('div'); div.className = `msg ${role}`; div.textContent = text;
-  $('log').appendChild(div); $('log').scrollTop = $('log').scrollHeight; return div;
-}
-
-function pick(logits, greedy, recent) {
-  const V = logits.length, l = new Float64Array(V);
-  for (let i = 0; i < V; i++) l[i] = logits[i];
-  for (let i = 8203; i < V; i++) l[i] = -Infinity;                // reserved control ids are never generated
-  l[ID.USER] = l[ID.MODEL] = -Infinity;                              // the model never opens a turn itself
-  if (greedy) { let b = 0; for (let i = 1; i < V; i++) if (l[i] > l[b]) b = i; return b; }
-  for (const t of recent) if (t < 8192) l[t] = l[t] > 0 ? l[t] / 1.1 : l[t] * 1.1;   // repetition penalty 1.1 on recent text tokens
-  const T = 0.7; let mx = -Infinity; for (let i = 0; i < V; i++) { l[i] /= T; if (l[i] > mx) mx = l[i]; }
-  const idx = []; let sum = 0;
-  for (let i = 0; i < V; i++) { const p = Math.exp(l[i] - mx); l[i] = p; sum += p; if (p > 1e-9) idx.push(i); }   // p(max) = 1
-  idx.sort((a, b) => l[b] - l[a]);
-  let cum = 0, cut = idx.length; for (let k = 0; k < idx.length; k++) { cum += l[idx[k]] / sum; if (cum >= 0.9) { cut = k + 1; break; } }   // top-p 0.9
-  let r = Math.random() * idx.slice(0, cut).reduce((s, i) => s + l[i], 0);
-  for (let k = 0; k < cut; k++) { r -= l[idx[k]]; if (r <= 0) return idx[k]; }
-  return idx[0];
-}
-
-async function sendMessage() {
-  if (generating) { stopFlag = true; return; }
-  const text = $('input').value.trim(); if (!text) return;
-  $('input').value = ''; generating = true; stopFlag = false; $('send').innerHTML = STOP_HTML;
-  if (!$('memory').checked && history.length > 1) { model.reset(); history = [ID.BOS]; model.step(ID.BOS, false); }   // answer from a clean context
-  addBubble('user', text);
-  const think = $('think').checked, greedy = $('decoding').value === 'greedy';
-  const turn = [ID.USER, ...tok.encode(text), ID.EOT, ID.MODEL, ...(think ? [ID.THINK] : [])];
-  log('reading…'); await new Promise((r) => setTimeout(r, 0));
-  let logits = null;
-  turn.forEach((id, i) => { history.push(id); logits = model.step(id, i === turn.length - 1); });
-
-  const bubble = addBubble('model', ''); bubble.classList.add('pending');
-  let thinkBox = null, cur = document.createTextNode(''); bubble.appendChild(cur);
-  const openThink = () => {
-    const d = document.createElement('details'); d.className = 'think';
-    d.innerHTML = '<summary><span data-lang="ru">размышления</span><span data-lang="en">thinking</span><span data-lang="zh">思考</span></summary>';
-    bubble.insertBefore(d, cur); thinkBox = document.createElement('div'); d.appendChild(thinkBox);
-    cur = document.createTextNode(''); thinkBox.appendChild(cur);
-  };
-  if (think) openThink();
-  const ex = new Lib.CircuitExecutor(tok);
-  let mode = 'text', expr = [], res = [], n = 0, ended = false; const t0 = performance.now();
-  let tools = null;   // chips of calls made inside the (collapsed) thinking block stay visible in a row after it
-  const chip = (e, r) => {
-    const s = document.createElement('span'); s.className = 'tool-chip'; s.innerHTML = '<span class="tool-chip__tag">tool</span> ';
-    s.appendChild(document.createTextNode(`${e} = ${r}`));
-    if (thinkBox) {
-      if (!tools) { tools = document.createElement('div'); tools.className = 'tools'; thinkBox.parentNode.after(tools); }
-      tools.appendChild(s);
-    } else { cur.parentNode.appendChild(s); cur = document.createTextNode(''); s.parentNode.appendChild(cur); }
-  };
-  while (n < 320 && !stopFlag) {
-    let next = ex.next(history);
-    if (next === null) next = pick(logits, greedy || mode === 'expr', history.slice(-64));   // tool expressions are always greedy
-    history.push(next); n++;
-    if (next === ID.EOT || next === ID.EOS) { ended = true; if (next === ID.EOS) history[history.length - 1] = ID.EOT; model.step(ID.EOT, false); break; }
-    if (next === ID.THINK) openThink();
-    else if (next === ID.ETHINK) { if (thinkBox) { cur = document.createTextNode(''); bubble.appendChild(cur); thinkBox = null; tools = null; } }
-    else if (next === ID.CALC) { mode = 'expr'; expr = []; }
-    else if (next === ID.EQ) { mode = 'result'; res = []; }
-    else if (next === ID.ECALC) { mode = 'text'; chip(tok.decode(expr), tok.decode(res)); }
-    else if (mode === 'expr') expr.push(next);
-    else if (mode === 'result') res.push(next);
-    else if (next < 8192) cur.nodeValue = tok.decode(curIds(cur, next));
-    logits = model.step(next);
-    if (n % 2 === 0) { $('tps').textContent = `${(n / ((performance.now() - t0) / 1000)).toFixed(1)} tok/s`; await new Promise((r) => setTimeout(r, 0)); $('log').scrollTop = $('log').scrollHeight; }
+  // ---------------------------------------------------------------- markdown (escaped first; a small safe subset)
+  function md(src) {
+    const out = []; const lines = esc(src).split('\n'); let i = 0;
+    const inline = (s) => s.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<i>$2</i>');
+    while (i < lines.length) {
+      const l = lines[i];
+      if (/^```/.test(l)) { const buf = []; i++; while (i < lines.length && !/^```/.test(lines[i])) buf.push(lines[i++]); i++; out.push(`<pre><code>${buf.join('\n')}</code></pre>`); continue; }
+      const h = l.match(/^(#{1,4})\s+(.*)/); if (h) { out.push(`<h4>${inline(h[2])}</h4>`); i++; continue; }
+      if (/^\s*([-*•]|\d+[.)])\s+/.test(l)) {
+        const ordered = /^\s*\d+[.)]/.test(l), items = [];
+        while (i < lines.length && /^\s*([-*•]|\d+[.)])\s+/.test(lines[i])) items.push(inline(lines[i++].replace(/^\s*([-*•]|\d+[.)])\s+/, '')));
+        out.push(`<${ordered ? 'ol' : 'ul'}>${items.map((x) => `<li>${x}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>`); continue;
+      }
+      if (!l.trim()) { i++; continue; }
+      const para = []; while (i < lines.length && lines[i].trim() && !/^(```|#{1,4}\s|\s*([-*•]|\d+[.)])\s)/.test(lines[i])) para.push(inline(lines[i++]));
+      out.push(`<p>${para.join('<br>')}</p>`);
+    }
+    return out.join('');
   }
-  if (!ended) { history.push(ID.EOT); model.step(ID.EOT, false); }   // close the turn in the model state too
-  bubble.classList.remove('pending');
-  if (!bubble.textContent.trim()) bubble.textContent = '(no output)';
-  else if (thinkBox && n >= 320) bubble.appendChild(document.createTextNode('(…the model was still thinking when the 320-token limit was reached — open "thinking")'));
-  generating = false; $('send').innerHTML = SEND_HTML;
-  log(`ready · ${n} tokens in ${((performance.now() - t0) / 1000).toFixed(1)}s · context ${history.length} tokens` + (history.length > 1500 ? ' — long conversation: start a new one for best results' : ''));
-}
 
-// text nodes decode their own token list (multi-byte UTF-8 characters can span several byte-level tokens)
-const nodeIds = new WeakMap();
-function curIds(node, id) { const a = nodeIds.get(node) || []; a.push(id); nodeIds.set(node, a); return a; }
-const SEND_HTML = $('send').innerHTML;
-const STOP_HTML = '<span data-lang="ru">Стоп</span><span data-lang="en">Stop</span><span data-lang="zh">停止</span>';
+  // ---------------------------------------------------------------- rendering
+  const ICON = {
+    copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>',
+    redo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg>',
+  };
+  function renderList() {
+    $('convList').innerHTML = '';
+    for (const c of convs) {
+      const d = document.createElement('div'); d.className = 'conv' + (c === cur ? ' is-current' : '');
+      d.innerHTML = `<span class="conv__title"></span><button class="conv__del" title="Delete" aria-label="Delete">×</button>`;
+      d.querySelector('.conv__title').textContent = c.title || '…';
+      d.addEventListener('click', (e) => {
+        if (e.target.classList.contains('conv__del')) { convs = convs.filter((x) => x !== c); saveConvs(); if (c === cur) newConv(); else renderList(); return; }
+        if (busy) return; cur = c; renderAll(); closeSide();
+      });
+      $('convList').appendChild(d);
+    }
+  }
+  function botBody(m) {
+    const parts = [];
+    for (const s of m.segs || []) {
+      if (s.kind === 'think') parts.push(`<details class="think"><summary>${L('размышления', 'thinking', '思考')}</summary><div class="md">${md(s.text)}</div></details>`);
+      else if (s.kind === 'tools') parts.push(`<div class="tools">${s.items.map((t) => `<span class="chip${t.result === '?' ? ' is-fail' : ''}"><b>tool</b>${esc(t.expr)} = ${esc(t.result)}</span>`).join('')}</div>`);
+      else if (s.text.trim()) parts.push(`<div class="md">${md(s.text)}</div>`);
+    }
+    if (m.note) parts.push(`<div class="m__note">${m.note}</div>`);
+    return parts.join('') || `<div class="md"></div>`;
+  }
+  function msgEl(m, idx) {
+    const d = document.createElement('div');
+    if (m.role === 'user') { d.className = 'm m--user'; d.innerHTML = '<div class="m__body"></div>'; d.firstChild.textContent = m.content; return d; }
+    d.className = 'm m--bot';
+    d.innerHTML = `<div class="m__avatar"><img src="../assets/q-logo.svg" alt=""></div><div class="m__body"><div class="m__content">${botBody(m)}</div><div class="m__meta"></div></div>`;
+    const meta = d.querySelector('.m__meta');
+    if (m.meta) meta.insertAdjacentHTML('beforeend', `<span>${m.meta.tokens} tok · ${(m.meta.tokens / (m.meta.ms / 1000)).toFixed(1)} tok/s</span>`);
+    const copy = document.createElement('button'); copy.innerHTML = ICON.copy + L('копировать', 'copy', '复制');
+    copy.onclick = () => navigator.clipboard && navigator.clipboard.writeText((m.segs || []).filter((s) => s.kind === 'text').map((s) => s.text).join('\n').trim());
+    meta.appendChild(copy);
+    if (idx === cur.messages.length - 1) {
+      const re = document.createElement('button'); re.innerHTML = ICON.redo + L('ещё раз', 'regenerate', '重新生成'); re.onclick = regenerate; meta.appendChild(re);
+    }
+    return d;
+  }
+  function renderAll() {
+    $('msgs').innerHTML = ''; cur.messages.forEach((m, i) => $('msgs').appendChild(msgEl(m, i)));
+    $('empty').hidden = !ready || cur.messages.length > 0; renderList(); scrollDown(true);
+  }
+  function scrollDown(force) { const t = $('thread'); if (force || t.scrollHeight - t.scrollTop - t.clientHeight < 160) t.scrollTop = t.scrollHeight; }
 
-$('send').addEventListener('click', sendMessage);
-$('input').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-$('newChat').addEventListener('click', resetConversation);
-document.querySelectorAll('.try').forEach((el) => el.addEventListener('click', () => { $('input').value = el.textContent; $('input').focus(); }));
-loadModel().catch((e) => { log('error: ' + e.message); console.error(e); });
+  // ---------------------------------------------------------------- worker
+  const worker = new Worker(`../nq-runtime/nq_worker.js?v=${V}`);
+  let ready = false, busy = false, live = null, lastAnswered = null, lastMemory = true;
+  worker.onmessage = (ev) => {
+    const m = ev.data;
+    if (m.type === 'progress') {
+      if (m.cached) { $('loadText').textContent = 'Loading from browser cache…'; $('loadBar').style.width = '100%'; }
+      else { const pct = m.total ? Math.round(100 * m.got / m.total) : 0; $('loadBar').style.width = pct + '%'; $('loadText').textContent = `Downloading the model… ${(m.got / 1e6).toFixed(1)}${m.total ? ' / ' + (m.total / 1e6).toFixed(1) : ''} MB`; }
+    } else if (m.type === 'status' && !ready) { $('loadText').textContent = 'Unpacking and self-testing…'; }
+    else if (m.type === 'ready') {
+      ready = true; $('loading').hidden = true; setStatus('ready');
+      $('modelMeta').innerHTML = `${m.layers} layers · hidden ${m.hidden} · vocab ${m.vocab.toLocaleString()}<br>self-test ${m.selftest[0]}/${m.selftest[1]} ${m.selftest[0] === m.selftest[1] ? '✓' : '✗'} · ${L('в браузере', 'in-browser', '浏览器内')}`;
+      updateSend(); renderAll(); $('input').focus();
+    } else if (m.type === 'seg' && live) {
+      let s = live.segs.find((x) => x.i === m.i && x.kind === m.kind);
+      if (!s) { s = { i: m.i, kind: m.kind, text: '' }; live.segs.push(s); }
+      s.text = m.text; redrawLive();
+    } else if (m.type === 'tool' && live) {
+      const last = live.segs[live.segs.length - 1];
+      if (last && last.kind === 'tools') last.items.push({ expr: m.expr, result: m.result }); else live.segs.push({ kind: 'tools', items: [{ expr: m.expr, result: m.result }] });
+      redrawLive();
+    } else if (m.type === 'done' && live) {
+      live.raw = m.raw; live.meta = { tokens: m.tokens, ms: m.ms };
+      if (m.hitLimit) live.note = L(`(ответ обрезан на ${opts().max_new} токенах — лимит в настройках)`, `(cut at ${opts().max_new} tokens — the limit is in settings)`, `（在 ${opts().max_new} 个词元处截断 —— 可在设置中调整上限）`);
+      if (!live.segs.some((s) => (s.kind === 'text' && s.text.trim()) || s.kind === 'tools')) live.note = (live.note || '') + L(' (только размышления, без ответа)', ' (only thinking, no answer)', '（只有思考，没有回答）');
+      finishLive(); setStatus('ready');
+    } else if (m.type === 'error') {
+      if (!ready) { $('loadText').textContent = 'Error: ' + m.message; }
+      else if (live) { live.note = 'error: ' + esc(m.message); finishLive(); }
+      setStatus(ready ? 'ready' : 'error');
+    }
+  };
+  worker.postMessage({ type: 'load', url: new URL(`model.qpack?v=${MODEL_V}`, location.href).href, version: MODEL_V });   // absolute: the worker resolves URLs from /nq-runtime/
+
+  function setStatus(s) {
+    const p = $('statusPill'); p.classList.toggle('is-ready', s === 'ready'); p.classList.toggle('is-busy', s === 'busy');
+    $('statusText').textContent = { ready: 'ready', busy: 'generating', loading: 'loading', error: 'error' }[s] || s;
+  }
+  function redrawLive() {
+    const el = $('msgs').lastElementChild; if (!el) return;
+    el.querySelector('.m__content').innerHTML = botBody(live); scrollDown(false);
+  }
+  function finishLive() {
+    busy = false; lastAnswered = cur; lastMemory = opts().memory; const idx = cur.messages.length - 1; cur.messages[idx] = live; live = null;
+    touch(); renderAll(); updateSend();   // re-render: only the newest answer gets the regenerate button
+  }
+
+  // ---------------------------------------------------------------- sending
+  const opts = () => ({ temperature: +$('temp').value, top_p: +$('topP').value, max_new: +$('maxNew').value, rep: +$('rep').value,
+    greedy: $('greedy').checked, think: $('think').checked, memory: $('memory').checked });
+  const turnsOf = (msgs) => msgs.filter((m) => m.role === 'user' || m.raw != null).map((m) => ({ role: m.role, content: m.role === 'user' ? m.content : m.raw }));
+
+  function startLive() {
+    live = { role: 'assistant', segs: [], raw: null }; cur.messages.push(live);
+    const el = msgEl(live, cur.messages.length - 1); el.classList.add('is-pending'); el.querySelector('.m__meta').innerHTML = ''; $('msgs').appendChild(el);
+    busy = true; setStatus('busy'); updateSend(); scrollDown(true);
+  }
+  function send(text) {
+    text = (text || '').trim(); if (!text || !ready || busy) return;
+    const prior = turnsOf(cur.messages);
+    cur.messages.push({ role: 'user', content: text }); $('empty').hidden = true;
+    $('msgs').appendChild(msgEl(cur.messages[cur.messages.length - 1])); touch();
+    startLive(); worker.postMessage({ type: 'chat', turns: prior, text, opts: opts() });
+  }
+  function regenerate() {
+    if (busy || !cur.messages.length || cur.messages[cur.messages.length - 1].role !== 'assistant') return;
+    const prior = turnsOf(cur.messages.slice(0, -2)), text = cur.messages[cur.messages.length - 2].content;
+    cur.messages.pop(); $('msgs').removeChild($('msgs').lastElementChild);
+    startLive();
+    // the worker keeps a snapshot from right before the last answer it generated: reuse it when that answer is this one
+    if (lastAnswered === cur && opts().memory === lastMemory) worker.postMessage({ type: 'regenerate', opts: opts() });
+    else worker.postMessage({ type: 'chat', turns: prior, text, opts: opts() });
+  }
+  function updateSend() {
+    const b = $('send'); b.classList.toggle('is-stop', busy); b.disabled = !ready || (!busy && !$('input').value.trim());
+  }
+
+  // ---------------------------------------------------------------- wiring
+  $('composer').addEventListener('submit', (e) => { e.preventDefault(); if (busy) { worker.postMessage({ type: 'stop' }); return; } const t = $('input').value; $('input').value = ''; autoGrow(); updateSend(); send(t); });
+  const autoGrow = () => { const t = $('input'); t.style.height = 'auto'; t.style.height = Math.min(200, t.scrollHeight) + 'px'; };
+  $('input').addEventListener('input', () => { autoGrow(); updateSend(); });
+  $('input').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('composer').requestSubmit(); } });
+  $('newChat').addEventListener('click', () => { if (!busy) { newConv(); closeSide(); $('input').focus(); } });
+  const closeSide = () => $('app').classList.remove('side-open');
+  $('menuBtn').addEventListener('click', () => $('app').classList.toggle('side-open'));
+  $('scrim').addEventListener('click', closeSide);
+  $('settingsBtn').addEventListener('click', (e) => { e.stopPropagation(); const s = $('settings'); s.hidden = !s.hidden; $('settingsBtn').setAttribute('aria-expanded', String(!s.hidden)); });
+  document.addEventListener('click', (e) => { if (!$('settings').hidden && !$('settings').contains(e.target)) $('settings').hidden = true; });
+  for (const [id, out, d] of [['temp', 'tempVal', 2], ['topP', 'topPVal', 2], ['maxNew', 'maxNewVal', 0], ['rep', 'repVal', 2]]) {
+    $(id).addEventListener('input', () => { $(out).textContent = (+$(id).value).toFixed(d); savePrefs(); });
+  }
+  ['greedy', 'think', 'memory'].forEach((id) => $(id).addEventListener('change', savePrefs));
+  function savePrefs() { try { localStorage.setItem('nq-chat-prefs-v3', JSON.stringify(opts())); } catch (e) {} }
+  try {
+    const p = JSON.parse(localStorage.getItem('nq-chat-prefs-v3') || 'null');
+    if (p) { $('temp').value = p.temperature; $('topP').value = p.top_p; $('maxNew').value = p.max_new; $('rep').value = p.rep; $('greedy').checked = p.greedy; $('think').checked = p.think; $('memory').checked = p.memory;
+      for (const [id, out, d] of [['temp', 'tempVal', 2], ['topP', 'topPVal', 2], ['maxNew', 'maxNewVal', 0], ['rep', 'repVal', 2]]) $(out).textContent = (+$(id).value).toFixed(d); }
+  } catch (e) {}
+  for (const [q, ru, en] of SUGGEST) {
+    const b = document.createElement('button'); b.type = 'button'; b.innerHTML = `${esc(q)}<small>${L(ru, en, en)}</small>`; b.onclick = () => send(q); $('suggest').appendChild(b);
+  }
+  loadConvs(); newConv(); renderList();
+})();
