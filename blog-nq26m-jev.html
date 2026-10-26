@@ -1,0 +1,386 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>N-Q-26M-JEV: a model that makes decisions instead of writing text — Q Project</title>
+  <meta name="description" content="N-Q-26M-JEV: a Jev-style decision model built from N-Q-26M-Chat — choice, score and yes/no with calibrated probabilities in one forward pass; strong on trained tasks, near chance on new ones; runs in the browser." />
+  <link rel="icon" type="image/svg+xml" href="assets/q-logo.svg" />
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("q-theme") || "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Release-page additions on top of the shared article styles */
+    .model-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 28px 0 8px; }
+    @media (max-width: 720px) { .model-pair { grid-template-columns: 1fr; } }
+    .model-pair .model { display: flex; flex-direction: column; gap: 10px; }
+    .model-pair .model__logo { width: 40px; height: 40px; margin-bottom: 2px; }
+    .model-pair .model__name { font-size: 1.2rem; }
+    .model-pair .model__desc { color: var(--muted); font-size: 0.92rem; margin: 0; }
+    .model-pair .model__foot { margin-top: auto; padding-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s cubic-bezier(0.2,0.7,0.2,1), transform 0.6s cubic-bezier(0.2,0.7,0.2,1); }
+    .reveal.is-in { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+    .stat-num { display: inline-block; font-variant-numeric: tabular-nums; }
+
+    .qbench-table-wrap { overflow-x: auto; margin-top: 18px; }
+    .qbench-table-wrap .doc-table td.best { color: var(--brand); font-weight: 600; }
+    .qbench-table-wrap .doc-table tr.us td { background: var(--surface-2); }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#intro"><span data-lang="ru">Перейти к статье</span><span data-lang="en">Skip to article</span><span data-lang="zh">跳到正文</span></a>
+
+  {% include header.html active="blog" %}
+
+  <article class="article" id="intro">
+
+  <!-- ===================== RUSSIAN ===================== -->
+  <div data-lang="ru">
+    <p class="article__kicker">ЭКСПЕРИМЕНТ &middot; ЛИНЕЙКА N-Q</p>
+    <h1 class="article__title">N-Q-26M-JEV: модель, которая не пишет текст, а принимает решения</h1>
+    <p class="article__lede">Мы взяли N-Q-26M-Chat и превратили её в модель решений в духе Jev: на входе текст, вопрос и варианты ответа, на выходе — выбор с откалиброванными вероятностями за один проход. Хорошо работает на задачах, которым её учили. На новых типах вопросов — около случайного уровня.</p>
+
+    <div class="article__stats reveal">
+      <div><b>98–99%</b><span>«ответ к вопросу»</span></div>
+      <div><b>81–89%</b><span>темы</span></div>
+      <div><b>0.005–0.055</b><span>ошибка калибровки</span></div>
+      <div><b>3.3 ч</b><span>обучения на V100</span></div>
+    </div>
+
+    <div class="doc-block">
+      <div class="callout">
+        <div>Работает прямо в браузере: <a href="jev/">демо JEV</a>. Базовая модель — <a href="blog-nq26m.html">N-Q-26M</a>.</div>
+      </div>
+
+      <h2>Что такое Jev</h2>
+      <p>Jev — «модель решений» от TypeSafe AI (сентябрь 2026). Она не генерирует текст: получает состояние (любой текст) и вопрос, а возвращает типизированный ответ с вероятностями. Три примитива: <code>Choice</code> — выбор из списка вариантов, <code>Score</code> — уровень на шкале, <code>Noul</code> — вероятность «да». Нужна для массовых решений в пайплайнах: классификация, маршрутизация, проверка ответа — там, где генерация текста лишняя и дорогая. Веса Jev закрыты, поэтому мы сделали свою версию с нуля.</p>
+
+      <h2>Как устроено</h2>
+      <p>Варианты ответа ставятся прямо в последовательность и разделяются маркером:</p>
+      <pre><code>&lt;bos&gt;&lt;USER&gt;текст&lt;EOT&gt;&lt;ASK&gt;вопрос&lt;OPT&gt;вариант 1&lt;OPT&gt;вариант 2&lt;OPT&gt;…&lt;OPT&gt;</code></pre>
+      <ul>
+        <li>Линейная голова читает скрытое состояние на маркере, закрывающем каждый вариант, и выдаёт оценку; softmax по вариантам даёт распределение.</li>
+        <li><code>Score</code> и <code>Noul</code> — частные случаи: варианты — уровни шкалы и «нет / да».</li>
+        <li>Модель каузальная, поэтому второй вариант «видит» первый, а не наоборот. В симметричном режиме варианты прогоняются и в обратном порядке, вероятности усредняются — перекос по позиции уходит.</li>
+        <li>Лосс — log-loss по вариантам. Это строгое правило оценки, оно и делает вероятности откалиброванными.</li>
+        <li>Голова языковой модели сохранена — чекпоинт по-прежнему умеет писать текст.</li>
+      </ul>
+
+      <h2>Обучение</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Версия</th><th>Данные</th><th>Время на V100</th></tr></thead>
+          <tbody>
+            <tr><td>v1</td><td>161 тыс. примеров, 6 типов задач: тема запроса, качество и сложность (saiga_scored), какой ответ лучше (пары предпочтений), какой ответ относится к вопросу и «отвечает ли ответ» (диалоги SFT)</td><td>1.4 ч</td></tr>
+            <tr class="us"><td><b>v2</b></td><td>+ логический вывод (XNLI, русский и английский), тональность, токсичность, тематика новостей: 242 тыс. примеров, 10 типов задач, продолжение v1</td><td>1.9 ч</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Вариантам каждый раз меняли порядок, а вопросы задавали несколькими формулировками на двух языках — чтобы модель читала вопрос, а не запоминала шаблон.</p>
+
+      <h2>Результаты</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Задача</th><th>v1</th><th>v2</th><th>Случайно</th></tr></thead>
+          <tbody>
+            <tr><td>отвечает ли ответ на вопрос (да/нет)</td><td>98.2%</td><td class="best">98.2%</td><td>50%</td></tr>
+            <tr><td>какой из 4 ответов относится к вопросу</td><td>98.9%</td><td class="best">99.0%</td><td>25%</td></tr>
+            <tr><td>тематика новостей (4 темы)</td><td>66.7%</td><td class="best">88.8%</td><td>25%</td></tr>
+            <tr><td>тема запроса (из 6)</td><td>79.8%</td><td class="best">81.1%</td><td>17%</td></tr>
+            <tr><td>токсичность (русский)</td><td>35.5%</td><td class="best">80.0%</td><td>50%</td></tr>
+            <tr><td>тональность (русский + английский)</td><td>44.0%</td><td class="best">78.1%</td><td>~40%</td></tr>
+            <tr><td>сложность запроса (3 уровня)</td><td>69.2%</td><td>69.4%</td><td>63% (всегда «средне»)</td></tr>
+            <tr><td>какой из двух ответов лучше</td><td>66.3%</td><td>68.7%</td><td>50%</td></tr>
+            <tr><td>логический вывод (3 класса)</td><td>38.0%</td><td class="best">64.5%</td><td>33%</td></tr>
+            <tr><td>качество ответа (3 уровня)</td><td>54.3%</td><td>56.6%</td><td>33%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Новые задачи в v2 выросли сильно, старые не просели. Ошибка калибровки на всех обученных задачах — от 0.005 до 0.055: если модель уверена на 90%, она права примерно в 90% случаев.</p>
+
+      <h2>Задачи, которых модель не видела</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Задача</th><th>v2</th><th>Случайно</th></tr></thead>
+          <tbody>
+            <tr><td>эмоции, 6 классов (английский)</td><td>29.9%</td><td>17% (частый класс — 35%)</td></tr>
+            <tr><td>ruOpenBookQA, 4 варианта</td><td>26.3%</td><td>25%</td></tr>
+            <tr><td>PARus, причина или следствие</td><td>49.0%</td><td>50%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Главный честный вывод: на 26M параметрах модель быстро учится любой задаче, которую видит, и даёт честные вероятности, но универсальным «решателем» не становится. Новые типы вопросов, особенно требующие знаний и рассуждения, она решает около случайного уровня.</p>
+
+      <h2>Как это выглядит</h2>
+      <ul>
+        <li>«Как сварить борщ?» + ответ про свёклу и бульон → «ответ по делу» с вероятностью <b>0.99</b>; тот же вопрос + ответ про Python → <b>0.01</b>.</li>
+        <li>«Напиши функцию для чисел Фибоначчи» → тема <b>coding</b> (0.67), сложность <b>средне</b>. В одиночном проходе модель выбирает <i>math</i> — симметричный режим исправляет перекос по порядку.</li>
+        <li>Жалоба на разбитый экран и молчащую поддержку → токсичность <b>нет</b> (0.99), тема <b>finance</b> (0.83), тональность — «отрицательная» всего на 51%. Русская разметка тональности шумная, и модель это унаследовала.</li>
+      </ul>
+
+      <h2>В браузере</h2>
+      <p><a href="jev/">Демо</a> работает на том же JavaScript-рантайме, что и чат: веса в формате qpack (89 МБ), вычисления в Web Worker. Общий префикс — текст и вопрос — считается один раз и переиспользуется для обоих порядков вариантов и для всех вопросов: у рекуррентной модели можно сохранить состояние и откатиться к нему. Вероятности в браузере совпадают с PyTorch с точностью до 5·10⁻⁵; одно решение занимает 4–8 секунд.</p>
+
+      <h2>Что дальше</h2>
+      <p>Встраиваем JEV в чат: модель решений будет проверять ответы чата и выбирать лучший из нескольких. Это делается в экспериментальном чате, где видно, когда работает JEV, и его можно отключить. А универсальную модель решений будем пробовать на N-Q-164M — на таком размере перенос на новые задачи гораздо вероятнее.</p>
+    </div>
+  </div>
+
+  <!-- ===================== ENGLISH ===================== -->
+  <div data-lang="en">
+    <p class="article__kicker">EXPERIMENT &middot; THE N-Q LADDER</p>
+    <h1 class="article__title">N-Q-26M-JEV: a model that makes decisions instead of writing text</h1>
+    <p class="article__lede">We took N-Q-26M-Chat and turned it into a Jev-style decision model: text, a question and options go in; a choice with calibrated probabilities comes out, in one forward pass. It is good at the tasks it was trained on. On new kinds of questions it is near chance.</p>
+
+    <div class="article__stats reveal">
+      <div><b>98–99%</b><span>reply ↔ question</span></div>
+      <div><b>81–89%</b><span>topics</span></div>
+      <div><b>0.005–0.055</b><span>calibration error</span></div>
+      <div><b>3.3 h</b><span>of V100 training</span></div>
+    </div>
+
+    <div class="doc-block">
+      <div class="callout">
+        <div>It runs right in the browser: <a href="jev/">JEV demo</a>. The base model is <a href="blog-nq26m.html">N-Q-26M</a>.</div>
+      </div>
+
+      <h2>What Jev is</h2>
+      <p>Jev is a "decision model" from TypeSafe AI (September 2026). It does not generate text: it takes a state (any text) and a question and returns a typed answer with probabilities. Three primitives: <code>Choice</code> — a pick from a list of options, <code>Score</code> — a level on a scale, <code>Noul</code> — the probability of "yes". It is meant for high-volume decisions in pipelines — classification, routing, answer checking — where generating text is unnecessary and expensive. Jev's weights are closed, so we built our own version from scratch.</p>
+
+      <h2>How it works</h2>
+      <p>The options go straight into the sequence, separated by a marker:</p>
+      <pre><code>&lt;bos&gt;&lt;USER&gt;text&lt;EOT&gt;&lt;ASK&gt;question&lt;OPT&gt;option 1&lt;OPT&gt;option 2&lt;OPT&gt;…&lt;OPT&gt;</code></pre>
+      <ul>
+        <li>A linear head reads the hidden state at the marker closing each option and outputs a score; a softmax over the options gives the distribution.</li>
+        <li><code>Score</code> and <code>Noul</code> are special cases: the options are the scale levels and "no / yes".</li>
+        <li>The model is causal, so the second option "sees" the first but not the other way round. In symmetric mode the options also run in reverse order and the probabilities are averaged, which removes the position bias.</li>
+        <li>The loss is log-loss over the options — a proper scoring rule, which is what makes the probabilities calibrated.</li>
+        <li>The language-model head is kept, so the checkpoint can still write text.</li>
+      </ul>
+
+      <h2>Training</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Version</th><th>Data</th><th>V100 time</th></tr></thead>
+          <tbody>
+            <tr><td>v1</td><td>161k examples, 6 task types: request topic, quality and difficulty (saiga_scored), which answer is better (preference pairs), which reply fits the question and "does the reply answer it" (SFT dialogues)</td><td>1.4 h</td></tr>
+            <tr class="us"><td><b>v2</b></td><td>+ entailment (XNLI, Russian and English), sentiment, toxicity, news topics: 242k examples, 10 task types, continued from v1</td><td>1.9 h</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The option order was shuffled every time, and each question came in several phrasings in two languages, so the model has to read the question rather than memorize a template.</p>
+
+      <h2>Results</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Task</th><th>v1</th><th>v2</th><th>Chance</th></tr></thead>
+          <tbody>
+            <tr><td>does the reply answer the question (yes/no)</td><td>98.2%</td><td class="best">98.2%</td><td>50%</td></tr>
+            <tr><td>which of 4 replies fits the question</td><td>98.9%</td><td class="best">99.0%</td><td>25%</td></tr>
+            <tr><td>news topic (4 topics)</td><td>66.7%</td><td class="best">88.8%</td><td>25%</td></tr>
+            <tr><td>request topic (6 offered)</td><td>79.8%</td><td class="best">81.1%</td><td>17%</td></tr>
+            <tr><td>toxicity (Russian)</td><td>35.5%</td><td class="best">80.0%</td><td>50%</td></tr>
+            <tr><td>sentiment (Russian + English)</td><td>44.0%</td><td class="best">78.1%</td><td>~40%</td></tr>
+            <tr><td>request difficulty (3 levels)</td><td>69.2%</td><td>69.4%</td><td>63% (always "medium")</td></tr>
+            <tr><td>which of two answers is better</td><td>66.3%</td><td>68.7%</td><td>50%</td></tr>
+            <tr><td>entailment (3 classes)</td><td>38.0%</td><td class="best">64.5%</td><td>33%</td></tr>
+            <tr><td>answer quality (3 levels)</td><td>54.3%</td><td>56.6%</td><td>33%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The new tasks rose sharply in v2 and the old ones held. Calibration error on every trained task is between 0.005 and 0.055: when the model is 90% sure, it is right about 90% of the time.</p>
+
+      <h2>Tasks the model never saw</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>Task</th><th>v2</th><th>Chance</th></tr></thead>
+          <tbody>
+            <tr><td>emotion, 6 classes (English)</td><td>29.9%</td><td>17% (majority class 35%)</td></tr>
+            <tr><td>ruOpenBookQA, 4 options</td><td>26.3%</td><td>25%</td></tr>
+            <tr><td>PARus, cause or effect</td><td>49.0%</td><td>50%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The main honest takeaway: at 26M parameters the model quickly learns any task it sees and gives honest probabilities, but it does not become a general decision model. New kinds of questions, especially ones that need knowledge or reasoning, it answers near chance.</p>
+
+      <h2>What it looks like</h2>
+      <ul>
+        <li>"How do I cook borscht?" + an answer about beetroot and broth → "the reply answers it" with probability <b>0.99</b>; the same question + an answer about Python → <b>0.01</b>.</li>
+        <li>"Write a function for Fibonacci numbers" → topic <b>coding</b> (0.67), difficulty <b>medium</b>. A single pass picks <i>math</i> — the symmetric mode fixes the order bias.</li>
+        <li>A complaint about a broken screen and silent support → toxicity <b>no</b> (0.99), topic <b>finance</b> (0.83), sentiment "negative" at only 51%. The Russian sentiment labels are noisy, and the model inherited that.</li>
+      </ul>
+
+      <h2>In the browser</h2>
+      <p>The <a href="jev/">demo</a> runs on the same JavaScript runtime as the chat: qpack weights (89 MB), computation in a Web Worker. The shared prefix — the text and the question — is computed once and reused for both option orders and for every question: a recurrent model can save its state and roll back to it. Probabilities in the browser match PyTorch within 5·10⁻⁵; one decision takes 4–8 seconds.</p>
+
+      <h2>What's next</h2>
+      <p>We are building JEV into the chat: the decision model will check the chat's answers and pick the best of several. That happens in an experimental chat that shows when JEV is at work and lets you turn it off. A general decision model we will try on N-Q-164M — at that size transfer to new tasks is far more likely.</p>
+    </div>
+  </div>
+
+  <!-- ===================== CHINESE ===================== -->
+  <div data-lang="zh">
+    <p class="article__kicker">实验 &middot; N-Q 系列</p>
+    <h1 class="article__title">N-Q-26M-JEV：一个不写文本、而是做决策的模型</h1>
+    <p class="article__lede">我们把 N-Q-26M-Chat 改造成了类似 Jev 的决策模型：输入文本、问题和选项，一次前向计算输出带校准概率的选择。它擅长训练过的任务；面对新类型的问题，表现接近随机。</p>
+
+    <div class="article__stats reveal">
+      <div><b>98–99%</b><span>问答匹配</span></div>
+      <div><b>81–89%</b><span>主题</span></div>
+      <div><b>0.005–0.055</b><span>校准误差</span></div>
+      <div><b>3.3 小时</b><span>V100 训练</span></div>
+    </div>
+
+    <div class="doc-block">
+      <div class="callout">
+        <div>直接在浏览器中运行：<a href="jev/">JEV 演示</a>。基础模型是 <a href="blog-nq26m.html">N-Q-26M</a>。</div>
+      </div>
+
+      <h2>Jev 是什么</h2>
+      <p>Jev 是 TypeSafe AI 的"决策模型"（2026 年 9 月）。它不生成文本：输入一个状态（任意文本）和一个问题，返回带概率的类型化答案。三个原语：<code>Choice</code> —— 从选项列表中选择，<code>Score</code> —— 量表上的等级，<code>Noul</code> —— "是"的概率。它用于流水线中的大规模决策：分类、路由、答案检查 —— 这些场景里生成文本既多余又昂贵。Jev 的权重不公开，所以我们从零做了自己的版本。</p>
+
+      <h2>工作原理</h2>
+      <p>选项直接放进序列，用标记分隔：</p>
+      <pre><code>&lt;bos&gt;&lt;USER&gt;文本&lt;EOT&gt;&lt;ASK&gt;问题&lt;OPT&gt;选项 1&lt;OPT&gt;选项 2&lt;OPT&gt;…&lt;OPT&gt;</code></pre>
+      <ul>
+        <li>线性头读取每个选项结尾标记处的隐藏状态并输出分数；对选项做 softmax 得到分布。</li>
+        <li><code>Score</code> 和 <code>Noul</code> 是特例：选项分别是量表等级和"否 / 是"。</li>
+        <li>模型是因果的，所以第二个选项能"看到"第一个，反之则不行。对称模式下选项还会以相反顺序再算一遍，再对概率取平均，从而消除位置偏差。</li>
+        <li>损失是选项上的 log-loss —— 一种严格评分规则，正是它让概率得到校准。</li>
+        <li>语言模型头保留着，检查点仍然可以写文本。</li>
+      </ul>
+
+      <h2>训练</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>版本</th><th>数据</th><th>V100 用时</th></tr></thead>
+          <tbody>
+            <tr><td>v1</td><td>16.1 万个样本，6 类任务：请求主题、质量与难度（saiga_scored）、哪个回答更好（偏好对）、哪个回答对应问题以及"回答是否切题"（SFT 对话）</td><td>1.4 小时</td></tr>
+            <tr class="us"><td><b>v2</b></td><td>+ 自然语言推理（XNLI，俄语和英语）、情感、毒性、新闻主题：24.2 万个样本，10 类任务，在 v1 基础上继续训练</td><td>1.9 小时</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>每次都会打乱选项顺序，每个问题都有两种语言的多种表述 —— 让模型去读问题，而不是记住模板。</p>
+
+      <h2>结果</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>任务</th><th>v1</th><th>v2</th><th>随机</th></tr></thead>
+          <tbody>
+            <tr><td>回答是否切题（是/否）</td><td>98.2%</td><td class="best">98.2%</td><td>50%</td></tr>
+            <tr><td>4 个回答中哪个对应问题</td><td>98.9%</td><td class="best">99.0%</td><td>25%</td></tr>
+            <tr><td>新闻主题（4 类）</td><td>66.7%</td><td class="best">88.8%</td><td>25%</td></tr>
+            <tr><td>请求主题（6 选 1）</td><td>79.8%</td><td class="best">81.1%</td><td>17%</td></tr>
+            <tr><td>毒性（俄语）</td><td>35.5%</td><td class="best">80.0%</td><td>50%</td></tr>
+            <tr><td>情感（俄语 + 英语）</td><td>44.0%</td><td class="best">78.1%</td><td>~40%</td></tr>
+            <tr><td>请求难度（3 级）</td><td>69.2%</td><td>69.4%</td><td>63%（总选"中等"）</td></tr>
+            <tr><td>两个回答哪个更好</td><td>66.3%</td><td>68.7%</td><td>50%</td></tr>
+            <tr><td>自然语言推理（3 类）</td><td>38.0%</td><td class="best">64.5%</td><td>33%</td></tr>
+            <tr><td>回答质量（3 级）</td><td>54.3%</td><td>56.6%</td><td>33%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>v2 中新任务大幅提升，旧任务保持不变。所有训练过的任务上校准误差在 0.005 到 0.055 之间：模型有 90% 把握时，大约 90% 的情况是对的。</p>
+
+      <h2>模型没见过的任务</h2>
+      <div class="qbench-table-wrap">
+        <table class="doc-table">
+          <thead><tr><th>任务</th><th>v2</th><th>随机</th></tr></thead>
+          <tbody>
+            <tr><td>情绪，6 类（英语）</td><td>29.9%</td><td>17%（多数类 35%）</td></tr>
+            <tr><td>ruOpenBookQA，4 个选项</td><td>26.3%</td><td>25%</td></tr>
+            <tr><td>PARus，原因还是结果</td><td>49.0%</td><td>50%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>最主要的如实结论：在 26M 参数下，模型能很快学会它见过的任何任务，并给出真实可信的概率，但不会变成通用的决策模型。对于新类型的问题，尤其是需要知识或推理的问题，它的表现接近随机。</p>
+
+      <h2>实际效果</h2>
+      <ul>
+        <li>"怎么做罗宋汤？" + 关于甜菜和高汤的回答 → "回答切题"的概率 <b>0.99</b>；同一个问题 + 关于 Python 的回答 → <b>0.01</b>。</li>
+        <li>"写一个计算斐波那契数的函数" → 主题 <b>coding</b>（0.67），难度 <b>中等</b>。单次计算会选 <i>math</i> —— 对称模式纠正了顺序偏差。</li>
+        <li>一条关于屏幕摔碎、客服不回复的投诉 → 毒性 <b>否</b>（0.99），主题 <b>finance</b>（0.83），情感"负面"只有 51%。俄语情感标注有噪声，模型也继承了这一点。</li>
+      </ul>
+
+      <h2>在浏览器中</h2>
+      <p><a href="jev/">演示</a>使用和聊天相同的 JavaScript 运行时：qpack 格式权重（89 MB），在 Web Worker 中计算。共享前缀 —— 文本和问题 —— 只计算一次，并在两种选项顺序和所有问题之间复用：循环模型可以保存状态并回滚。浏览器中的概率与 PyTorch 的差异在 5·10⁻⁵ 以内；一次决策需要 4–8 秒。</p>
+
+      <h2>接下来</h2>
+      <p>我们正在把 JEV 集成到聊天中：决策模型将检查聊天的回答，并从多个回答中选出最好的。这会在一个实验性聊天中进行，你能看到 JEV 何时在工作，也可以关闭它。通用决策模型我们会在 N-Q-164M 上尝试 —— 在那个规模上，迁移到新任务的可能性要大得多。</p>
+    </div>
+  </div>
+
+  </article>
+
+  <footer class="footer">
+    <div class="footer__brand">
+      <img src="assets/q-logo.svg" alt="" width="28" height="28" />
+      <span>Q Project</span>
+    </div>
+    <p class="footer__tag">
+      <span data-lang="ru">Претрейн &middot; Файнтюн &middot; Агенты &middot; Исследования</span>
+      <span data-lang="en">Pretrain &middot; Finetune &middot; Agents &middot; Research</span>
+      <span data-lang="zh">预训练 &middot; 微调 &middot; 智能体 &middot; 研究</span>
+    </p>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="index.html"><span data-lang="ru">Главная</span><span data-lang="en">Home</span><span data-lang="zh">首页</span></a>
+      <a href="blog.html"><span data-lang="ru">Блог</span><span data-lang="en">Blog</span><span data-lang="zh">博客</span></a>
+      <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a>
+      <a href="https://github.com/Q-Project-LM" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <p class="footer__copy">
+      <span data-lang="ru">&copy; <span class="year"></span> Q Project. Разрабатывается независимо.</span>
+      <span data-lang="en">&copy; <span class="year"></span> Q Project. Built independently.</span>
+      <span data-lang="zh">&copy; <span class="year"></span> Q Project。独立开发。</span>
+    </p>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    (function () {
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var els = document.querySelectorAll(".reveal");
+      if (!("IntersectionObserver" in window) || reduce) {
+        els.forEach(function (el) { el.classList.add("is-in"); });
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          en.target.classList.add("is-in");
+          io.unobserve(en.target);
+          en.target.querySelectorAll(".stat-num[data-count]").forEach(function (num) {
+            var target = parseFloat(num.getAttribute("data-count"));
+            var suffix = num.getAttribute("data-suffix") || "";
+            var start = performance.now(), dur = 900;
+            function frame(t) {
+              var p = Math.min(1, (t - start) / dur);
+              var eased = 1 - Math.pow(1 - p, 3);
+              num.textContent = (target * eased).toFixed(target % 1 ? 1 : 0) + suffix;
+              if (p < 1) requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+          });
+        });
+      }, { threshold: 0.25 });
+      els.forEach(function (el) { io.observe(el); });
+    })();
+  </script>
+</body>
+</html>
