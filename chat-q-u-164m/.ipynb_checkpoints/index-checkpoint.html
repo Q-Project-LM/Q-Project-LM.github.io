@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Q-164M — chat demo</title>
+<meta name="description" content="Multi-turn chat with Q-164M, running entirely in your browser via a hand-written WASM kernel — no server." />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  .chat-wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 120px; }
+  .chat-log { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; min-height: 200px; }
+  .msg { max-width: 82%; padding: 10px 14px; border-radius: 14px; line-height: 1.5; font-size: 15px; white-space: pre-wrap; }
+  .msg.user { align-self: flex-end; background: var(--brand); color: var(--on-grad); border-bottom-right-radius: 4px; }
+  .msg.model { align-self: flex-start; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .msg.model.pending::after { content: "▍"; opacity: .5; animation: blink 1s step-start infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .composer { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg-2); border-top: 1px solid var(--line); padding: 12px 16px; }
+  .composer-inner { max-width: 760px; margin: 0 auto; display: flex; gap: 8px; align-items: flex-end; }
+  .composer textarea { flex: 1; resize: none; border: 1px solid var(--line-2); border-radius: 10px; padding: 10px 12px; font: inherit; background: var(--surface); color: var(--text); min-height: 42px; max-height: 140px; }
+  .composer button { border: none; border-radius: 10px; padding: 10px 18px; font-weight: 600; background: var(--brand); color: var(--on-grad); cursor: pointer; }
+  .composer button:disabled { opacity: .5; cursor: default; }
+  .status-bar { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 8px; }
+  .new-chat { font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--line-2); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+  .placeholder-note { font-size: 12px; color: var(--faint); border: 1px dashed var(--line-2); border-radius: 8px; padding: 8px 10px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="chat-wrap">
+  <h1 style="font-size:20px;margin:8px 0 2px;">Q-164M — chat</h1>
+  <div class="status-bar">
+    <span id="status">loading…</span>
+    <span id="params"></span>
+    <span id="backend"></span>
+    <span id="selftest"></span>
+    <button class="new-chat" id="newChat">New conversation</button>
+  </div>
+  <div class="placeholder-note" id="placeholderNote">
+    Placeholder build: this page ships with the previous (single-turn) demo's <code>model.qpack</code>/<code>kernel.wasm</code>
+    so the chat UI itself can be tested end-to-end before Q-164M finishes training. Swap those two files once the real
+    checkpoint is exported — nothing else on this page needs to change.
+  </div>
+  <div class="chat-log" id="log"></div>
+</div>
+<div class="composer">
+  <div class="composer-inner">
+    <textarea id="input" placeholder="Message Q-164M…" rows="1"></textarea>
+    <button id="send">Send</button>
+  </div>
+</div>
+<script src="qpack.js"></script>
+<script src="tokenizer.js"></script>
+<script src="model.js"></script>
+<script src="wasm.js"></script>
+<script src="circuits.js"></script>
+<script src="chat.js"></script>
+</body>
+</html>

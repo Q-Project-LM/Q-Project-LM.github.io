@@ -5,8 +5,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chat with Q-U-164M — Q Project</title>
-  <meta name="description" content="Multi-turn chat with Q-U-164M (Q-164M fine-tuned with SFT then RL), running entirely client-side via a hand-written WASM kernel — no server, no Python. Tool calls (exact arithmetic, dates, sorting, and more) are shown transparently, not hidden." />
+  <title>Chat with N-Q-26M — Q Project</title>
+  <meta name="description" content="Chat with N-Q-26M, a 26M-class Russian/English model trained from scratch on one V100 (Gated DeltaNet + gated attention, exact tool calls), running entirely in your browser in plain JavaScript — no server, no Python." />
   <link rel="icon" type="image/svg+xml" href="../assets/q-logo.svg" />
 
   <script>
@@ -23,23 +23,31 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../styles.css" />
   <style>
-    /* Chat-specific additions, layered on top of the shared site tokens/components (.run/.demo-card/.btn/.demo__row already come from styles.css) */
+    /* Chat-specific additions on top of the shared site tokens/components (same as the Q-U-164M chat) */
     .chat-log { display: flex; flex-direction: column; gap: 12px; max-height: 56vh; overflow-y: auto; padding: 4px 2px; margin-bottom: 4px; }
-    .chat-log:empty::before { content: "Say hello, ask it to do some math, or try one of the prompts below."; color: var(--faint); font-size: 0.9rem; }
-    html:lang(ru) .chat-log:empty::before { content: "Скажи привет, попроси что-нибудь посчитать или попробуй один из промптов ниже."; }
-    html:lang(zh) .chat-log:empty::before { content: "打个招呼，让它算点数学题，或者试试下面的提示词。"; }
-    .msg { max-width: 86%; padding: 10px 14px; border-radius: 14px; line-height: 1.55; font-size: 0.95rem; white-space: pre-wrap; }
+    .chat-log:empty::before { content: "Say hello, ask it to compute something, or try one of the prompts below."; color: var(--faint); font-size: 0.9rem; }
+    html:lang(ru) .chat-log:empty::before { content: "Поздоровайся, попроси что-нибудь посчитать или попробуй один из промптов ниже."; }
+    html:lang(zh) .chat-log:empty::before { content: "打个招呼，让它算点东西，或者试试下面的提示词。"; }
+    .msg { max-width: 86%; padding: 10px 14px; border-radius: 14px; line-height: 1.55; font-size: 0.95rem; white-space: pre-wrap; overflow-wrap: anywhere; }
     .msg.user { align-self: flex-end; background: var(--brand); color: var(--on-grad); border-bottom-right-radius: 4px; }
     .msg.model { align-self: flex-start; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
     .msg.model.pending::after { content: "▍"; opacity: .6; animation: blink 1s step-start infinite; }
     @keyframes blink { 50% { opacity: 0; } }
     .tool-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--code-bg); color: var(--code-text); border: 1px solid var(--code-line);
-      border-radius: 8px; padding: 3px 9px; font-family: var(--f-mono); font-size: 0.82em; margin: 4px 0; }
+      border-radius: 8px; padding: 3px 9px; font-family: var(--f-mono); font-size: 0.82em; margin: 4px 0; white-space: normal; }
     .tool-chip__tag { color: var(--cyan); font-weight: 600; }
+    details.think { margin: 0 0 6px; font-size: 0.85em; color: var(--muted); }
+    details.think summary { cursor: pointer; user-select: none; }
+    .msg .tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 6px; }
+    details.think > div { border-left: 2px solid var(--line); padding-left: 10px; margin-top: 4px; white-space: pre-wrap; }
     .composer-row { display: flex; gap: 10px; align-items: flex-end; margin-top: 14px; }
     .composer-row textarea { flex: 1; min-height: 44px; max-height: 140px; }
-    .chat-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+    .chat-actions { display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: space-between; align-items: center; margin-top: 10px; }
     .chat-actions .btn--ghost { padding: 7px 14px; font-size: 0.82rem; }
+    .chat-opts { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 0.85rem; color: var(--muted); }
+    .chat-opts select { font: inherit; color: var(--text); background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
+    .try { cursor: pointer; }
+    .try:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -49,13 +57,13 @@
 
   <main class="run demo" id="demo">
     <h1>
-      <span data-lang="ru">Чат с Q-U-164M</span>
-      <span data-lang="en">Chat with Q-U-164M</span>
-      <span data-lang="zh">与 Q-U-164M 对话</span>
+      <span data-lang="ru">Чат с N-Q-26M</span>
+      <span data-lang="en">Chat with N-Q-26M</span>
+      <span data-lang="zh">与 N-Q-26M 对话</span>
     </h1>
-    <p class="run__lede" data-lang="ru">Модель архитектуры Q, обучается с нуля, только текст: тернарные веса, замороженный словарь отпечатков и обобщённый механизм точных вызовов инструментов — арифметика, даты, сортировка, фильтрация и даже многошаговые цепочки — работает нативно прямо в этой вкладке, без сервера. Вызовы инструментов показаны, а не скрыты, чтобы было видно, когда сеть передаёт управление детерминированному исполнителю.</p>
-    <p class="run__lede" data-lang="en">A from-scratch, text-only member of the Q architecture family: ternary weights, a frozen fingerprint vocabulary, and a generalized exact-tool-calling mechanism — arithmetic, dates, sorting, filtering, even chained multi-step lookups — running natively in this tab, no server involved. Tool calls are shown here, not hidden, so you can see when the network hands off to the deterministic executor.</p>
-    <p class="run__lede" data-lang="zh">Q 架构家族中一个从零训练的纯文本成员：三元权重、冻结的指纹词表，以及通用化的精确工具调用机制 —— 算术、日期、排序、筛选，甚至链式多步查询 —— 全部原生运行在这个标签页里，不涉及任何服务器。工具调用在这里是展示出来的，而不是隐藏起来，这样你能看到网络何时把控制权交给确定性执行器。</p>
+    <p class="run__lede" data-lang="ru">N-Q — линейка маленьких русско-английских моделей, обученных с нуля на одной видеокарте V100 (наш ответ MiniMind). Это младшая из них: 29.7M параметров основы + 16.8M в таблице n-грамм, архитектура мини-Qwen3.8-Flash-Next — Gated DeltaNet вперемешку с gated attention, — выбранная абляцией против тернарной архитектуры Q. Фишка Q сохранена: модель сама пишет выражение <code>&lt;CALC&gt;…&lt;EQ&gt;</code>, а детерминированный исполнитель подставляет точный результат. Всё работает прямо в этой вкладке на обычном JavaScript — без сервера и без Python.</p>
+    <p class="run__lede" data-lang="en">N-Q is a ladder of small Russian/English models trained from scratch on a single V100 GPU (our answer to MiniMind). This is the smallest one: 29.7M backbone parameters + 16.8M in an n-gram table, a mini Qwen3.8-Flash-Next architecture — Gated DeltaNet interleaved with gated attention — chosen by an ablation against the ternary Q design. The Q trick is kept: the model writes the expression <code>&lt;CALC&gt;…&lt;EQ&gt;</code> and a deterministic executor fills in the exact result. Everything runs in this tab in plain JavaScript — no server, no Python.</p>
+    <p class="run__lede" data-lang="zh">N-Q 是一组在单张 V100 上从零训练的小型俄英双语模型（我们对 MiniMind 的回应）。这是其中最小的一个：29.7M 主干参数 + 16.8M n-gram 表参数，架构是迷你版 Qwen3.8-Flash-Next —— Gated DeltaNet 与 gated attention 交替 —— 通过与三元 Q 架构的消融实验选出。Q 的特色保留了下来：模型自己写出表达式 <code>&lt;CALC&gt;…&lt;EQ&gt;</code>，由确定性执行器填入精确结果。全部在这个标签页里用普通 JavaScript 运行 —— 没有服务器，没有 Python。</p>
 
     <div class="demo-card">
       <div id="status" class="demo-status">loading&hellip;</div>
@@ -67,26 +75,36 @@
     <div class="demo-card">
       <div id="log" class="chat-log" role="log" aria-live="polite"></div>
       <div class="composer-row">
-        <label class="visually-hidden" for="input"><span data-lang="ru">Сообщение для Q-U-164M</span><span data-lang="en">Message Q-U-164M</span><span data-lang="zh">发送给 Q-U-164M 的消息</span></label>
-        <textarea id="input" placeholder="Message Q-U-164M…" rows="1"></textarea>
+        <label class="visually-hidden" for="input"><span data-lang="ru">Сообщение для N-Q-26M</span><span data-lang="en">Message N-Q-26M</span><span data-lang="zh">发送给 N-Q-26M 的消息</span></label>
+        <textarea id="input" placeholder="Message N-Q-26M…" rows="1"></textarea>
         <button id="send" class="btn btn--solid" disabled>
           <span data-lang="ru">Отправить</span><span data-lang="en">Send</span><span data-lang="zh">发送</span>
         </button>
       </div>
       <div class="chat-actions">
-        <button id="newChat" class="btn btn--ghost" type="button">
-          <span data-lang="ru">Новый диалог</span><span data-lang="en">New conversation</span><span data-lang="zh">新对话</span>
-        </button>
+        <div class="chat-opts">
+          <button id="newChat" class="btn btn--ghost" type="button">
+            <span data-lang="ru">Новый диалог</span><span data-lang="en">New conversation</span><span data-lang="zh">新对话</span>
+          </button>
+          <label><input type="checkbox" id="memory" checked /> <span data-lang="ru">помнить диалог</span><span data-lang="en">remember the conversation</span><span data-lang="zh">记住对话</span></label>
+          <label><input type="checkbox" id="think" /> <span data-lang="ru">думать вслух (&lt;THINK&gt;)</span><span data-lang="en">think first (&lt;THINK&gt;)</span><span data-lang="zh">先思考（&lt;THINK&gt;）</span></label>
+          <label><span data-lang="ru">декодирование</span><span data-lang="en">decoding</span><span data-lang="zh">解码</span>
+            <select id="decoding">
+              <option value="sample">T=0.7 · top-p 0.9</option>
+              <option value="greedy">greedy</option>
+            </select>
+          </label>
+        </div>
         <span id="tps" class="demo__tps"></span>
       </div>
-      <p class="demo-hint" data-lang="ru">Попробуй: <code>What is 347 times 86?</code> &middot; <code>An item costs 800 dollars with a 20 percent discount — what's the final price?</code> (цепочка из двух вызовов инструмента) &middot; <code>How many days between January 1 and March 15, 2026?</code> &middot; <code>Sort these: 9, 3, 7, 1.</code> Или просто поздоровайся — это ещё и обычный чат. Декодирование принудительно жадное, как при измерении точности; на необычных формулировках модель всё ещё может выбрать не тот инструмент или не выбрать никакой — этот режим отказа реален и здесь не скрыт.</p>
-      <p class="demo-hint" data-lang="en">Try: <code>What is 347 times 86?</code> &middot; <code>An item costs 800 dollars with a 20 percent discount — what's the final price?</code> (a chained, two-step tool call) &middot; <code>How many days between January 1 and March 15, 2026?</code> &middot; <code>Sort these: 9, 3, 7, 1.</code> Or just say hi — it's a normal chat too. Decoding is forced greedy, matching the setup the exact-match accuracy was measured with; unusual phrasings can still make the model reach for the wrong tool, or none at all — that failure mode is real and not hidden here.</p>
-      <p class="demo-hint" data-lang="zh">可以试试：<code>What is 347 times 86?</code> &middot; <code>An item costs 800 dollars with a 20 percent discount — what's the final price?</code>（一个两步链式工具调用）&middot; <code>How many days between January 1 and March 15, 2026?</code> &middot; <code>Sort these: 9, 3, 7, 1.</code> 或者直接打个招呼 —— 它也是一个正常的聊天模型。解码被强制为贪心模式，与测量精确匹配率时的设置一致；遇到不常见的表述，模型仍可能选错工具、甚至完全不调用工具 —— 这种失败模式是真实存在的，这里并未隐藏。</p>
+      <p class="demo-hint" data-lang="ru">Попробуй (нажми, чтобы вставить): <code class="try">Сколько будет 4821 умножить на 37?</code> &middot; <code class="try">Какой день недели 9 мая 2027 года?</code> &middot; <code class="try">Отсортируй по возрастанию: 42, 7, 19, 3.</code> &middot; <code class="try">Переведи 42 километра в мили.</code> &middot; <code class="try">Является ли 221 простым числом?</code> &middot; <code class="try">Привет! Кто ты?</code> Выражения внутри вызова инструмента всегда выбираются жадно; обычный текст — сэмплингом (можно переключить). В длинном диалоге 26M-модель хуже решает, когда звать инструмент (особенно на «а теперь…»): если вызова нет, начни новый диалог или выключи «помнить диалог» — тогда каждое сообщение решается с чистого контекста.</p>
+      <p class="demo-hint" data-lang="en">Try (click to insert): <code class="try">What is 4821 times 37?</code> &middot; <code class="try">What day of the week is March 5, 2027?</code> &middot; <code class="try">Sort these numbers from smallest to largest: 88, 12, 45.</code> &middot; <code class="try">Convert 100 kilograms to pounds.</code> &middot; <code class="try">Is 97 a prime number?</code> &middot; <code class="try">Hi! Who are you?</code> Tool-call expressions are always decoded greedily; ordinary text is sampled (switchable). Deep into a conversation the 26M model is worse at deciding to call a tool (especially on "and now…" follow-ups): if no call happens, start a new conversation or turn off "remember the conversation" so each message is answered from a clean context.</p>
+      <p class="demo-hint" data-lang="zh">可以试试（点击插入）：<code class="try">What is 4821 times 37?</code> &middot; <code class="try">Сколько будет 4821 умножить на 37?</code> &middot; <code class="try">Sort these numbers from smallest to largest: 88, 12, 45.</code> &middot; <code class="try">Is 97 a prime number?</code> &middot; <code class="try">Hi! Who are you?</code> 模型只训练了俄语和英语。工具调用里的表达式总是贪心解码；普通文本用采样（可切换）。在较长的对话中，26M 模型更难判断何时调用工具（尤其是"那现在……"这类追问）：如果没有调用工具，请开始新对话，或关闭"记住对话"，让每条消息都从干净的上下文回答。</p>
     </div>
 
-    <p class="demo-note" id="placeholderNote" data-lang="ru">Это Q-U-164M — Q-164M, дообученная в два этапа (chat-SFT, затем RL по верифицируемой награде) специально для диалога. Работает прямо в браузере — без сервера, без Python. Модель надёжно вызывает инструмент на каждом ходу многоходового диалога, даже с естественными разговорными связками («спасибо, а теперь…», «ещё один вопрос…»). Известная слабость: иногда путает похожие операции (например, деление с умножением) или неверно классифицирует открытые небазовые вопросы — показано как есть, без прикрас. Демо только для текста (без токенов изображений/звука).</p>
-    <p class="demo-note" data-lang="en">This is Q-U-164M — Q-164M fine-tuned in two stages (chat-SFT, then RL on a verifiable reward) specifically for dialogue. Runs entirely in your browser — no server, no Python. The model reliably calls a tool on every turn of a multi-turn conversation, even with natural conversational connectives (&ldquo;thanks, now what's&hellip;&rdquo;, &ldquo;one more question&hellip;&rdquo;). Known weak spot: it sometimes confuses similar operations (e.g. division with multiplication) or misclassifies open-ended non-tool questions &mdash; shown honestly as-is. Text-only demo (no image/audio tokens).</p>
-    <p class="demo-note" data-lang="zh">这是 Q-U-164M —— 专门为对话分两个阶段微调过的 Q-164M（先 chat-SFT，再基于可验证奖励的 RL）。完全在浏览器中运行 —— 不需要服务器，不需要 Python。即使用户使用自然的对话连接词（比如"谢谢，那…"、"还有一个问题…"），模型也能在多轮对话的每一轮都可靠地调用工具。已知弱点：有时会混淆相似的运算（比如把除法当成乘法），或误判开放式的非工具类问题 —— 如实展示，没有美化。仅支持文本的演示（不含图像/音频词元）。</p>
+    <p class="demo-note" data-lang="ru">Честно о модели: при 26M параметрах она уверенно держит форму диалога и надёжно вызывает калькулятор (15/16 на нашем тесте вызовов инструментов), но часто выдумывает факты, зацикливается в длинных ответах и почти не решает многошаговые текстовые задачи (GSM8K ≈ 2%). Иногда она получает от исполнителя правильный результат, но в финальной фразе пишет другое. Без фильтров безопасности. Веса — <code>model.qpack</code> (89 МБ, формат QPACK1), прогон в браузере сверен с PyTorch: расхождение логитов ~2·10⁻⁵, жадная генерация совпадает токен в токен. Предыдущий чат с Q-U-164M переехал на <a href="../chat-q-u-164m/" style="color:var(--brand)">отдельную страницу</a>.</p>
+    <p class="demo-note" data-lang="en">An honest note: at 26M parameters it holds the shape of a dialogue and calls the calculator reliably (15/16 on our tool-call probe), but it often invents facts, loops in long answers and essentially does not solve multi-step word problems (GSM8K ≈ 2%). Sometimes it receives the correct result from the executor and still writes something else in its final sentence. No safety tuning. Weights: <code>model.qpack</code> (89 MB, QPACK1 format); the in-browser forward pass is checked against PyTorch: logits within ~2·10⁻⁵, greedy generation identical token for token. The previous Q-U-164M chat moved to <a href="../chat-q-u-164m/" style="color:var(--brand)">its own page</a>.</p>
+    <p class="demo-note" data-lang="zh">坦白说明：在 26M 参数规模下，它能稳定地保持对话形式并可靠地调用计算器（我们的工具调用测试 15/16），但经常编造事实，在长回答中会陷入重复，基本不能解决多步文字题（GSM8K ≈ 2%）。有时它从执行器拿到了正确结果，却在最后一句里写成别的。没有安全调优。权重：<code>model.qpack</code>（89 MB，QPACK1 格式）；浏览器中的前向计算已与 PyTorch 对齐：logits 误差约 2·10⁻⁵，贪心生成逐词元一致。之前的 Q-U-164M 聊天已移到<a href="../chat-q-u-164m/" style="color:var(--brand)">单独的页面</a>。</p>
   </main>
 
   <footer class="footer">
@@ -115,9 +133,9 @@
   <script src="../main.js"></script>
   <script src="qpack.js"></script>
   <script src="tokenizer.js"></script>
-  <script src="model.js"></script>
-  <script src="wasm.js"></script>
-  <script src="circuits.js"></script>
+  <script src="nq_tokenizer.js"></script>
+  <script src="nq_model.js"></script>
+  <script src="nq_circuits.js"></script>
   <script src="chat.js"></script>
 </body>
 </html>
