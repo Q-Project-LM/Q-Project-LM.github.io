@@ -16,6 +16,11 @@ let history = null;            // token ids currently inside the model state
 let synced = [];               // the [{role, content}] turns that `history` encodes
 let beforeAnswer = null;       // snapshot right before the last answer (for regenerate)
 
+// a macrotask yield without setTimeout's >= 4 ms clamp (lets onmessage run between tokens)
+const yieldChannel = new MessageChannel(); const yieldQueue = [];
+yieldChannel.port1.onmessage = () => { const r = yieldQueue.shift(); if (r) r(); };
+const yieldNow = () => new Promise((r) => { yieldQueue.push(r); yieldChannel.port2.postMessage(0); });
+
 async function fetchCached(url, version) {
   const key = `${url}#${version}`;
   try {
@@ -39,6 +44,11 @@ async function load(url, version) {
   postMessage({ type: 'status', text: 'unpacking' });
   const c = Lib.readContainer(buf), loaded = Lib.loadNQ(c);
   tok = new Lib.NQTokenizer(c.json('tokenizer.json')); model = new Lib.NQ4JS(loaded);
+  let backend = 'js';
+  try {   // WASM SIMD kernel for the matrix products; browsers without WASM SIMD keep the plain-JS path
+    const wasm = await (await fetch(`nq_kernel.wasm?v=${V}`)).arrayBuffer();
+    model.attachKernel((await WebAssembly.instantiate(wasm, {})).instance); backend = 'wasm';
+  } catch (e) { postMessage({ type: 'status', text: 'WASM kernel unavailable, plain JS: ' + e.message }); }
   let ok = 0, n = 0;
   if (loaded.selftest) for (const cs of loaded.selftest.cases) {
     n++; model.reset(); let lg = null; cs.ids.forEach((id, i) => { lg = model.step(id, i === cs.ids.length - 1); });
@@ -47,7 +57,8 @@ async function load(url, version) {
   }
   resetChat();
   const cfg = loaded.cfg;
-  postMessage({ type: 'ready', selftest: [ok, n], decision: !!loaded.tensors['decide_head.weight'], layers: cfg.num_hidden_layers, hidden: cfg.hidden_size, vocab: cfg.vocab_size });
+  postMessage({ type: 'ready', selftest: [ok, n], decision: !!loaded.tensors['decide_head.weight'], layers: cfg.num_hidden_layers, hidden: cfg.hidden_size, vocab: cfg.vocab_size,
+                backend, format: c.toc['manifest.json'] && c.json('manifest.json').quant ? 'QPACK2 q8' : 'QPACK1' });
 }
 
 function resetChat() { model.reset(); history = [ID.BOS]; model.step(ID.BOS, false); synced = []; beforeAnswer = null; }
@@ -108,7 +119,7 @@ async function generate(o) {
     else if (mode === 'result') res.push(next);
     else if (next < 8192) { seg.ids.push(next); flush(); }
     logits = model.step(next, true);
-    if (n % 3 === 0) await new Promise((r) => setTimeout(r, 0));   // lets 'stop' messages in
+    if (n % 3 === 0) await yieldNow();   // lets 'stop' messages in
   }
   if (!ended) { history.push(ID.EOT); model.step(ID.EOT, false); }
   // raw = the assistant turn exactly as the model state holds it (control tokens included), re-encodable by syncTo()

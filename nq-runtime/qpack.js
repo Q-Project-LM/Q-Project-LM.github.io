@@ -6,8 +6,8 @@ const MAGIC = new TextEncoder().encode('QPACK1\0\0'); // 8 bytes
 
 function readContainer(buf) {
   const dv = new DataView(buf);
-  const magic = new Uint8Array(buf, 0, 8);
-  for (let i = 0; i < 8; i++) if (magic[i] !== MAGIC[i]) throw new Error('not a QPACK1 container');
+  const magic = new Uint8Array(buf, 0, 8);   // QPACK1 and QPACK2 share the container layout; QPACK2 adds tensor kinds (q8)
+  for (let i = 0; i < 8; i++) if (magic[i] !== MAGIC[i] && !(i === 5 && magic[i] === 0x32)) throw new Error('not a QPACK1/QPACK2 container');
   const count = dv.getUint32(8, true);
   const toc = {};
   for (let i = 0; i < count; i++) {

@@ -154,7 +154,7 @@
       <p>По знаниям N-Q-26M на уровне distilgpt2, на TruthfulQA — наравне с моделями в 5–20 раз крупнее (разница в пределах погрешности при 100 вопросах). Задачи с инструментами без исполнителя модель не решает: она правильно записывает выражение, но число угадывает сама.</p>
 
       <h2>Чат в браузере</h2>
-      <p><a href="chat/">Чат на сайте</a> теперь работает на N-Q-26M-Chat. Модель, токенизатор и исполнитель переписаны на обычный JavaScript: 89 МБ весов в формате qpack, никакого сервера. Прогон в браузере сверен с PyTorch: логиты расходятся не больше чем на 2·10⁻⁵, жадная генерация совпадает токен в токен. Прошлый чат с Q-U-164M — <a href="chat-q-u-164m/">на отдельной странице</a>.</p>
+      <p><a href="chat/">Чат на сайте</a> теперь работает на N-Q-26M-Chat. Модель, токенизатор и исполнитель переписаны на обычный JavaScript: 47 МБ весов в формате QPACK2 (int8), вычисления в WebAssembly с SIMD — около 75 токенов в секунду, никакого сервера. Прогон в браузере сверен с PyTorch: логиты расходятся не больше чем на 2·10⁻⁵, жадная генерация совпадает токен в токен. Прошлый чат с Q-U-164M — <a href="chat-q-u-164m/">на отдельной странице</a>.</p>
 
       <h2>N-Q-26M-JEV: модель решений</h2>
       <p>Из того же чекпоинта сделали вариант в духе Jev: вместо текста он за один проход выдаёт выбор из вариантов, оценку по шкале или вероятность «да» с откалиброванными вероятностями. Хорошо работает на задачах, на которых обучен (сопоставление вопроса и ответа — 98–99%, тематика — 81–89%, токсичность и тональность — 78–80%); новые типы вопросов решает около случайного уровня. <a href="jev/">Демо в браузере</a>, <a href="blog-nq26m-jev.html">разбор</a>, <a href="https://huggingface.co/q-project/N-Q-26M-JEV" target="_blank" rel="noopener">веса</a>.</p>
@@ -268,7 +268,7 @@
       <p>On knowledge N-Q-26M is at the level of distilgpt2; on TruthfulQA it is level with models 5–20× larger (the difference is within the error of a 100-question set). Without an executor it does not solve tool tasks: it writes the expression correctly but guesses the number itself.</p>
 
       <h2>Chat in the browser</h2>
-      <p>The <a href="chat/">site chat</a> now runs N-Q-26M-Chat. The model, tokenizer and executor were rewritten in plain JavaScript: 89 MB of weights in qpack format, no server. The in-browser forward pass is checked against PyTorch: logits within 2·10⁻⁵, greedy generation identical token for token. The previous Q-U-164M chat is <a href="chat-q-u-164m/">on its own page</a>.</p>
+      <p>The <a href="chat/">site chat</a> now runs N-Q-26M-Chat. The model, tokenizer and executor were rewritten in plain JavaScript: 47 MB of weights in QPACK2 format (int8), computed in WebAssembly with SIMD — about 75 tokens/s, no server. The in-browser forward pass is checked against PyTorch: logits within 2·10⁻⁵, greedy generation identical token for token. The previous Q-U-164M chat is <a href="chat-q-u-164m/">on its own page</a>.</p>
 
       <h2>N-Q-26M-JEV: a decision model</h2>
       <p>From the same checkpoint we made a Jev-style variant: instead of text it returns, in one forward pass, a choice among options, a level on a scale or a probability of "yes", with calibrated probabilities. It is good at the tasks it was trained on (question–answer matching 98–99%, topics 81–89%, toxicity and sentiment 78–80%); new kinds of questions it answers near chance. <a href="jev/">Demo in the browser</a>, <a href="blog-nq26m-jev.html">writeup</a>, <a href="https://huggingface.co/q-project/N-Q-26M-JEV" target="_blank" rel="noopener">weights</a>.</p>
@@ -382,7 +382,7 @@
       <p>在知识类测试上，N-Q-26M 与 distilgpt2 相当；在 TruthfulQA 上与大 5–20 倍的模型持平（在 100 道题的样本下，差异处于误差范围内）。没有执行器时，它解不了工具类任务：表达式写得对，但数字是自己猜的。</p>
 
       <h2>浏览器中的聊天</h2>
-      <p><a href="chat/">网站聊天</a>现在运行的是 N-Q-26M-Chat。模型、分词器和执行器都用普通 JavaScript 重写：qpack 格式的 89 MB 权重，不需要服务器。浏览器中的前向计算已与 PyTorch 对齐：logits 误差在 2·10⁻⁵ 以内，贪心生成逐词元一致。之前的 Q-U-164M 聊天在<a href="chat-q-u-164m/">单独的页面</a>。</p>
+      <p><a href="chat/">网站聊天</a>现在运行的是 N-Q-26M-Chat。模型、分词器和执行器都用普通 JavaScript 重写：QPACK2 格式（int8）的 47 MB 权重，在带 SIMD 的 WebAssembly 中计算 —— 每秒约 75 个词元，不需要服务器。浏览器中的前向计算已与 PyTorch 对齐：logits 误差在 2·10⁻⁵ 以内，贪心生成逐词元一致。之前的 Q-U-164M 聊天在<a href="chat-q-u-164m/">单独的页面</a>。</p>
 
       <h2>N-Q-26M-JEV：决策模型</h2>
       <p>我们用同一个检查点做了一个类似 Jev 的版本：它不生成文本，而是一次前向计算给出选项中的选择、量表上的等级或"是"的概率，概率经过校准。在训练过的任务上表现良好（问答匹配 98–99%、主题 81–89%、毒性和情感 78–80%）；新类型的问题则接近随机。<a href="jev/">浏览器演示</a>、<a href="blog-nq26m-jev.html">详细介绍</a>、<a href="https://huggingface.co/q-project/N-Q-26M-JEV" target="_blank" rel="noopener">权重</a>。</p>

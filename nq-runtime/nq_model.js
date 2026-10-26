@@ -2,6 +2,7 @@
 // (NQ4ForCausalLM, dense non-ternary checkpoints such as N-Q-26M-Chat) op for op:
 //   embed -> 4 residual streams -> 8 x [ (layer 2: + n-gram PLE) -> Gated Residual -> Gated DeltaNet | gated attention
 //   -> Gated Residual -> SwiGLU ] -> Gated Residual collapse -> lm_head.
+// Big matrices can live in a WASM SIMD kernel (nq_kernel.wasm, attachKernel); weights may be f32/f16 (QPACK1) or int8 'q8' (QPACK2).
 // Decode-time state per layer: Gated DeltaNet = short-conv window + recurrent matrix S per value head; attention =
 // K/V cache; PLE = last two token ids + dilated conv window. Checked against PyTorch logits in node (test_parity.mjs).
 'use strict';
@@ -29,6 +30,11 @@
       if (e.kind === 'f16') data = f16ToF32Array(b);
       else if (e.kind === 'f32') data = new Float32Array(copy);
       else if (e.kind === 'i64') data = new BigInt64Array(copy);
+      else if (e.kind === 'q8') {   // QPACK2: int8 rows + float32 per-row scale
+        const sb = c.blob(e.scale);
+        t[e.name] = { q8: new Int8Array(copy), scale: new Float32Array(sb.buffer.slice(sb.byteOffset, sb.byteOffset + sb.length)), shape: e.shape };
+        continue;
+      }
       else throw new Error(`tensor kind ${e.kind} (${e.name}) is not supported by the N-Q runtime`);
       t[e.name] = { data, shape: e.shape };
     }
@@ -43,6 +49,14 @@
       for (; c + 3 < cols; c += 4) { s0 += W[base + c] * x[c]; s1 += W[base + c + 1] * x[c + 1]; s2 += W[base + c + 2] * x[c + 2]; s3 += W[base + c + 3] * x[c + 3]; }
       for (; c < cols; c++) s0 += W[base + c] * x[c];
       out[r] = s0 + s1 + s2 + s3;
+    }
+    return out;
+  }
+  function matvecQ8(Q, scale, x, rows, cols, out) {   // int8 weights with a per-row scale (QPACK2 'q8')
+    for (let r = 0; r < rows; r++) {
+      let s = 0; const base = r * cols;
+      for (let c = 0; c < cols; c++) s += Q[base + c] * x[c];
+      out[r] = s * scale[r];
     }
     return out;
   }
@@ -83,7 +97,8 @@
         inj: new Float32Array(this.hc), y: new Float32Array(D), gu: new Float32Array(2 * this.ff), act: new Float32Array(this.ff),
         qkvz: new Float32Array(this.convC + this.vdim), ba: new Float32Array(2 * this.nv), o: new Float32Array(this.vdim),
         q: new Float32Array(2 * this.nh * this.hd), k: new Float32Array(this.nkv * this.hd), v: new Float32Array(this.nkv * this.hd),
-        ao: new Float32Array(this.nh * this.hd), logits: new Float32Array(this.V) };
+        ao: new Float32Array(this.nh * this.hd), logits: new Float32Array(this.V), emb: new Float32Array(D),
+        trow: new Float32Array(this.pleLayer >= 0 ? this.pHdim : 1) };
       this.reset();
     }
 
@@ -104,14 +119,53 @@
 
     W(name) { const x = this.t[name]; if (!x) throw new Error('missing tensor ' + name); return x.data; }
 
+    // y = W x for the matrix `name` (rows x cols): WASM SIMD kernel when attached, plain JS otherwise; f32 or q8 weights
+    mv(name, x, rows, cols, out) {
+      const t = this.t[name]; if (!t) throw new Error('missing tensor ' + name);
+      const k = this.kernel;
+      if (t.ptr) {
+        k.F32.set(x.length === cols ? x : x.subarray(0, cols), k.xPtr >> 2);
+        if (t.q8) k.ex.matvec_q8(t.ptr, t.sptr, k.xPtr, k.yPtr, rows, cols); else k.ex.matvec_f32(t.ptr, k.xPtr, k.yPtr, rows, cols);
+        out.set(k.F32.subarray(k.yPtr >> 2, (k.yPtr >> 2) + rows));
+        return out;
+      }
+      return t.q8 ? matvecQ8(t.q8, t.scale, x, rows, cols, out) : matvec(t.data, x, rows, cols, out);
+    }
+
+    // one row of a table (embedding, n-gram table) as floats; `out` is reused
+    row(name, i, out) {
+      const t = this.t[name], cols = t.shape[1], k = this.kernel;
+      if (t.ptr && t.q8) { k.ex.row_q8(t.ptr, t.sptr, i, cols, k.yPtr); out.set(k.F32.subarray(k.yPtr >> 2, (k.yPtr >> 2) + cols)); return out; }
+      if (t.ptr) { out.set(k.F32.subarray((t.ptr >> 2) + i * cols, (t.ptr >> 2) + (i + 1) * cols)); return out; }
+      if (t.q8) { const sc = t.scale[i]; for (let c = 0; c < cols; c++) out[c] = t.q8[i * cols + c] * sc; return out; }
+      out.set(t.data.subarray(i * cols, (i + 1) * cols)); return out;
+    }
+
+    // move every sizeable matrix into WASM linear memory (once); afterwards mv()/row() run in the SIMD kernel
+    attachKernel(instance) {
+      const ex = instance.exports, big = Object.entries(this.t).filter(([, t]) => t.shape.length === 2 && t.shape[0] * t.shape[1] >= 4096 && (t.data instanceof Float32Array || t.q8));
+      const k = { ex, xPtr: ex.alloc(4 * 4096), yPtr: ex.alloc(4 * Math.max(this.V, 4096)) };
+      for (const [, t] of big) {
+        const n = t.shape[0] * t.shape[1];
+        if (t.q8) { t.ptr = ex.alloc(n); t.sptr = ex.alloc(4 * t.shape[0]); if (!t.ptr || !t.sptr) throw new Error('out of WASM memory'); }
+        else { t.ptr = ex.alloc(4 * n); if (!t.ptr) throw new Error('out of WASM memory'); }
+      }
+      const mem = ex.memory.buffer; k.F32 = new Float32Array(mem);      // the memory has stopped growing: one view for all
+      for (const [, t] of big) {
+        if (t.q8) { new Int8Array(mem, t.ptr, t.q8.length).set(t.q8); k.F32.set(t.scale, t.sptr >> 2); t.q8 = true; t.scale = null; }
+        else { k.F32.set(t.data, t.ptr >> 2); t.data = null; }           // the JS copy is released
+      }
+      this.kernel = k; return big.length;
+    }
+
     gatedResidual(P, h, withInject) {      // -> mixed (d) [, inject weights (hc)]
       const D = this.d, HC = this.hc, b = this.buf;
       rmsnormZC(h, this.W(P + 'norm.weight'), this.eps, D, b.hn);
-      matvec(this.W(P + 'down.weight'), b.hn, this.rank, HC * D, b.low);
+      this.mv(P + 'down.weight', b.hn, this.rank, HC * D, b.low);
       for (let i = 0; i < this.rank; i++) b.low[i] = silu(b.low[i] / HC);
-      matvec(this.W(P + 'up.weight'), b.low, HC * D, this.rank, b.gate);
+      this.mv(P + 'up.weight', b.low, HC * D, this.rank, b.gate);
       for (let j = 0; j < D; j++) { let s = 0; for (let c = 0; c < HC; c++) s += sigmoid(b.gate[c * D + j]) * b.hn[c * D + j]; b.mixed[j] = s / HC; }
-      if (withInject) { matvec(this.W(P + 'inject.weight'), b.hn, HC, HC * D, b.inj); for (let c = 0; c < HC; c++) b.inj[c] = 2 * sigmoid(b.inj[c] / HC); }
+      if (withInject) { this.mv(P + 'inject.weight', b.hn, HC, HC * D, b.inj); for (let c = 0; c < HC; c++) b.inj[c] = 2 * sigmoid(b.inj[c] / HC); }
       return b.mixed;
     }
 
@@ -132,10 +186,10 @@
     ple(h, tok) {                             // returns the PLE term (hc*d) added to the residual streams
       const P = `layers.${this.pleLayer}.ple.`, D = this.d, HC = this.hc, HD = HC * D;
       const ids = this.ngramIds(tok); this.pleHist = [this.pleHist[1], tok];
-      const tab = this.W(P + 'table.weight'), hdim = this.pHdim, e = new Float32Array(ids.length * hdim);
-      ids.forEach((id, j) => e.set(tab.subarray(id * hdim, (id + 1) * hdim), j * hdim));
-      const k = rmsnormZC(matvec(this.W(P + 'key.weight'), e, HD, e.length, new Float32Array(HD)), this.W(P + 'norm_k.weight'), this.eps, D, new Float32Array(HD));
-      const v = matvec(this.W(P + 'value.weight'), e, D, e.length, new Float32Array(D));
+      const hdim = this.pHdim, e = new Float32Array(ids.length * hdim);
+      ids.forEach((id, j) => e.set(this.row(P + 'table.weight', id, this.buf.trow), j * hdim));
+      const k = rmsnormZC(this.mv(P + 'key.weight', e, HD, e.length, new Float32Array(HD)), this.W(P + 'norm_k.weight'), this.eps, D, new Float32Array(HD));
+      const v = this.mv(P + 'value.weight', e, D, e.length, new Float32Array(D));
       const qn = rmsnormZC(h, this.W(P + 'norm_q.weight'), this.eps, D, new Float32Array(HD));
       const gv = new Float32Array(HD);
       for (let c = 0; c < HC; c++) {
@@ -157,8 +211,8 @@
 
     gdn(l, x) {
       const P = `layers.${l}.mixer.`, st = this.state[l], b = this.buf, C = this.convC, K = this.K;
-      matvec(this.W(P + 'in_qkvz.weight'), x, C + this.vdim, this.d, b.qkvz);
-      matvec(this.W(P + 'in_ba.weight'), x, 2 * this.nv, this.d, b.ba);
+      this.mv(P + 'in_qkvz.weight', x, C + this.vdim, this.d, b.qkvz);
+      this.mv(P + 'in_ba.weight', x, 2 * this.nv, this.d, b.ba);
       st.conv.push(b.qkvz.slice(0, C)); if (st.conv.length > K) st.conv.shift();
       const cw = this.W(P + 'conv.weight'), n = st.conv.length, xc = new Float32Array(C);
       for (let ch = 0; ch < C; ch++) { let s = 0; for (let j = 0; j < K; j++) { const idx = n - K + j; if (idx >= 0) s += cw[ch * K + j] * st.conv[idx][ch]; } xc[ch] = silu(s); }
@@ -186,14 +240,14 @@
         const inv = 1 / Math.sqrt(ss / dv + this.eps);
         for (let j = 0; j < dv; j++) b.o[vh * dv + j] = Math.fround(o[j] * inv) * (1 + nw[j]) * sigmoid(b.qkvz[C + vh * dv + j]);
       }
-      return matvec(this.W(P + 'out.weight'), b.o, this.d, this.vdim, b.y);
+      return this.mv(P + 'out.weight', b.o, this.d, this.vdim, b.y);
     }
 
     attn(l, x) {
       const P = `layers.${l}.mixer.`, st = this.state[l], b = this.buf, hd = this.hd, nh = this.nh, nkv = this.nkv;
-      matvec(this.W(P + 'q.weight'), x, 2 * nh * hd, this.d, b.q);
-      matvec(this.W(P + 'k.weight'), x, nkv * hd, this.d, b.k);
-      matvec(this.W(P + 'v.weight'), x, nkv * hd, this.d, b.v);
+      this.mv(P + 'q.weight', x, 2 * nh * hd, this.d, b.q);
+      this.mv(P + 'k.weight', x, nkv * hd, this.d, b.k);
+      this.mv(P + 'v.weight', x, nkv * hd, this.d, b.v);
       const qn = this.W(P + 'q_norm.weight'), kn = this.W(P + 'k_norm.weight'), r = this.rot, half = r / 2;
       const cos = new Float64Array(half), sin = new Float64Array(half);
       for (let i = 0; i < half; i++) { const a = Math.fround(this.pos * this.inv[i]); cos[i] = Math.fround(Math.cos(a)); sin[i] = Math.fround(Math.sin(a)); }
@@ -220,22 +274,22 @@
           b.ao[hI * hd + i] = (o / sum) * sigmoid(b.q[hI * 2 * hd + hd + i]);
         }
       }
-      return matvec(this.W(P + 'o.weight'), b.ao, this.d, nh * hd, b.y);
+      return this.mv(P + 'o.weight', b.ao, this.d, nh * hd, b.y);
     }
 
     ffn(l, x) {
       const P = `layers.${l}.ffn.`, b = this.buf, ff = this.ff;
-      matvec(this.W(P + 'gate_up.weight'), x, 2 * ff, this.d, b.gu);
+      this.mv(P + 'gate_up.weight', x, 2 * ff, this.d, b.gu);
       for (let i = 0; i < ff; i++) b.act[i] = silu(b.gu[i]) * b.gu[ff + i];
-      return matvec(this.W(P + 'down.weight'), b.act, this.d, ff, b.y);
+      return this.mv(P + 'down.weight', b.act, this.d, ff, b.y);
     }
 
     // one decode step: token id -> logits (Float32Array, reused between calls: copy it if you keep it).
     // wantLogits=false skips the 8256x512 output matmul (prompt prefill: only the state matters);
     // wantLogits='hidden' returns the final hidden state (d floats, a copy) instead — what the JEV decision head reads.
     step(tok, wantLogits = true) {
-      const D = this.d, HC = this.hc, emb = this.W('embed.weight'), h = new Float32Array(HC * D);
-      for (let c = 0; c < HC; c++) for (let j = 0; j < D; j++) h[c * D + j] = emb[tok * D + j];
+      const D = this.d, HC = this.hc, emb = this.row('embed.weight', tok, this.buf.emb), h = new Float32Array(HC * D);
+      for (let c = 0; c < HC; c++) h.set(emb, c * D);
       for (let l = 0; l < this.L; l++) {
         if (l === this.pleLayer) { const p = this.ple(h, tok); for (let i = 0; i < h.length; i++) h[i] += p[i]; }
         let x = this.gatedResidual(`layers.${l}.gr_mix.`, h, true).slice(); let w = this.buf.inj.slice();
@@ -248,7 +302,7 @@
       if (!wantLogits) return null;
       const fin = this.gatedResidual('mixer.', h, false);
       if (wantLogits === 'hidden') return fin.slice();
-      return matvec(this.W('lm_head.weight'), fin, this.V, D, this.buf.logits);
+      return this.mv('lm_head.weight', fin, this.V, D, this.buf.logits);
     }
 
     // JEV decision head on a final hidden state (NQ4ForDecision.decide_head, clamped like option_logits)

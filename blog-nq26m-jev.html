@@ -135,7 +135,7 @@
       </ul>
 
       <h2>В браузере</h2>
-      <p><a href="jev/">Демо</a> работает на том же JavaScript-рантайме, что и чат: веса в формате qpack (89 МБ), вычисления в Web Worker. Общий префикс — текст и вопрос — считается один раз и переиспользуется для обоих порядков вариантов и для всех вопросов: у рекуррентной модели можно сохранить состояние и откатиться к нему. Вероятности в браузере совпадают с PyTorch с точностью до 5·10⁻⁵; одно решение занимает 4–8 секунд.</p>
+      <p><a href="jev/">Демо</a> работает на том же JavaScript-рантайме, что и чат: веса в формате QPACK2 (47 МБ, int8), вычисления в WebAssembly с SIMD внутри Web Worker. Общий префикс — текст и вопрос — считается один раз и переиспользуется для обоих порядков вариантов и для всех вопросов: у рекуррентной модели можно сохранить состояние и откатиться к нему. Вероятности в браузере совпадают с PyTorch с точностью до 5·10⁻⁵; одно решение занимает 4–8 секунд.</p>
 
       <h2>Что дальше</h2>
       <p>Встраиваем JEV в чат: модель решений будет проверять ответы чата и выбирать лучший из нескольких. Это делается в экспериментальном чате, где видно, когда работает JEV, и его можно отключить. А универсальную модель решений будем пробовать на N-Q-164M — на таком размере перенос на новые задачи гораздо вероятнее.</p>
@@ -227,7 +227,7 @@
       </ul>
 
       <h2>In the browser</h2>
-      <p>The <a href="jev/">demo</a> runs on the same JavaScript runtime as the chat: qpack weights (89 MB), computation in a Web Worker. The shared prefix — the text and the question — is computed once and reused for both option orders and for every question: a recurrent model can save its state and roll back to it. Probabilities in the browser match PyTorch within 5·10⁻⁵; one decision takes 4–8 seconds.</p>
+      <p>The <a href="jev/">demo</a> runs on the same JavaScript runtime as the chat: QPACK2 weights (47 MB, int8), computation in WebAssembly with SIMD inside a Web Worker. The shared prefix — the text and the question — is computed once and reused for both option orders and for every question: a recurrent model can save its state and roll back to it. Probabilities in the browser match PyTorch within 5·10⁻⁵; one decision takes 4–8 seconds.</p>
 
       <h2>What's next</h2>
       <p>We are building JEV into the chat: the decision model will check the chat's answers and pick the best of several. That happens in an experimental chat that shows when JEV is at work and lets you turn it off. A general decision model we will try on N-Q-164M — at that size transfer to new tasks is far more likely.</p>
@@ -319,7 +319,7 @@
       </ul>
 
       <h2>在浏览器中</h2>
-      <p><a href="jev/">演示</a>使用和聊天相同的 JavaScript 运行时：qpack 格式权重（89 MB），在 Web Worker 中计算。共享前缀 —— 文本和问题 —— 只计算一次，并在两种选项顺序和所有问题之间复用：循环模型可以保存状态并回滚。浏览器中的概率与 PyTorch 的差异在 5·10⁻⁵ 以内；一次决策需要 4–8 秒。</p>
+      <p><a href="jev/">演示</a>使用和聊天相同的 JavaScript 运行时：QPACK2 格式权重（47 MB，int8），在 Web Worker 内用带 SIMD 的 WebAssembly 计算。共享前缀 —— 文本和问题 —— 只计算一次，并在两种选项顺序和所有问题之间复用：循环模型可以保存状态并回滚。浏览器中的概率与 PyTorch 的差异在 5·10⁻⁵ 以内；一次决策需要 4–8 秒。</p>
 
       <h2>接下来</h2>
       <p>我们正在把 JEV 集成到聊天中：决策模型将检查聊天的回答，并从多个回答中选出最好的。这会在一个实验性聊天中进行，你能看到 JEV 何时在工作，也可以关闭它。通用决策模型我们会在 N-Q-164M 上尝试 —— 在那个规模上，迁移到新任务的可能性要大得多。</p>
