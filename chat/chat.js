@@ -26,7 +26,7 @@ async function fetchWithProgress(url, onProgress, timeoutMs = 120000) {
 
 async function loadModel() {
   const t0 = performance.now();
-  const buf = await fetchWithProgress('./model.qpack', (got, total) =>
+  const buf = await fetchWithProgress('./model.qpack?v=nq26m-2', (got, total) =>
     log(total ? `downloading model.qpack ${(got / 1e6).toFixed(1)}/${(total / 1e6).toFixed(1)} MB (${Math.round(100 * got / total)}%)…` : `downloading model.qpack ${(got / 1e6).toFixed(1)} MB…`));
   log(`unpacking (${(buf.byteLength / 1e6).toFixed(1)} MB in ${((performance.now() - t0) / 1000).toFixed(1)}s)…`);
   await new Promise((r) => setTimeout(r, 0));
