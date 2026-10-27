@@ -86,6 +86,7 @@
             <div class="set-sub" id="jevSub">
               <label class="set-check"><input type="checkbox" id="jevCheck" checked /> <span data-lang="ru">Проверять, отвечает ли ответ на вопрос</span><span data-lang="en">Check whether each answer addresses the question</span><span data-lang="zh">检查回答是否切题</span></label>
               <label class="set-check"><input type="checkbox" id="jevRetry" checked /> <span data-lang="ru">Перегенерировать ответы не по делу (до 2 раз)</span><span data-lang="en">Regenerate off-topic answers (up to 2 times)</span><span data-lang="zh">重新生成不切题的回答（最多 2 次）</span></label>
+              <label class="set-check"><input type="checkbox" id="jevRoute" checked /> <span data-lang="ru">JEV сам решает, когда думать перед ответом (новое)</span><span data-lang="en">JEV decides when to think before answering (new)</span><span data-lang="zh">由 JEV 决定何时先思考再回答（新）</span></label>
               <label class="set-check"><input type="checkbox" id="jevTags" checked /> <span data-lang="ru">Метки запроса: тема, сложность, токсичность</span><span data-lang="en">Request tags: topic, difficulty, toxicity</span><span data-lang="zh">请求标签：主题、难度、毒性</span></label>
             </div>
             <p class="set-note"><span data-lang="ru">JEV — вторая модель (47 МБ), работает в отдельном потоке. Она хорошо отличает ответ по делу от ответа не по теме (98% на тесте), но не проверяет, верны ли числа и факты.</span><span data-lang="en">JEV is a second model (47 MB) running in its own thread. It tells an on-topic answer from an off-topic one well (98% on the test set), but it does not check whether numbers or facts are right.</span><span data-lang="zh">JEV 是第二个模型（47 MB），在独立线程中运行。它能很好地区分切题和不切题的回答（测试集 98%），但不检查数字或事实是否正确。</span></p>
@@ -123,6 +124,6 @@
   </div>
 
   <script src="../main.js"></script>
-  <script src="chat_exp.js?v=nq26m-9"></script>
+  <script src="chat_exp.js?v=nq26m-10"></script>
 </body>
 </html>

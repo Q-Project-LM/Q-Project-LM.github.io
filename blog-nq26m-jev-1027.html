@@ -1,0 +1,242 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>N-Q-26M-JEV-1027: logic, trick questions and decisions for chat — Q Project</title>
+  <meta name="description" content="N-Q-26M-JEV-1027, the October 27 update of the 26M decision model: openjev data, teacher distillation and a 1536-token context — +8 MNLI, +20 ANLI, false-premise detection 0.44 → 0.61, new routing decisions for chat. Honest comparison with small NLI models." />
+  <link rel="icon" type="image/svg+xml" href="assets/q-logo.svg" />
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("q-theme") || "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Release-page additions on top of the shared article styles */
+    .model-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 28px 0 8px; }
+    @media (max-width: 720px) { .model-pair { grid-template-columns: 1fr; } }
+    .model-pair .model { display: flex; flex-direction: column; gap: 10px; }
+    .model-pair .model__logo { width: 40px; height: 40px; margin-bottom: 2px; }
+    .model-pair .model__name { font-size: 1.2rem; }
+    .model-pair .model__desc { color: var(--muted); font-size: 0.92rem; margin: 0; }
+    .model-pair .model__foot { margin-top: auto; padding-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s cubic-bezier(0.2,0.7,0.2,1), transform 0.6s cubic-bezier(0.2,0.7,0.2,1); }
+    .reveal.is-in { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+    .stat-num { display: inline-block; font-variant-numeric: tabular-nums; }
+
+    .qbench-table-wrap { overflow-x: auto; margin-top: 18px; }
+    .qbench-table-wrap .doc-table td.best { color: var(--brand); font-weight: 600; }
+    .qbench-table-wrap .doc-table tr.us td { background: var(--surface-2); }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#intro"><span data-lang="ru">Перейти к статье</span><span data-lang="en">Skip to article</span><span data-lang="zh">跳到正文</span></a>
+
+  {% include header.html active="blog" %}
+
+  <article class="article" id="intro">
+
+  <div data-lang="ru">
+    <p class="article__kicker">ОБНОВЛЕНИЕ &middot; ЛИНЕЙКА N-Q</p>
+    <h1 class="article__title">N-Q-26M-JEV-1027: логика, ловушки и решения для чата</h1>
+    <p class="article__lede">Обновили 26-мегабайтную модель решений. Она стала заметно сильнее в логике и в поиске ложных предпосылок — там теперь обгоняет NLI-модели в 3 раза крупнее — и научилась решать за чат, нужен ли калькулятор и стоит ли подумать перед ответом. Рассказываем, что помогло и что нет.</p>
+
+    <div class="article__stats reveal">
+      <div><b>+8</b><span>MNLI, до 72.5%</span></div>
+      <div><b>+20</b><span>ANLI r1, до 43%</span></div>
+      <div><b>0.61</b><span>FalseQA, было 0.44</span></div>
+      <div><b>98–99%</b><span>«калькулятор?», «думать?»</span></div>
+    </div>
+
+    <div class="article__body">
+      <h2>Почему 1027</h2>
+      <p>Номер версии — это дата, как у DeepSeek: <code>V3-0324</code> вышла 24 марта, <code>R1-0528</code> — 28 мая. <b>1027</b> значит 27 октября. Интерфейс тот же, что у прошлой N-Q-26M-JEV, новые только веса. Следующие обновления получат свою дату, старые версии никуда не денутся.</p>
+
+      <h2>Что изменилось</h2>
+      <ul>
+        <li><b>Данные openjev.</b> Взяли 156 тыс. примеров из открытого набора <a href="https://huggingface.co/datasets/AlexWortega/openjev-data" target="_blank" rel="noopener">openjev-data</a>: логика (NLI), следование инструкциям, вызовы инструментов, верность источнику, вопросы с подвохом, решения сильной модели-учителя. Плюс ещё 206 тыс. NLI-пар.</li>
+        <li><b>Учитель.</b> На английских задачах модель учится не только на правильном ответе, но и на распределении вероятностей учителя — NLI-модели <a href="https://huggingface.co/dleemiller/ModernCE-base-nli" target="_blank" rel="noopener">ModernCE-base</a> (150M). Половина «правильный ответ», половина «как думает учитель»: маленькой модели так проще уловить, где граница между вариантами.</li>
+        <li><b>Длинный контекст.</b> Текст читается до 1536 токенов, а не до 640.</li>
+        <li><b>Решения для чата.</b> «Понадобится ли точное вычисление?» и «нужно ли рассуждать перед ответом?» — 98.3% и 99.2% на отложенных примерах. В <a href="chat_exp/">экспериментальном чате</a> JEV теперь сам включает размышление, когда вопрос этого требует.</li>
+      </ul>
+
+      <h2>Честное сравнение</h2>
+      <p>На этих тестах модель не училась. Маленькие NLI-модели мы прогнали сами на тех же задачах, строка openjev-4B — из его карточки.</p>
+      <div class="qbench-table-wrap"><table class="doc-table"><thead><tr><th>Тест</th><th>JEV (октябрь)</th><th><b>JEV-1027</b></th><th>DeBERTa-xs, 71M</th><th>ModernCE, 150M</th><th>openjev, 4B</th></tr></thead><tbody><tr><td>JevBench, все 231</td><td>46.3</td><td>46.3</td><td>49.4</td><td>52.0</td><td>81.4</td></tr><tr><td>JevBench, трудные 111</td><td>36.9</td><td><b>39.6</b></td><td>35.1</td><td>36.9</td><td>62.2</td></tr><tr><td>MNLI m / mm</td><td>64.7 / 65.9</td><td><b>72.5 / 73.0</b></td><td>88.5 / 87.8</td><td>89.5 / 89.6</td><td>89.6 / 89.9</td></tr><tr><td>ANLI r1 / r2 / r3</td><td>24 / 30 / 30</td><td><b>43 / 38 / 36</b></td><td>36 / 30 / 32</td><td>52 / 39 / 33</td><td>78 / 67 / 63</td></tr><tr><td>FalseQA, ложные предпосылки (AUROC)</td><td>0.44</td><td><b>0.61</b></td><td>0.52</td><td>0.60</td><td>0.95</td></tr><tr><td>HaluBench, выдумки (AUROC)</td><td>0.52</td><td><b>0.65</b></td><td>0.61</td><td>0.72</td><td>0.94</td></tr><tr><td>LLMBar, лучший из двух ответов</td><td>41.5</td><td>42.7</td><td>45.1</td><td>51.8</td><td>83.4</td></tr></tbody></table></div>
+      <p>Где выросли: логика с ловушками (ANLI) и ложные предпосылки — 26M обгоняет DeBERTa-xsmall и MiniLM, которые в 3 раза больше, и догоняет 150-миллионную ModernCE. Обычная логика (MNLI) выросла на 8 пунктов, но до специализированных моделей ещё далеко: их учили на миллионе пар в несколько эпох. На JevBench в целом — без изменений: трудные задачи лучше, средние хуже. Все модели до 150M на нём упираются примерно в 50%, модели на 4B — совсем другая лига.</p>
+
+      <h2>Что не получилось</h2>
+      <ul>
+        <li><b>Судья решений.</b> Модель уверенно отличает верные решения математических задач от неверных (AUC 0.98), но в основном потому, что отличает лёгкие задачи от трудных. Если чат-модель решает задачу 8 раз, выбор судьи поднимает точность только с 14.5% до 16% при потолке 22%. Попарное сравнение решений тоже не помогло — на 26M-чате почти не бывает задач, где одно решение верное, а другое нет.</li>
+        <li><b>LLMBar</b> (какой из двух ответов лучше выполняет инструкцию) остался около угадывания у всех маленьких моделей, включая нашу.</li>
+        <li><b>Учитель покрупнее.</b> Хотели учить у openjev-2B, но на V100 он работает слишком медленно: разметка заняла бы больше суток.</li>
+      </ul>
+
+      <h2>Попробовать</h2>
+      <p><a href="jev/">Демо JEV</a> работает прямо в браузере (47 МБ, QPACK2, расчёт сверен с PyTorch). Там есть новые примеры: «нужен калькулятор?», проверка утверждения по тексту, логика с подвохом.</p>
+
+      <h2>Что дальше</h2>
+      <p>Главное ограничение — размер. Следующий шаг — тот же рецепт на базе N-Q-164M, которая сейчас дообучается; затем больше данных NLI и «зрение»: решения по картинке.</p>
+    </div>
+  </div>
+
+  <div data-lang="en">
+    <p class="article__kicker">UPDATE &middot; THE N-Q LADDER</p>
+    <h1 class="article__title">N-Q-26M-JEV-1027: logic, trick questions and decisions for chat</h1>
+    <p class="article__lede">We updated the 26M decision model. It is much stronger at logic and at spotting false premises — there it now beats NLI models three times its size — and it learned two decisions for chat: does the reply need the calculator, and should the model think first. Here is what helped and what did not.</p>
+
+    <div class="article__stats reveal">
+      <div><b>+8</b><span>MNLI, to 72.5%</span></div>
+      <div><b>+20</b><span>ANLI r1, to 43%</span></div>
+      <div><b>0.61</b><span>FalseQA, was 0.44</span></div>
+      <div><b>98–99%</b><span>"calculator?", "think?"</span></div>
+    </div>
+
+    <div class="article__body">
+      <h2>Why 1027</h2>
+      <p>The version number is a date, the DeepSeek way: <code>V3-0324</code> came out on March 24, <code>R1-0528</code> on May 28. <b>1027</b> means October 27. Same interface as the previous N-Q-26M-JEV, new weights; future updates get their own date and old versions stay available.</p>
+
+      <h2>What changed</h2>
+      <ul>
+        <li><b>openjev data.</b> 156k examples from the open <a href="https://huggingface.co/datasets/AlexWortega/openjev-data" target="_blank" rel="noopener">openjev-data</a> set: NLI, instruction following, tool calls, faithfulness to a source, trick questions, decisions of a strong teacher — plus 206k more NLI pairs.</li>
+        <li><b>A teacher.</b> On the English tasks the model learns not only the right answer but the probability distribution of a teacher, the <a href="https://huggingface.co/dleemiller/ModernCE-base-nli" target="_blank" rel="noopener">ModernCE-base</a> NLI model (150M): half "the right answer", half "what the teacher thinks". It shows a small model where the boundaries between options lie.</li>
+        <li><b>Longer context.</b> Texts are read up to 1536 tokens instead of 640.</li>
+        <li><b>Decisions for chat.</b> "Will this need an exact computation?" and "should the assistant reason first?" — 98.3% and 99.2% on held-out examples. In the <a href="chat_exp/">experimental chat</a> JEV now turns on thinking by itself when a question calls for it.</li>
+      </ul>
+
+      <h2>An honest comparison</h2>
+      <p>The model never trained on these tests. We ran the small NLI models ourselves on the same items; the openjev-4B row is from its model card.</p>
+      <div class="qbench-table-wrap"><table class="doc-table"><thead><tr><th>Test</th><th>JEV (Oct)</th><th><b>JEV-1027</b></th><th>DeBERTa-xs, 71M</th><th>ModernCE, 150M</th><th>openjev, 4B</th></tr></thead><tbody><tr><td>JevBench, all 231</td><td>46.3</td><td>46.3</td><td>49.4</td><td>52.0</td><td>81.4</td></tr><tr><td>JevBench, hard 111</td><td>36.9</td><td><b>39.6</b></td><td>35.1</td><td>36.9</td><td>62.2</td></tr><tr><td>MNLI m / mm</td><td>64.7 / 65.9</td><td><b>72.5 / 73.0</b></td><td>88.5 / 87.8</td><td>89.5 / 89.6</td><td>89.6 / 89.9</td></tr><tr><td>ANLI r1 / r2 / r3</td><td>24 / 30 / 30</td><td><b>43 / 38 / 36</b></td><td>36 / 30 / 32</td><td>52 / 39 / 33</td><td>78 / 67 / 63</td></tr><tr><td>FalseQA, false premises (AUROC)</td><td>0.44</td><td><b>0.61</b></td><td>0.52</td><td>0.60</td><td>0.95</td></tr><tr><td>HaluBench, hallucinations (AUROC)</td><td>0.52</td><td><b>0.65</b></td><td>0.61</td><td>0.72</td><td>0.94</td></tr><tr><td>LLMBar, better of two answers</td><td>41.5</td><td>42.7</td><td>45.1</td><td>51.8</td><td>83.4</td></tr></tbody></table></div>
+      <p>Where it grew: adversarial logic (ANLI) and false premises — the 26M model beats DeBERTa-xsmall and MiniLM, three times its size, and catches up with the 150M ModernCE. Plain NLI went up 8 points but is still far from the specialised models, which were trained on a million pairs for several epochs. JevBench overall is unchanged: better on the hard tier, worse on the standard one. Every model up to 150M lands around 50% there; the 4B models play in another league.</p>
+
+      <h2>What did not work</h2>
+      <ul>
+        <li><b>The solution judge.</b> It separates right from wrong math solutions with AUC 0.98 — mostly by telling easy problems from hard ones. When the chat model solves a problem 8 times, picking with the judge lifts accuracy only from 14.5% to 16% (the ceiling is 22%). Pairwise comparison did not help either: the 26M chat model almost never has one right and one wrong solution for the same problem.</li>
+        <li><b>LLMBar</b> (which of two answers follows the instruction) stays near chance for every small model, ours included.</li>
+        <li><b>A bigger teacher.</b> We wanted openjev-2B as the teacher, but it is too slow on a V100: labelling would have taken more than a day.</li>
+      </ul>
+
+      <h2>Try it</h2>
+      <p>The <a href="jev/">JEV demo</a> runs in your browser (47 MB, QPACK2, checked against PyTorch), with new examples: "needs a calculator?", checking a claim against a text, tricky logic.</p>
+
+      <h2>What's next</h2>
+      <p>Size is the main limit. Next: the same recipe on top of N-Q-164M, which is still pretraining; then more NLI data and vision — decisions about an image.</p>
+    </div>
+  </div>
+
+  <div data-lang="zh">
+    <p class="article__kicker">更新 &middot; N-Q 系列</p>
+    <h1 class="article__title">N-Q-26M-JEV-1027：逻辑、陷阱问题与聊天决策</h1>
+    <p class="article__lede">我们更新了 26M 决策模型。它在逻辑推断和识别虚假前提方面明显更强 —— 在这些任务上已超过 3 倍大小的 NLI 模型 —— 并学会了两个聊天决策：回答是否需要计算器，模型是否应该先思考。下面说明哪些有效、哪些无效。</p>
+
+    <div class="article__stats reveal">
+      <div><b>+8</b><span>MNLI，达 72.5%</span></div>
+      <div><b>+20</b><span>ANLI r1，达 43%</span></div>
+      <div><b>0.61</b><span>FalseQA，原为 0.44</span></div>
+      <div><b>98–99%</b><span>「需要计算器？」「需要思考？」</span></div>
+    </div>
+
+    <div class="article__body">
+      <h2>为什么是 1027</h2>
+      <p>版本号就是日期，和 DeepSeek 一样：<code>V3-0324</code> 发布于 3 月 24 日，<code>R1-0528</code> 发布于 5 月 28 日。<b>1027</b> 即 10 月 27 日。接口与之前的 N-Q-26M-JEV 相同，只是权重更新；之后的更新会有各自的日期，旧版本保留。</p>
+
+      <h2>改动</h2>
+      <ul>
+        <li><b>openjev 数据。</b>来自开放数据集 <a href="https://huggingface.co/datasets/AlexWortega/openjev-data" target="_blank" rel="noopener">openjev-data</a> 的 15.6 万条样本：自然语言推断、指令遵循、工具调用、忠实于来源、陷阱问题、强教师模型的决策，另加 20.6 万对 NLI。</li>
+        <li><b>教师模型。</b>在英文任务上，模型不仅学习正确答案，也学习教师 <a href="https://huggingface.co/dleemiller/ModernCE-base-nli" target="_blank" rel="noopener">ModernCE-base</a>（150M）的概率分布：一半是正确答案，一半是教师的判断。</li>
+        <li><b>更长的上下文。</b>文本最多读取 1536 个词元，而不是 640。</li>
+        <li><b>聊天决策。</b>「是否需要精确计算？」和「回答前是否需要推理？」—— 在留出样本上分别为 98.3% 和 99.2%。在<a href="chat_exp/">实验聊天</a>中，JEV 会在问题需要时自动开启思考。</li>
+      </ul>
+
+      <h2>诚实的对比</h2>
+      <p>模型从未在这些测试上训练过。小型 NLI 模型由我们在相同题目上运行，openjev-4B 一行取自其模型卡。</p>
+      <div class="qbench-table-wrap"><table class="doc-table"><thead><tr><th>测试</th><th>JEV（十月）</th><th><b>JEV-1027</b></th><th>DeBERTa-xs，71M</th><th>ModernCE，150M</th><th>openjev，4B</th></tr></thead><tbody><tr><td>JevBench，全部 231</td><td>46.3</td><td>46.3</td><td>49.4</td><td>52.0</td><td>81.4</td></tr><tr><td>JevBench，困难 111</td><td>36.9</td><td><b>39.6</b></td><td>35.1</td><td>36.9</td><td>62.2</td></tr><tr><td>MNLI m / mm</td><td>64.7 / 65.9</td><td><b>72.5 / 73.0</b></td><td>88.5 / 87.8</td><td>89.5 / 89.6</td><td>89.6 / 89.9</td></tr><tr><td>ANLI r1 / r2 / r3</td><td>24 / 30 / 30</td><td><b>43 / 38 / 36</b></td><td>36 / 30 / 32</td><td>52 / 39 / 33</td><td>78 / 67 / 63</td></tr><tr><td>FalseQA，虚假前提（AUROC）</td><td>0.44</td><td><b>0.61</b></td><td>0.52</td><td>0.60</td><td>0.95</td></tr><tr><td>HaluBench，幻觉（AUROC）</td><td>0.52</td><td><b>0.65</b></td><td>0.61</td><td>0.72</td><td>0.94</td></tr><tr><td>LLMBar，两个回答中更好的</td><td>41.5</td><td>42.7</td><td>45.1</td><td>51.8</td><td>83.4</td></tr></tbody></table></div>
+      <p>提升之处：对抗推断（ANLI）和虚假前提 —— 26M 超过了大 3 倍的 DeBERTa-xsmall 和 MiniLM，并追上了 150M 的 ModernCE。常规 NLI 提升 8 个百分点，但距离专门模型仍远。JevBench 总体不变：困难题更好，标准题更差。150M 以内的模型都在 50% 左右，4B 模型完全是另一个级别。</p>
+
+      <h2>没成功的部分</h2>
+      <ul>
+        <li><b>解题评判。</b>它区分数学题正确与错误解答的 AUC 为 0.98，但主要靠区分题目难易。聊天模型对同一道题解 8 次时，评判的选择只把准确率从 14.5% 提升到 16%（上限 22%）。</li>
+        <li><b>LLMBar</b>（两个回答中哪个更好地遵循指令）对所有小模型都接近随机，包括我们的。</li>
+        <li><b>更大的教师。</b>本想用 openjev-2B 作教师，但它在 V100 上太慢，标注需要一天以上。</li>
+      </ul>
+
+      <h2>试用</h2>
+      <p><a href="jev/">JEV 演示</a>直接在浏览器中运行（47 MB，QPACK2，已与 PyTorch 对齐），新增示例：「需要计算器？」、依据文本核查论断、带陷阱的逻辑题。</p>
+
+      <h2>接下来</h2>
+      <p>主要限制是规模。下一步：在仍在预训练的 N-Q-164M 上使用同样的方法；然后是更多 NLI 数据和视觉 —— 针对图片做决策。</p>
+    </div>
+  </div>
+
+  </article>
+
+  <footer class="footer">
+    <div class="footer__brand">
+      <img src="assets/q-logo.svg" alt="" width="28" height="28" />
+      <span>Q Project</span>
+    </div>
+    <p class="footer__tag">
+      <span data-lang="ru">Претрейн &middot; Файнтюн &middot; Агенты &middot; Исследования</span>
+      <span data-lang="en">Pretrain &middot; Finetune &middot; Agents &middot; Research</span>
+      <span data-lang="zh">预训练 &middot; 微调 &middot; 智能体 &middot; 研究</span>
+    </p>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="index.html"><span data-lang="ru">Главная</span><span data-lang="en">Home</span><span data-lang="zh">首页</span></a>
+      <a href="blog.html"><span data-lang="ru">Блог</span><span data-lang="en">Blog</span><span data-lang="zh">博客</span></a>
+      <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a>
+      <a href="https://github.com/Q-Project-LM" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <p class="footer__copy">
+      <span data-lang="ru">&copy; <span class="year"></span> Q Project. Разрабатывается независимо.</span>
+      <span data-lang="en">&copy; <span class="year"></span> Q Project. Built independently.</span>
+      <span data-lang="zh">&copy; <span class="year"></span> Q Project。独立开发。</span>
+    </p>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    (function () {
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var els = document.querySelectorAll(".reveal");
+      if (!("IntersectionObserver" in window) || reduce) {
+        els.forEach(function (el) { el.classList.add("is-in"); });
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          en.target.classList.add("is-in");
+          io.unobserve(en.target);
+          en.target.querySelectorAll(".stat-num[data-count]").forEach(function (num) {
+            var target = parseFloat(num.getAttribute("data-count"));
+            var suffix = num.getAttribute("data-suffix") || "";
+            var start = performance.now(), dur = 900;
+            function frame(t) {
+              var p = Math.min(1, (t - start) / dur);
+              var eased = 1 - Math.pow(1 - p, 3);
+              num.textContent = (target * eased).toFixed(target % 1 ? 1 : 0) + suffix;
+              if (p < 1) requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+          });
+        });
+      }, { threshold: 0.25 });
+      els.forEach(function (el) { io.observe(el); });
+    })();
+  </script>
+</body>
+</html>

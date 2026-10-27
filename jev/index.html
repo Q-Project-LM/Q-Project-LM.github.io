@@ -5,8 +5,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>N-Q-26M-JEV: decisions in the browser — Q Project</title>
-  <meta name="description" content="N-Q-26M-JEV, a 26M-class decision model: a choice, a score or a yes/no with calibrated probabilities in one forward pass, running in your browser." />
+  <title>N-Q-26M-JEV-1027: decisions in the browser — Q Project</title>
+  <meta name="description" content="N-Q-26M-JEV-1027 (October 27 update), a 26M-class decision model: a choice, a score or a yes/no with calibrated probabilities in one forward pass, running in your browser." />
   <link rel="icon" type="image/svg+xml" href="../assets/q-logo.svg" />
   <script>
     (function () { try { document.documentElement.setAttribute("data-theme", localStorage.getItem("q-theme") || "light"); } catch (e) {} })();
@@ -48,10 +48,10 @@
   {% include header.html base="../" active="jev" %}
 
   <main class="run demo" id="demo">
-    <h1>N-Q-26M-JEV</h1>
-    <p class="run__lede" data-lang="ru">Модель решений: вместо текста она за один проход выдаёт выбор из вариантов, оценку по шкале или вероятность «да» — с откалиброванными вероятностями. Это N-Q-26M-Chat с головой решений, работает прямо в этой вкладке.</p>
-    <p class="run__lede" data-lang="en">A decision model: instead of text it returns, in one forward pass, a choice among options, a level on a scale or a probability of "yes" — with calibrated probabilities. It is N-Q-26M-Chat with a decision head, running right in this tab.</p>
-    <p class="run__lede" data-lang="zh">一个决策模型：它不生成文本，而是一次前向计算给出选项中的选择、量表上的等级或"是"的概率 —— 概率经过校准。它是带决策头的 N-Q-26M-Chat，直接在这个标签页里运行。</p>
+    <h1>N-Q-26M-JEV-1027</h1>
+    <p class="run__lede" data-lang="ru">Модель решений: вместо текста она за один проход выдаёт выбор из вариантов, оценку по шкале или вероятность «да» — с откалиброванными вероятностями. Это N-Q-26M-Chat с головой решений, работает прямо в этой вкладке. <b>Обновление 27 октября</b>: заметно сильнее в логике, ловушках и проверке фактов по тексту, плюс новые решения для чата — нужен ли калькулятор и стоит ли подумать перед ответом.</p>
+    <p class="run__lede" data-lang="en">A decision model: instead of text it returns, in one forward pass, a choice among options, a level on a scale or a probability of "yes" — with calibrated probabilities. It is N-Q-26M-Chat with a decision head, running right in this tab. <b>October 27 update</b>: much stronger at logic, trick questions and checking claims against a text, plus new chat decisions — does the reply need the calculator, should the model think first.</p>
+    <p class="run__lede" data-lang="zh">一个决策模型：它不生成文本，而是一次前向计算给出选项中的选择、量表上的等级或"是"的概率 —— 概率经过校准。它是带决策头的 N-Q-26M-Chat，直接在这个标签页里运行。<b>10 月 27 日更新</b>：在逻辑推断、陷阱问题和依据文本核查事实方面明显更强，并新增了聊天决策 —— 是否需要计算器、回答前是否需要思考。</p>
 
     <div class="demo-card">
       <div id="status" class="demo-status">loading&hellip;</div>
@@ -81,21 +81,26 @@
       <table class="doc-table jev-table">
         <thead><tr><th data-lang="ru">Задача</th><th data-lang="en">Task</th><th data-lang="zh">任务</th><th>%</th><th data-lang="ru">Случайно</th><th data-lang="en">Chance</th><th data-lang="zh">随机</th></tr></thead>
         <tbody>
+          <tr><td>needs the calculator? / нужен ли калькулятор (new)</td><td><b>98.3</b></td><td>50</td></tr>
+          <tr><td>think before answering? / думать ли перед ответом (new)</td><td><b>99.2</b></td><td>50</td></tr>
           <tr><td>reply ↔ question / ответ ↔ вопрос</td><td><b>98–99</b></td><td>25–50</td></tr>
-          <tr><td>news topic / тематика новостей</td><td><b>88.8</b></td><td>25</td></tr>
-          <tr><td>request topic / тема запроса (6)</td><td><b>81.1</b></td><td>17</td></tr>
-          <tr><td>toxicity (ru) / токсичность</td><td><b>80.0</b></td><td>50</td></tr>
-          <tr><td>sentiment / тональность</td><td><b>78.1</b></td><td>~40</td></tr>
-          <tr><td>which answer is better / какой ответ лучше</td><td>68.7</td><td>50</td></tr>
-          <tr><td>NLI (ru+en)</td><td>64.5</td><td>33</td></tr>
-          <tr><td>emotion, never trained / эмоции, вне обучения</td><td>29.9</td><td>17</td></tr>
-          <tr><td>OpenBookQA, never trained / вне обучения</td><td>26.3</td><td>25</td></tr>
+          <tr><td>news topic / тематика новостей</td><td><b>89.5</b></td><td>25</td></tr>
+          <tr><td>tool call correct / вызов инструмента верный (new)</td><td><b>87.5</b></td><td>50</td></tr>
+          <tr><td>request topic / тема запроса (6)</td><td><b>79.8</b></td><td>17</td></tr>
+          <tr><td>toxicity (ru) / токсичность</td><td><b>79.5</b></td><td>50</td></tr>
+          <tr><td>sentiment / тональность</td><td><b>79.2</b></td><td>~40</td></tr>
+          <tr><td>claim supported by the text / утверждение подтверждается текстом (new)</td><td><b>76.8</b></td><td>50</td></tr>
+          <tr><td>MNLI, held out / логика, вне обучения</td><td>72.5 <small>(was 64.7)</small></td><td>33</td></tr>
+          <tr><td>ANLI r1, adversarial, held out / логика с ловушками</td><td>43.3 <small>(was 23.7)</small></td><td>33</td></tr>
+          <tr><td>FalseQA, false premises, held out (AUROC) / ложные предпосылки</td><td>0.61 <small>(was 0.44)</small></td><td>0.5</td></tr>
+          <tr><td>which answer is better / какой ответ лучше</td><td>68.3</td><td>50</td></tr>
+          <tr><td>JevBench public, held out / внешний бенчмарк</td><td>46.3</td><td>—</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="demo-note" data-lang="ru">Модель хорошо решает задачи тех типов, на которых обучена, и её вероятности честные (ошибка калибровки 0.005–0.055). Новые типы вопросов, особенно требующие знаний и рассуждения, она решает около случайного уровня — для этого 26M мало. Веса — <code>model.q8.qpack</code> (47 МБ, QPACK2); расчёт в браузере сверен с PyTorch (расхождение вероятностей &lt; 10⁻⁴). Подробнее — в <a href="../blog-nq26m-jev.html" style="color:var(--brand)">разборе JEV</a>; веса — на <a href="https://huggingface.co/q-project/N-Q-26M-JEV" target="_blank" rel="noopener" style="color:var(--brand)">Hugging Face</a>.</p>
-    <p class="demo-note" data-lang="en">The model is good at the task families it was trained on, and its probabilities are honest (calibration error 0.005–0.055). New kinds of questions, especially ones that need knowledge or reasoning, it answers near chance — 26M is too small for that. Weights: <code>model.q8.qpack</code> (47 MB, QPACK2); the in-browser computation is checked against PyTorch (probabilities within 10⁻⁴). More in the <a href="../blog-nq26m-jev.html" style="color:var(--brand)">JEV writeup</a>; weights on <a href="https://huggingface.co/q-project/N-Q-26M-JEV" target="_blank" rel="noopener" style="color:var(--brand)">Hugging Face</a>.</p>
-    <p class="demo-note" data-lang="zh">模型擅长它训练过的任务类型，概率也是真实可信的（校准误差 0.005–0.055）。对于新类型的问题，尤其是需要知识或推理的问题，它的表现接近随机 —— 26M 对此太小了。权重：<code>model.q8.qpack</code>（47 MB，QPACK2）；浏览器中的计算已与 PyTorch 对齐（概率误差小于 10⁻⁴）。详见 <a href="../blog-nq26m-jev.html" style="color:var(--brand)">JEV 介绍</a>；权重见 <a href="https://huggingface.co/q-project/N-Q-26M-JEV" target="_blank" rel="noopener" style="color:var(--brand)">Hugging Face</a>。</p>
+    <p class="demo-note" data-lang="ru">Модель хорошо решает задачи тех типов, на которых обучена, и её вероятности честные (средняя ошибка калибровки 0.065). На внешних тестах, которых она не видела, обновление дало +8 пунктов в логике (MNLI), +20 в логике с ловушками (ANLI r1) и рост с 0.44 до 0.61 в поиске ложных предпосылок — там 26M теперь обгоняет NLI-модели в 3 раза крупнее. Вопросы, требующие знаний и многошагового рассуждения, по-прежнему не по силам 26M. Веса — <code>model.q8.qpack</code> (47 МБ, QPACK2); расчёт в браузере сверен с PyTorch (расхождение вероятностей 5·10⁻⁵). Подробнее — в <a href="../blog-nq26m-jev-1027.html" style="color:var(--brand)">посте об обновлении</a> и <a href="../blog-nq26m-jev.html" style="color:var(--brand)">разборе JEV</a>; веса — на <a href="https://huggingface.co/q-project/N-Q-26M-JEV" target="_blank" rel="noopener" style="color:var(--brand)">Hugging Face</a>.</p>
+    <p class="demo-note" data-lang="en">The model is good at the task families it was trained on, and its probabilities are honest (mean calibration error 0.065). On held-out tests it never saw, the update adds +8 points on plain NLI (MNLI), +20 on adversarial NLI (ANLI r1) and lifts false-premise detection from 0.44 to 0.61 AUROC — there the 26M model now beats NLI models 3× its size. Questions that need knowledge or multi-step reasoning are still beyond 26M. Weights: <code>model.q8.qpack</code> (47 MB, QPACK2); the in-browser computation is checked against PyTorch (probabilities within 10⁻⁴). More in the <a href="../blog-nq26m-jev-1027.html" style="color:var(--brand)">update post</a> and the <a href="../blog-nq26m-jev.html" style="color:var(--brand)">JEV writeup</a>; weights on <a href="https://huggingface.co/q-project/N-Q-26M-JEV" target="_blank" rel="noopener" style="color:var(--brand)">Hugging Face</a>.</p>
+    <p class="demo-note" data-lang="zh">模型擅长它训练过的任务类型，概率也是真实可信的（平均校准误差 0.065）。在从未见过的测试上，此次更新让常规推断（MNLI）提升 8 个百分点、对抗推断（ANLI r1）提升 20 个百分点，虚假前提检测从 0.44 提升到 0.61 AUROC —— 在这些任务上 26M 已超过 3 倍大小的 NLI 模型。需要知识或多步推理的问题仍超出 26M 的能力。权重：<code>model.q8.qpack</code>（47 MB，QPACK2）；浏览器中的计算已与 PyTorch 对齐（概率误差小于 10⁻⁴）。详见 <a href="../blog-nq26m-jev-1027.html" style="color:var(--brand)">更新说明</a>和 <a href="../blog-nq26m-jev.html" style="color:var(--brand)">JEV 介绍</a>；权重见 <a href="https://huggingface.co/q-project/N-Q-26M-JEV" target="_blank" rel="noopener" style="color:var(--brand)">Hugging Face</a>。</p>
   </main>
 
   <footer class="footer">
@@ -110,6 +115,6 @@
   </footer>
 
   <script src="../main.js"></script>
-  <script src="jev.js?v=nq26m-9"></script>
+  <script src="jev.js?v=nq26m-10"></script>
 </body>
 </html>

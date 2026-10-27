@@ -1,7 +1,7 @@
 'use strict';
-// N-Q-26M-JEV demo page: builds {name: {kind, question, options}} from the form and asks the worker to decide.
+// N-Q-26M-JEV-1027 demo page: builds {name: {kind, question, options}} from the form and asks the worker to decide.
 (function () {
-  const V = 'nq26m-9', MODEL_V = 'nq26m-q8-1';   // code version / weights version (bumping MODEL_V forces a re-download)
+  const V = 'nq26m-10', MODEL_V = 'jev-1027';   // code version / weights version (bumping MODEL_V forces a re-download)
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const PRESETS = [
@@ -20,6 +20,14 @@
       qs: [['score', 'Насколько сложен этот запрос?', 'легко, средне, сложно'], ['choice', 'О чём этот запрос? Выбери тему.', 'math, coding, writing, cooking, travel, languages']] },
     { name: 'NLI', state: 'Посылка: Все кошки в доме спали на диване.\nГипотеза: В доме нет ни одной кошки.',
       qs: [['choice', 'Как гипотеза соотносится с посылкой?', 'следует, нейтрально, противоречит']] },
+    { name: 'Нужен калькулятор? (новое)', state: 'Сколько будет 347 умножить на 86, а потом разделить на 4?',
+      qs: [['noul', 'Понадобится ли для ответа точное вычисление калькулятором?', 'нет, да'], ['noul', 'Нужно ли рассуждать перед ответом на этот запрос?', 'нет, да']] },
+    { name: 'Просто поболтать (новое)', state: 'Привет! Как настроение?',
+      qs: [['noul', 'Понадобится ли для ответа точное вычисление калькулятором?', 'нет, да'], ['noul', 'Нужно ли рассуждать перед ответом на этот запрос?', 'нет, да']] },
+    { name: 'Fact check (new)', state: 'Text: The Eiffel Tower was completed in 1889 and is 330 metres tall.\nClaim: The Eiffel Tower was completed in 1925.',
+      qs: [['noul', 'Does the text support the claim?', 'no, yes']] },
+    { name: 'Tricky NLI (new)', state: 'Premise: A man is playing a guitar on stage in front of a crowd.\nHypothesis: Nobody is making music.',
+      qs: [['choice', 'How does the hypothesis relate to the premise?', 'entailment, neutral, contradiction']] },
   ];
 
   function addRow(kind = 'choice', q = '', opts = '') {

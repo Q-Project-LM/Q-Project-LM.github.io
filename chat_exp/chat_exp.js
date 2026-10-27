@@ -6,7 +6,7 @@
 // A conversation: {id, title, updated, messages: [{role:'user', content} | {role:'assistant', raw, segs:[{kind, text}], tools:[...], meta}]}
 // `raw` is the assistant turn with its control tokens (<THINK>, <CALC>…) — that is what the model re-reads.
 (function () {
-  const V = 'nq26m-9', MODEL_V = 'nq26m-q8-1';   // code version / weights version (bumping MODEL_V forces a re-download)
+  const V = 'nq26m-10', MODEL_V = 'nq26m-q8-1', JEV_V = 'jev-1027';   // code version / weights version (bumping MODEL_V forces a re-download)
   const $ = (id) => document.getElementById(id);
   const lang = () => (document.documentElement.lang || 'en').slice(0, 2);
   // a trilingual label that follows the site's language switch (main.js toggles .is-active on [data-lang])
@@ -100,6 +100,13 @@
           (m.jev.toxic ? tag(L('токсичность', 'toxicity', '毒性'), `${(100 * m.jev.toxic.p_yes).toFixed(0)}%`, null) : '');
         d.appendChild(t);
       }
+      if (m.jevRoute) {   // JEV-1027 routing decision taken before the answer was generated
+        const t2 = document.createElement('div'); t2.className = 'jev-tags';
+        const yes = (p) => (p >= 0.5 ? L('да', 'yes', '是') : L('нет', 'no', '否'));
+        const rt = (label, p) => `<span class="jev-tag" title="P = ${(100 * p).toFixed(0)}%"><b>JEV</b><span>${label}: ${yes(p)} ${(100 * p).toFixed(0)}%</span></span>`;
+        t2.innerHTML = rt(L('думать', 'think', '思考'), m.jevRoute.think) + rt(L('калькулятор', 'calculator', '计算器'), m.jevRoute.calc);
+        d.appendChild(t2);
+      }
       return d;
     }
     d.className = 'm m--bot';
@@ -130,7 +137,7 @@
     else if (m.type === 'decision' && jevBusy) { const r = jevBusy; jevBusy = null; r.resolve(m.result); jevNext(); }
     else if (m.type === 'error') { if (jevBusy) { const r = jevBusy; jevBusy = null; r.resolve(null); jevNext(); } else jevPill('error'); }
   };
-  jevWorker.postMessage({ type: 'load', url: new URL(`../jev/model.q8.qpack?v=${MODEL_V}`, location.href).href, version: MODEL_V });
+  jevWorker.postMessage({ type: 'load', url: new URL(`../jev/model.q8.qpack?v=${JEV_V}`, location.href).href, version: JEV_V });
   function jevNext() { if (jevBusy || !jevQueue.length) return; jevBusy = jevQueue.shift(); jevWorker.postMessage({ type: 'decide', state: jevBusy.state, questions: jevBusy.questions }); }
   const jevDecide = (state, questions) => new Promise((resolve) => { jevQueue.push({ state, questions, resolve }); jevNext(); });
   const isRu = (t) => (t.match(/[а-яё]/gi) || []).length > 3;
@@ -144,6 +151,13 @@
       level: { kind: 'score', question: ru ? 'Насколько сложен этот запрос?' : 'How difficult is this request?', tiers: ru ? ['легко', 'средне', 'сложно'] : ['easy', 'medium', 'hard'] } };
     if (ru) q.toxic = { kind: 'noul', question: 'Есть ли в сообщении токсичность?', options: ['нет', 'да'] };
     return jevDecide(cut(text, 700), q);
+  }
+  // routing (N-Q-26M-JEV-1027): does the request need a reasoning block / the calculator? (prep_jev3.py phrasings)
+  function jevRoute(text) {
+    const ru = isRu(text), yn = ru ? ['нет', 'да'] : ['no', 'yes'];
+    return jevDecide(cut(text, 700), {
+      think: { kind: 'noul', question: ru ? 'Нужно ли рассуждать перед ответом на этот запрос?' : 'Should the assistant reason step by step before answering?', options: yn },
+      calc: { kind: 'noul', question: ru ? 'Понадобится ли для ответа точное вычисление калькулятором?' : 'Does answering this need an exact calculator computation?', options: yn } });
   }
   function jevMatch(question, answer) {
     const ru = isRu(question);
@@ -237,14 +251,20 @@
     const el = msgEl(live, cur.messages.length - 1); el.classList.add('is-pending'); el.querySelector('.m__meta').innerHTML = ''; $('msgs').appendChild(el);
     busy = true; setStatus('busy'); updateSend(); scrollDown(true);
   }
-  function send(text) {
+  async function send(text) {
     text = (text || '').trim(); if (!text || !ready || busy) return;
     const prior = turnsOf(cur.messages);
     const um = { role: 'user', content: text }; cur.messages.push(um); $('empty').hidden = true;
     $('msgs').appendChild(msgEl(um)); touch();
     turnQuestion = text; candidates = [];
     if (jevOn() && $('jevTags').checked) jevTagsFor(text).then((r) => { if (r) { um.jev = r; saveConvs(); if (!busy) renderAll(); else { const els = $('msgs').querySelectorAll('.m--user'); const el = els[els.length - 1]; if (el && cur.messages.includes(um)) el.replaceWith(msgEl(um)); } } });
-    startLive(); worker.postMessage({ type: 'chat', turns: prior, text, opts: opts() });
+    const o = opts();
+    if (jevOn() && $('jevRoute').checked && !o.think) {   // JEV decides whether this answer starts with a reasoning block
+      busy = true; setStatus('busy'); updateSend();
+      const r = await jevRoute(text); busy = false;
+      if (r) { um.jevRoute = { think: r.think.p_yes, calc: r.calc.p_yes }; o.think = r.think.p_yes >= 0.5; saveConvs(); const els = $('msgs').querySelectorAll('.m--user'); const el = els[els.length - 1]; if (el) el.replaceWith(msgEl(um)); }
+    }
+    startLive(); worker.postMessage({ type: 'chat', turns: prior, text, opts: o });
   }
   function regenerate() {
     if (busy || !cur.messages.length || cur.messages[cur.messages.length - 1].role !== 'assistant') return;
@@ -274,8 +294,9 @@
     $(id).addEventListener('input', () => { $(out).textContent = (+$(id).value).toFixed(d); savePrefs(); });
   }
   ['greedy', 'think', 'memory'].forEach((id) => $(id).addEventListener('change', savePrefs));
-  ['jevOn', 'jevCheck', 'jevRetry', 'jevTags'].forEach((id) => $(id).addEventListener('change', () => { jevPill(); try { localStorage.setItem('nq-chatexp-jev', JSON.stringify(['jevOn', 'jevCheck', 'jevRetry', 'jevTags'].map((k) => $(k).checked))); } catch (e) {} }));
-  try { const j = JSON.parse(localStorage.getItem('nq-chatexp-jev') || 'null'); if (j) ['jevOn', 'jevCheck', 'jevRetry', 'jevTags'].forEach((k, i) => { $(k).checked = j[i]; }); } catch (e) {}
+  const JEV_KEYS = ['jevOn', 'jevCheck', 'jevRetry', 'jevTags', 'jevRoute'];
+  JEV_KEYS.forEach((id) => $(id).addEventListener('change', () => { jevPill(); try { localStorage.setItem('nq-chatexp-jev', JSON.stringify(JEV_KEYS.map((k) => $(k).checked))); } catch (e) {} }));
+  try { const j = JSON.parse(localStorage.getItem('nq-chatexp-jev') || 'null'); if (j) JEV_KEYS.forEach((k, i) => { if (typeof j[i] === 'boolean') $(k).checked = j[i]; }); } catch (e) {}
   $('jevPill').addEventListener('click', (e) => { e.stopPropagation(); $('jevOn').checked = !$('jevOn').checked; $('jevOn').dispatchEvent(new Event('change')); });
   try { if (localStorage.getItem('nq-chatexp-banner') === 'closed') $('jevBanner').hidden = true; } catch (e) {}
   $('bannerClose').addEventListener('click', () => { $('jevBanner').hidden = true; try { localStorage.setItem('nq-chatexp-banner', 'closed'); } catch (e) {} });

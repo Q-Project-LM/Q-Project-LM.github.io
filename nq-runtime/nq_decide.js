@@ -23,7 +23,7 @@
   function decide(model, tok, state, questions, { symmetric = true, onProgress = null } = {}) {
     let done = 0; const tick = () => { done++; if (onProgress && done % 8 === 0) onProgress(done); };
     model.reset();
-    for (const id of [BOS, USER, ...tok.encode(state).slice(0, 640), EOT]) { model.step(id, false); tick(); }
+    for (const id of [BOS, USER, ...tok.encode(state).slice(0, 1536), EOT]) { model.step(id, false); tick(); }
     const afterState = model.snapshot(), out = {};
     for (const [name, q] of Object.entries(questions)) {
       const opts = (q.options || q.tiers || (q.kind === 'noul' ? ['no', 'yes'] : [])).slice();
