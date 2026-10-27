@@ -1,0 +1,85 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logic game — N-Q-26M-JEV · Q Project</title>
+  <meta name="description" content="Play against N-Q-26M-JEV: does the second sentence follow from the first? Entailment, neutral or contradiction." />
+  <link rel="icon" type="image/svg+xml" href="../../assets/q-logo.svg" />
+  <script>
+    (function () { try { document.documentElement.setAttribute("data-theme", localStorage.getItem("q-theme") || "light"); } catch (e) {} })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../styles.css" />
+  <link rel="stylesheet" href="../apps.css?v=1" />
+  <style></style>
+</head>
+<body>
+  <a class="skip" href="#demo">Skip to demo</a>
+  {% include header.html base="../../" active="jev" %}
+
+  <main class="run demo" id="demo">
+    <p class="app-kicker"><a href="../">JEV</a> / logic</p>
+    <h1><span data-lang="ru">Игра «Следует ли?»</span><span data-lang="en">Game: does it follow?</span><span data-lang="zh">游戏：能推出吗？</span></h1>
+    <p class="run__lede" data-lang="ru">Даны два утверждения. Следует ли второе из первого, противоречит ему или ничего нельзя сказать? Отвечайте сами, потом смотрите ответ JEV. Часть пар — с подвохом из набора ANLI, на котором ошибаются и большие модели.</p><p class="run__lede" data-lang="en">Two statements. Does the second follow from the first, contradict it, or is it impossible to tell? Answer yourself, then see JEV's answer. Some pairs are tricky ones in the style of ANLI, where large models fail too.</p><p class="run__lede" data-lang="zh">给出两句话。第二句能从第一句推出、与之矛盾，还是无法判断？先自己回答，再看 JEV 的答案。部分题目带有 ANLI 风格的陷阱，大模型也会出错。</p>
+    <div id="jevStatus" class="jev-pill"></div>
+
+    <div class="demo-card">
+      <div class="row" style="justify-content:space-between;margin-top:0"><span class="tag is-brand" id="score"><span data-lang="ru">вы 0 · JEV 0</span><span data-lang="en">you 0 · JEV 0</span><span data-lang="zh">你 0 · JEV 0</span></span><span class="small muted" id="num"></span></div>
+      <div class="tile" style="margin-top:14px"><div class="tile__k"><span data-lang="ru">Посылка</span><span data-lang="en">Premise</span><span data-lang="zh">前提</span></div><div id="prem" style="font-size:1.08rem;margin-top:4px"></div></div>
+      <div class="tile" style="margin-top:10px"><div class="tile__k"><span data-lang="ru">Гипотеза</span><span data-lang="en">Hypothesis</span><span data-lang="zh">假设</span></div><div id="hyp" style="font-size:1.08rem;margin-top:4px"></div></div>
+      <div class="row" id="btns"></div>
+      <div id="reveal"></div>
+      <div class="row"><button class="btn btn--ghost btn--sm" id="nextB" hidden><span data-lang="ru">Следующая пара →</span><span data-lang="en">Next pair →</span><span data-lang="zh">下一题 →</span></button></div>
+    </div>
+    <p class="app-note"><span data-lang="ru">Модель — N-Q-26M-JEV-1027 (26M параметров), работает целиком в этой вкладке: текст никуда не отправляется. Она сильна на обученных типах решений и часто ошибается на необычных. <a href="../">Все примеры JEV</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">о модели</a></span><span data-lang="en">The model is N-Q-26M-JEV-1027 (26M parameters) and runs entirely in this tab: no text leaves your browser. It is strong on the decision types it was trained on and often wrong on unusual ones. <a href="../">All JEV examples</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">about the model</a></span><span data-lang="zh">模型为 N-Q-26M-JEV-1027（2600 万参数），完全在此标签页中运行：文本不会离开你的浏览器。它擅长训练过的决策类型，在不寻常的问题上常会出错。<a href="../">全部 JEV 示例</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">关于模型</a></span></p>
+  </main>
+
+  <script src="../../main.js"></script>
+  <script src="../jev-client.js?v=1"></script>
+  <script>
+'use strict';
+(function () {
+  const { JevClient, esc, L, isRu, pct, Q, TOPICS, TOPIC_NAMES, cut, lang } = window.Jev;
+  const $ = (id) => document.getElementById(id);
+  const jev = new JevClient($('jevStatus'));
+
+  const PAIRS = [ // [premise, hypothesis, gold: 0 entail 1 neutral 2 contradiction]
+    ['Все кошки в доме спали на диване.', 'В доме нет ни одной кошки.', 2], ['Мальчик бежит по пляжу с собакой.', 'На улице есть ребёнок.', 0],
+    ['Женщина держит в руках зонт.', 'Идёт дождь.', 1], ['A man is playing a guitar on stage in front of a crowd.', 'Nobody is making music.', 2],
+    ['The meeting was moved from Tuesday to Thursday.', 'The meeting will not take place on Tuesday.', 0], ['She bought a new phone last week.', 'Her old phone was broken.', 1],
+    ['Анна старше Бориса, а Борис старше Веры.', 'Вера младше Анны.', 0], ['The restaurant only serves vegetarian food.', 'You can order a steak there.', 2],
+    ['Он закончил университет в 2019 году.', 'Он работает врачом.', 1], ['Not a single student failed the exam.', 'Some students failed the exam.', 2],
+    ['The museum is open every day except Monday.', 'You can visit the museum on Sunday.', 0], ['Поезд пришёл без опоздания.', 'Поезд опоздал на 10 минут.', 2]];
+  const NAMES = [[L('следует', 'follows', '能推出'), 'is-good'], [L('нельзя сказать', "can't tell", '无法判断'), ''], [L('противоречит', 'contradicts', '矛盾'), 'is-bad']];
+  let i = 0, you = 0, me = 0, order = PAIRS.map((_, k) => k).sort(() => Math.random() - .5);
+  function show() {
+    const [p, h] = PAIRS[order[i % PAIRS.length]]; $('prem').textContent = p; $('hyp').textContent = h; $('reveal').innerHTML = ''; $('nextB').hidden = true;
+    $('num').textContent = `${i % PAIRS.length + 1} / ${PAIRS.length}`;
+    $('btns').innerHTML = NAMES.map(([n], k) => `<button class="btn btn--ghost btn--sm" data-k="${k}">${n}</button>`).join('');
+    $('btns').querySelectorAll('button').forEach((b) => b.onclick = () => answer(+b.dataset.k));
+  }
+  async function answer(k) {
+    $('btns').querySelectorAll('button').forEach((b) => { b.disabled = true; if (+b.dataset.k === k) b.classList.add('btn--solid'); });
+    const [p, h, gold] = PAIRS[order[i % PAIRS.length]], ru = isRu(p + h), lk = ru ? 'ru' : 'en';
+    $('reveal').innerHTML = `<div class="verdict-card"><span class="spinner"></span> ${L('JEV думает…', 'JEV is deciding…', 'JEV 正在判断…')}</div>`;
+    if (!jev.ready) await new Promise((r) => jev.onReady(r));
+    const st = ru ? `Посылка: ${p}\nГипотеза: ${h}` : `Premise: ${p}\nHypothesis: ${h}`;
+    const r = await jev.decide(st, { n: { kind: 'choice', question: Q.nli[lk], options: Q.nliOpts[lk] } });
+    const j = r.n.index; if (k === gold) you++; if (j === gold) me++;
+    $('score').innerHTML = `${L('вы', 'you', '你')} ${you} · JEV ${me}`;
+    const bars = Q.nliOpts[lk].map((o, t) => `<div style="display:grid;grid-template-columns:130px 1fr 48px;gap:8px;align-items:center;font-size:.85rem;margin:4px 0"><span>${NAMES[t][0]}</span><div class="meter ${t === gold ? 'is-good' : ''}"><span style="width:${100 * r.n.probs[o]}%"></span></div><span>${pct(r.n.probs[o])}</span></div>`).join('');
+    $('reveal').innerHTML = `<div class="verdict-card">${L('Правильно', 'Correct', '正确答案')}: <b>${NAMES[gold][0]}</b> · ${L('вы', 'you', '你')} ${k === gold ? '✓' : '✗'} · JEV ${j === gold ? '✓' : '✗'}<div style="margin-top:10px">${bars}</div></div>`;
+    $('nextB').hidden = false;
+  }
+  $('nextB').onclick = () => { i++; show(); };
+  show();
+
+})();
+  </script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fact check — N-Q-26M-JEV · Q Project</title>
+  <meta name="description" content="N-Q-26M-JEV checks claims against a source text: supported or not, with probabilities." />
+  <link rel="icon" type="image/svg+xml" href="../../assets/q-logo.svg" />
+  <script>
+    (function () { try { document.documentElement.setAttribute("data-theme", localStorage.getItem("q-theme") || "light"); } catch (e) {} })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../styles.css" />
+  <link rel="stylesheet" href="../apps.css?v=1" />
+  <style></style>
+</head>
+<body>
+  <a class="skip" href="#demo">Skip to demo</a>
+  {% include header.html base="../../" active="jev" %}
+
+  <main class="run demo" id="demo">
+    <p class="app-kicker"><a href="../">JEV</a> / factcheck</p>
+    <h1><span data-lang="ru">Проверка утверждений по тексту</span><span data-lang="en">Check claims against a text</span><span data-lang="zh">依据文本核查论断</span></h1>
+    <p class="run__lede" data-lang="ru">Вставьте текст-источник и утверждения — по одному в строке. JEV для каждого скажет, подтверждает ли его текст. Так проверяют ответы RAG-систем и пересказы на выдумки. Модель училась на английских данных, по-английски она точнее.</p><p class="run__lede" data-lang="en">Paste a source text and claims, one per line. For each claim JEV says whether the text supports it — the way RAG answers and summaries are checked for made-up facts. The model learned this on English data, so English works best.</p><p class="run__lede" data-lang="zh">粘贴来源文本和论断（每行一个）。JEV 会判断文本是否支持每个论断 —— 用于检查 RAG 回答和摘要中的编造内容。模型用英文数据训练，英文效果最好。</p>
+    <div id="jevStatus" class="jev-pill"></div>
+
+    <div class="demo-card">
+      <div class="chips" id="presets"></div>
+      <label class="field-label"><span data-lang="ru">Текст-источник</span><span data-lang="en">Source text</span><span data-lang="zh">来源文本</span></label>
+      <textarea id="src" class="app-input" rows="5"></textarea>
+      <label class="field-label" style="margin-top:12px;display:block"><span data-lang="ru">Утверждения (по одному в строке)</span><span data-lang="en">Claims (one per line)</span><span data-lang="zh">论断（每行一个）</span></label>
+      <textarea id="claims" class="app-input" rows="5"></textarea>
+      <div class="row"><button class="btn btn--solid btn--sm" id="go" disabled><span data-lang="ru">Проверить</span><span data-lang="en">Check</span><span data-lang="zh">核查</span></button><span id="ms" class="muted small"></span></div>
+      <div id="out" style="margin-top:16px;display:grid;gap:10px"></div>
+    </div>
+    <p class="app-note"><span data-lang="ru">Модель — N-Q-26M-JEV-1027 (26M параметров), работает целиком в этой вкладке: текст никуда не отправляется. Она сильна на обученных типах решений и часто ошибается на необычных. <a href="../">Все примеры JEV</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">о модели</a></span><span data-lang="en">The model is N-Q-26M-JEV-1027 (26M parameters) and runs entirely in this tab: no text leaves your browser. It is strong on the decision types it was trained on and often wrong on unusual ones. <a href="../">All JEV examples</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">about the model</a></span><span data-lang="zh">模型为 N-Q-26M-JEV-1027（2600 万参数），完全在此标签页中运行：文本不会离开你的浏览器。它擅长训练过的决策类型，在不寻常的问题上常会出错。<a href="../">全部 JEV 示例</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">关于模型</a></span></p>
+  </main>
+
+  <script src="../../main.js"></script>
+  <script src="../jev-client.js?v=1"></script>
+  <script>
+'use strict';
+(function () {
+  const { JevClient, esc, L, isRu, pct, Q, TOPICS, TOPIC_NAMES, cut, lang } = window.Jev;
+  const $ = (id) => document.getElementById(id);
+  const jev = new JevClient($('jevStatus'));
+
+  const PRESETS = [
+    { name: 'Eiffel Tower', src: 'The Eiffel Tower is a wrought-iron lattice tower in Paris. It was designed by Gustave Eiffel\'s company and completed in 1889 for the World\'s Fair. The tower is 330 metres tall and was the tallest man-made structure in the world until 1930.',
+      claims: 'The tower is in Paris.\nIt was completed in 1889.\nThe tower was built for the 1925 World\'s Fair.\nThe Eiffel Tower is over 300 metres tall.\nIt is still the tallest structure in the world.\nGustave Eiffel personally welded every beam.' },
+    { name: 'Quarterly report', src: 'Acme Corp reported revenue of $4.2 billion for the third quarter, up 12% from a year earlier. Net income fell to $310 million because of a one-time legal charge. The company kept its full-year forecast unchanged and announced 400 new jobs in Ohio.',
+      claims: 'Revenue grew compared with last year.\nNet income increased.\nThe company raised its full-year forecast.\nAcme will hire 400 people in Ohio.\nRevenue was about 4 billion dollars.' },
+    { name: 'Medicine label', src: 'Take one tablet twice a day with food. Do not exceed four tablets in 24 hours. Not recommended for children under 12. May cause drowsiness; do not drive after taking it.',
+      claims: 'The medicine should be taken with food.\nYou can take six tablets a day.\nChildren aged 8 can take it.\nIt may make you sleepy.\nIt is safe to drive after taking it.' },
+    { name: 'Русский текст', src: 'Байкал — самое глубокое озеро на планете: его глубина достигает 1642 метров. В озере сосредоточено около 20% мировых запасов пресной воды. Байкал расположен в Восточной Сибири.',
+      claims: 'Байкал — самое глубокое озеро в мире.\nГлубина Байкала меньше 1000 метров.\nБайкал находится в Сибири.\nВ Байкале половина всей пресной воды Земли.' },
+  ];
+  PRESETS.forEach((p, i) => { const b = document.createElement('button'); b.textContent = p.name; b.onclick = () => { load(p, b); run(); }; $('presets').appendChild(b); if (!i) load(p, b); });
+  function load(p, b) { $('src').value = p.src; $('claims').value = p.claims; document.querySelectorAll('#presets button').forEach((x) => x.classList.toggle('is-on', x === b)); }
+  jev.onReady(() => { $('go').disabled = false; run(); });
+  $('go').onclick = run;
+  async function run() {
+    const src = $('src').value.trim(), claims = $('claims').value.split('\n').map((s) => s.trim()).filter(Boolean);
+    if (!src || !claims.length || !jev.ready) return;
+    $('go').disabled = true; $('out').innerHTML = claims.map((c, i) => `<div class="tile" id="c${i}"><div><span class="spinner"></span> ${esc(c)}</div></div>`).join('');
+    const t0 = performance.now();
+    for (let i = 0; i < claims.length; i++) {
+      const r = await jev.decide(`Text: ${src}\nClaim: ${claims[i]}`, { s: { kind: 'noul', question: Q.claim, options: ['no', 'yes'] } });
+      const p = r.s.p_yes, cls = p >= .65 ? 'is-good' : p <= .35 ? 'is-bad' : 'is-warn';
+      const verdict = p >= .65 ? L('подтверждается', 'supported', '有依据') : p <= .35 ? L('не подтверждается', 'not supported', '无依据') : L('неясно', 'unclear', '不确定');
+      $('c' + i).innerHTML = `<div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>${esc(claims[i])}</span><span class="tag ${cls}">${p >= .65 ? '✓' : p <= .35 ? '✗' : '?'} ${verdict} · ${pct(p)}</span></div><div class="meter ${cls}" style="margin-top:8px"><span style="width:${100 * p}%"></span></div>`;
+    }
+    $('ms').textContent = `${((performance.now() - t0) / 1000).toFixed(1)} s`; $('go').disabled = false;
+  }
+
+})();
+  </script>
+</body>
+</html>

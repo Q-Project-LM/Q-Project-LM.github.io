@@ -1,0 +1,72 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support inbox — N-Q-26M-JEV · Q Project</title>
+  <meta name="description" content="N-Q-26M-JEV sorts support tickets into categories you define, and flags angry customers." />
+  <link rel="icon" type="image/svg+xml" href="../../assets/q-logo.svg" />
+  <script>
+    (function () { try { document.documentElement.setAttribute("data-theme", localStorage.getItem("q-theme") || "light"); } catch (e) {} })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../styles.css" />
+  <link rel="stylesheet" href="../apps.css?v=1" />
+  <style></style>
+</head>
+<body>
+  <a class="skip" href="#demo">Skip to demo</a>
+  {% include header.html base="../../" active="jev" %}
+
+  <main class="run demo" id="demo">
+    <p class="app-kicker"><a href="../">JEV</a> / inbox</p>
+    <h1><span data-lang="ru">Сортировка обращений (эксперимент)</span><span data-lang="en">Support inbox triage (experiment)</span><span data-lang="zh">客服工单分拣（实验）</span></h1>
+    <p class="run__lede" data-lang="ru">Обращения в поддержку интернет-магазина. Задайте свои категории — JEV разложит письма по колонкам и отметит недовольных клиентов. Категории можно менять, но честно: на своих категориях, которых модель не видела при обучении, она права примерно в половине случаев. Надёжнее всего тут метка «недоволен» — тональность модель знает.</p><p class="run__lede" data-lang="en">Support tickets of an online shop. Define your own categories and JEV sorts the messages into columns and flags unhappy customers. Categories are free text, but honestly: on categories it never saw in training the model is right about half the time. The reliable part here is the «unhappy» flag — sentiment is a trained skill.</p><p class="run__lede" data-lang="zh">网店的客服工单。自定义类别，JEV 会把消息分到各列，并标记不满意的客户。类别可以随意修改，但坦白说：对于训练中没见过的类别，模型大约只有一半正确。这里最可靠的是「不满意」标记 —— 情感是训练过的能力。</p>
+    <div id="jevStatus" class="jev-pill"></div>
+
+    <div class="demo-card">
+      <label class="field-label"><span data-lang="ru">Категории (через запятую)</span><span data-lang="en">Categories (comma-separated)</span><span data-lang="zh">类别（逗号分隔）</span></label>
+      <input id="cats" class="app-input" value="доставка, возврат денег, оплата, качество товара, вопрос о товаре" />
+      <div class="row"><button class="btn btn--solid btn--sm" id="go" disabled><span data-lang="ru">Разобрать входящие</span><span data-lang="en">Sort the inbox</span><span data-lang="zh">分拣工单</span></button><span id="ms" class="muted small"></span></div>
+    </div>
+    <div id="board" style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));margin-top:16px"></div>
+    <p class="app-note"><span data-lang="ru">Модель — N-Q-26M-JEV-1027 (26M параметров), работает целиком в этой вкладке: текст никуда не отправляется. Она сильна на обученных типах решений и часто ошибается на необычных. <a href="../">Все примеры JEV</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">о модели</a></span><span data-lang="en">The model is N-Q-26M-JEV-1027 (26M parameters) and runs entirely in this tab: no text leaves your browser. It is strong on the decision types it was trained on and often wrong on unusual ones. <a href="../">All JEV examples</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">about the model</a></span><span data-lang="zh">模型为 N-Q-26M-JEV-1027（2600 万参数），完全在此标签页中运行：文本不会离开你的浏览器。它擅长训练过的决策类型，在不寻常的问题上常会出错。<a href="../">全部 JEV 示例</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">关于模型</a></span></p>
+  </main>
+
+  <script src="../../main.js"></script>
+  <script src="../jev-client.js?v=1"></script>
+  <script>
+'use strict';
+(function () {
+  const { JevClient, esc, L, isRu, pct, Q, TOPICS, TOPIC_NAMES, cut, lang } = window.Jev;
+  const $ = (id) => document.getElementById(id);
+  const jev = new JevClient($('jevStatus'));
+
+  const TICKETS = ['Заказ №4512 должен был прийти вчера, но курьер так и не появился. Где посылка?', 'Хочу вернуть деньги за наушники, они не подошли.',
+    'Списали деньги дважды за один заказ! Срочно верните!', 'Пришла куртка с порванным швом, качество ужасное.', 'Подскажите, есть ли этот чайник в чёрном цвете?',
+    'Не проходит оплата картой Мир, пишет ошибку.', 'Курьер опоздал на три часа и нахамил. Больше у вас не закажу.', 'Какой размер выбрать при росте 182 см?',
+    'Вернул товар две недели назад, а деньги до сих пор не пришли.', 'Можно ли оплатить заказ при получении?', 'Телефон сломался через неделю, экран мерцает.',
+    'Спасибо, доставили быстро, всё отлично!'];
+  jev.onReady(() => { $('go').disabled = false; run(); });
+  $('go').onclick = run;
+  async function run() {
+    const cats = $('cats').value.split(',').map((s) => s.trim()).filter(Boolean); if (cats.length < 2) return;
+    $('go').disabled = true; const t0 = performance.now();
+    const cols = Object.fromEntries(cats.map((c) => [c, []]));
+    const drawB = () => { $('board').innerHTML = cats.map((c) => `<div class="tile" style="background:var(--surface-2)"><div class="tile__k" style="margin-bottom:8px">${esc(c)} · ${cols[c].length}</div>${cols[c].map((t) => `<div class="tile" style="margin-top:8px;padding:10px 12px"><div class="small">${esc(t.text)}</div><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><span class="tag">${pct(t.p)}</span>${t.neg >= .5 ? `<span class="tag is-bad">😠 ${L('недоволен', 'unhappy', '不满')} ${pct(t.neg)}</span>` : ''}</div></div>`).join('')}</div>`).join(''); };
+    drawB();
+    for (const text of TICKETS) {
+      const r = await jev.decide(text, { c: { kind: 'choice', question: 'О чём этот запрос? Выбери тему.', options: cats }, s: { kind: 'choice', question: Q.sentiment.ru, options: Q.sentOpts.ru } });
+      cols[r.c.choice].push({ text, p: r.c.confidence, neg: r.s.probs['отрицательная'] }); drawB();
+    }
+    $('ms').textContent = `${TICKETS.length} ${L('писем', 'tickets', '封')} · ${((performance.now() - t0) / 1000).toFixed(1)} s`; $('go').disabled = false;
+  }
+
+})();
+  </script>
+</body>
+</html>

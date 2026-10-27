@@ -1,0 +1,44 @@
+/* Shared styles for the /jev/* use-case pages (on top of styles.css) */
+.run--wide { max-width: 1120px; }
+.app-kicker { font-family: var(--f-mono); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--brand); margin: 0 0 10px; }
+.app-kicker a { color: inherit; text-decoration: none; } .app-kicker a:hover { text-decoration: underline; }
+.jev-pill { display: inline-flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: .8rem; color: var(--muted); border: 1px solid var(--line-2); border-radius: 999px; padding: 5px 12px; margin-top: 18px; background: var(--surface); }
+.jev-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+.jev-pill.is-loading i { background: #f2a541; animation: jpulse 1.2s infinite; }
+.jev-pill.is-ready i { background: #2fb57c; }
+.jev-pill.is-error i { background: #e5484d; }
+@keyframes jpulse { 50% { opacity: .3; } }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 14px; }
+.chips button { border: 1px solid var(--line-2); background: var(--surface-2); color: var(--text); border-radius: 999px; padding: 6px 13px; font: inherit; font-size: .84rem; cursor: pointer; text-align: left; }
+.chips button:hover, .chips button.is-on { border-color: var(--brand); color: var(--brand); }
+.app-input { width: 100%; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line-2); border-radius: 12px; padding: 12px 14px; resize: vertical; }
+.app-input:focus { outline: none; border-color: var(--cyan); }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+.muted { color: var(--muted); } .faint { color: var(--faint); } .small { font-size: .82rem; }
+.tile-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); margin-top: 16px; }
+.tile { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 14px 16px; position: relative; overflow: hidden; }
+.tile__k { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.tile__v { font-family: var(--f-display); font-size: 1.35rem; font-weight: 600; margin: 4px 0 8px; }
+.tile__v small { font-family: var(--f-body); font-size: .8rem; font-weight: 400; color: var(--faint); margin-left: 6px; }
+.meter { height: 7px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
+.meter > span { display: block; height: 100%; border-radius: 99px; background: var(--grad); transition: width .5s cubic-bezier(.2,.7,.2,1); }
+.meter.is-bad > span { background: linear-gradient(90deg, #f2a541, #e5484d); }
+.meter.is-good > span { background: linear-gradient(90deg, #3fc07a, #2fb57c); }
+.tag { display: inline-flex; align-items: center; gap: 5px; font-size: .75rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface-2); color: var(--text); white-space: nowrap; }
+.tag.is-good { border-color: rgba(47,181,124,.45); color: #1f9d6a; background: rgba(47,181,124,.1); }
+.tag.is-bad { border-color: rgba(229,72,77,.45); color: #d23c40; background: rgba(229,72,77,.08); }
+.tag.is-warn { border-color: rgba(242,165,65,.5); color: #c47a12; background: rgba(242,165,65,.1); }
+.tag.is-brand { border-color: var(--brand); color: var(--brand); }
+.verdict-card { margin-top: 18px; border-radius: 16px; padding: 16px 18px; background: var(--surface-2); border: 1px solid var(--line-2); }
+.verdict-card b { font-family: var(--f-display); }
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--line-2); border-top-color: var(--brand); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.app-note { margin-top: 26px; font-size: .86rem; color: var(--muted); line-height: 1.6; }
+.app-note code { font-size: .8rem; }
+/* gallery on /jev/ */
+.gallery { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); margin-top: 16px; }
+.gcard { display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: var(--surface); color: var(--text); text-decoration: none; transition: border-color .2s, transform .2s; }
+.gcard:hover { border-color: var(--brand); transform: translateY(-2px); }
+.gcard__icon { font-size: 1.5rem; }
+.gcard__t { font-family: var(--f-display); font-weight: 600; }
+.gcard__d { font-size: .85rem; color: var(--muted); }

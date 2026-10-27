@@ -26,6 +26,12 @@
       qs: [['noul', 'Понадобится ли для ответа точное вычисление калькулятором?', 'нет, да'], ['noul', 'Нужно ли рассуждать перед ответом на этот запрос?', 'нет, да']] },
     { name: 'Fact check (new)', state: 'Text: The Eiffel Tower was completed in 1889 and is 330 metres tall.\nClaim: The Eiffel Tower was completed in 1925.',
       qs: [['noul', 'Does the text support the claim?', 'no, yes']] },
+    { name: 'Отзыв о ресторане', state: 'Еда была холодной, официант забыл про наш заказ, а счёт принесли с чужими блюдами. Больше не придём.',
+      qs: [['choice', 'Какая тональность у текста?', 'нейтральная, положительная, отрицательная'], ['noul', 'Есть ли в сообщении токсичность?', 'нет, да'], ['choice', 'О чём этот запрос? Выбери тему.', 'cooking, travel, finance, health, entertainment, other']] },
+    { name: 'Spam or not', state: 'Congratulations!!! You have WON a free iPhone. Click the link and enter your card number to claim your prize now.',
+      qs: [['choice', 'What is the sentiment of this text?', 'negative, positive'], ['choice', 'What is this request about? Pick the topic.', 'finance, entertainment, career, other, coding, travel']] },
+    { name: 'Какой ответ лучше', state: 'Объясни, что такое фотосинтез.',
+      qs: [['choice', 'Какой ответ на запрос лучше?', 'Фотосинтез — процесс, при котором растения на свету превращают углекислый газ и воду в глюкозу и кислород., Это когда растения что-то делают.']] },
     { name: 'Tricky NLI (new)', state: 'Premise: A man is playing a guitar on stage in front of a crowd.\nHypothesis: Nobody is making music.',
       qs: [['choice', 'How does the hypothesis relate to the premise?', 'entailment, neutral, contradiction']] },
   ];

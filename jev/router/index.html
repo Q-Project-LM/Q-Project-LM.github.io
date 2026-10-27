@@ -1,0 +1,85 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Request router — N-Q-26M-JEV · Q Project</title>
+  <meta name="description" content="N-Q-26M-JEV routes a chat request: topic, difficulty, does it need the calculator, should the model think first." />
+  <link rel="icon" type="image/svg+xml" href="../../assets/q-logo.svg" />
+  <script>
+    (function () { try { document.documentElement.setAttribute("data-theme", localStorage.getItem("q-theme") || "light"); } catch (e) {} })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../styles.css" />
+  <link rel="stylesheet" href="../apps.css?v=1" />
+  <style></style>
+</head>
+<body>
+  <a class="skip" href="#demo">Skip to demo</a>
+  {% include header.html base="../../" active="jev" %}
+
+  <main class="run demo" id="demo">
+    <p class="app-kicker"><a href="../">JEV</a> / router</p>
+    <h1><span data-lang="ru">Маршрутизатор запросов</span><span data-lang="en">Request router</span><span data-lang="zh">请求路由器</span></h1>
+    <p class="run__lede" data-lang="ru">Перед тем как отвечать, ассистенту полезно понять запрос: о чём он, насколько сложен, нужен ли калькулятор и стоит ли подумать. JEV отвечает на всё это за доли секунды — и предлагает, куда отправить запрос.</p><p class="run__lede" data-lang="en">Before answering, an assistant should understand the request: what it is about, how hard it is, whether it needs the calculator and whether to think first. JEV answers all of that in a fraction of a second — and suggests where to send the request.</p><p class="run__lede" data-lang="zh">在回答之前，助手需要理解请求：主题是什么、有多难、是否需要计算器、是否应先思考。JEV 在不到一秒内回答这些问题，并建议把请求发往哪里。</p>
+    <div id="jevStatus" class="jev-pill"></div>
+
+    <div class="demo-card">
+      <div class="chips" id="samples"></div>
+      <textarea id="msg" class="app-input" rows="3"></textarea>
+      <div class="row"><button class="btn btn--solid btn--sm" id="go" disabled><span data-lang="ru">Разобрать</span><span data-lang="en">Route</span><span data-lang="zh">路由</span></button><span id="ms" class="muted small"></span></div>
+      <div class="tile-grid" id="tiles"></div>
+      <div id="route"></div>
+    </div>
+    <p class="app-note"><span data-lang="ru">Модель — N-Q-26M-JEV-1027 (26M параметров), работает целиком в этой вкладке: текст никуда не отправляется. Она сильна на обученных типах решений и часто ошибается на необычных. <a href="../">Все примеры JEV</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">о модели</a></span><span data-lang="en">The model is N-Q-26M-JEV-1027 (26M parameters) and runs entirely in this tab: no text leaves your browser. It is strong on the decision types it was trained on and often wrong on unusual ones. <a href="../">All JEV examples</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">about the model</a></span><span data-lang="zh">模型为 N-Q-26M-JEV-1027（2600 万参数），完全在此标签页中运行：文本不会离开你的浏览器。它擅长训练过的决策类型，在不寻常的问题上常会出错。<a href="../">全部 JEV 示例</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">关于模型</a></span></p>
+  </main>
+
+  <script src="../../main.js"></script>
+  <script src="../jev-client.js?v=1"></script>
+  <script>
+'use strict';
+(function () {
+  const { JevClient, esc, L, isRu, pct, Q, TOPICS, TOPIC_NAMES, cut, lang } = window.Jev;
+  const $ = (id) => document.getElementById(id);
+  const jev = new JevClient($('jevStatus'));
+
+  const SAMPLES = ['Сколько будет 15% от 2 340 рублей?', 'Привет! Как настроение?', 'Напиши функцию на Python, которая проверяет, является ли число простым.',
+    'Почему небо голубое?', 'Посоветуй, куда поехать на выходные из Москвы.', 'Докажи, что корень из двух иррационален.', 'Как приготовить сырники?',
+    'How many days are there between March 3 and July 19?', 'Write a short poem about autumn.', 'What is the capital of Australia?'];
+  SAMPLES.forEach((s, i) => { const b = document.createElement('button'); b.textContent = s; b.onclick = () => { $('msg').value = s; run(); }; $('samples').appendChild(b); });
+  $('msg').value = SAMPLES[0];
+  jev.onReady(() => { $('go').disabled = false; run(); });
+  $('go').onclick = run;
+  $('msg').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); run(); } });
+  async function run() {
+    const text = $('msg').value.trim(); if (!text || !jev.ready) return;
+    const ru = isRu(text), k = ru ? 'ru' : 'en';
+    const qs = { topic: { kind: 'choice', question: Q.topic[k], options: TOPICS }, level: { kind: 'score', question: Q.complexity[k], tiers: Q.tiers[k] },
+      calc: { kind: 'noul', question: Q.calc[k], options: Q.yn[k] }, think: { kind: 'noul', question: Q.think[k], options: Q.yn[k] } };
+    $('go').disabled = true; $('tiles').innerHTML = `<div class="muted"><span class="spinner"></span></div>`; $('route').innerHTML = '';
+    const r = await jev.decide(cut(text, 700), qs); $('go').disabled = false; $('ms').textContent = `${(r._ms / 1000).toFixed(2)} s`;
+    const tn = (t) => (TOPIC_NAMES[t] ? L(...TOPIC_NAMES[t]) : esc(t));
+    const lv = r.level.index, LV = [['легко', 'easy', '简单'], ['средне', 'medium', '中等'], ['сложно', 'hard', '困难']][lv];
+    const tile = (k_, v, p, cls = '') => `<div class="tile"><div class="tile__k">${k_}</div><div class="tile__v">${v}<small>${pct(p)}</small></div><div class="meter ${cls}"><span style="width:${100 * p}%"></span></div></div>`;
+    const yes = (p) => (p >= .5 ? L('да', 'yes', '是') : L('нет', 'no', '否'));
+    $('tiles').innerHTML = tile(L('тема', 'topic', '主题'), tn(r.topic.choice), r.topic.confidence) + tile(L('сложность', 'difficulty', '难度'), L(...LV), r.level.confidence) +
+      tile(L('калькулятор', 'calculator', '计算器'), yes(r.calc.p_yes), r.calc.p_yes) + tile(L('подумать сначала', 'think first', '先思考'), yes(r.think.p_yes), r.think.p_yes) +
+      (r.toxic ? tile(L('токсичность', 'toxicity', '毒性'), yes(r.toxic.p_yes), r.toxic.p_yes, r.toxic.p_yes >= .5 ? 'is-bad' : 'is-good') : '');
+    const steps = [];
+    if (r.toxic && r.toxic.p_yes >= .5) steps.push(L('сначала мягко ответить на грубость, без спора', 'answer the rudeness calmly first, no arguing', '先冷静回应粗鲁言辞，不争辩'));
+    if (r.calc.p_yes >= .5) steps.push(L('включить калькулятор (<CALC>) — точная арифметика', 'enable the calculator (<CALC>) — exact arithmetic', '启用计算器（<CALC>）—— 精确运算'));
+    steps.push(r.think.p_yes >= .5 ? L('режим размышления: сначала рассуждение, потом ответ', 'thinking mode: reasoning first, then the answer', '思考模式：先推理再作答')
+      : L('ответить сразу, без размышлений — быстрее', 'answer directly, no thinking block — faster', '直接回答，不思考 —— 更快'));
+    steps.push(lv === 2 ? L('сложный запрос: лучше большая модель (164M), если доступна', 'hard request: prefer the bigger model (164M) when available', '困难请求：如有可能使用更大的模型（164M）')
+      : L('маленькой модели (26M) достаточно', 'the small model (26M) is enough', '小模型（26M）即可'));
+    $('route').innerHTML = `<div class="verdict-card"><b>${L('Маршрут', 'Route', '路由')}:</b><ol style="margin:8px 0 0;padding-left:20px">${steps.map((s) => `<li>${s}</li>`).join('')}</ol></div>`;
+  }
+
+})();
+  </script>
+</body>
+</html>
