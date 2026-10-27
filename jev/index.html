@@ -54,6 +54,24 @@
     <p class="run__lede" data-lang="en">A decision model: instead of text it returns, in one forward pass, a choice among options, a level on a scale or a probability of "yes" — with calibrated probabilities. It is N-Q-26M-Chat with a decision head, running right in this tab. <b>October 27 update</b>: much stronger at logic, trick questions and checking claims against a text, plus new chat decisions — does the reply need the calculator, should the model think first.</p>
     <p class="run__lede" data-lang="zh">一个决策模型：它不生成文本，而是一次前向计算给出选项中的选择、量表上的等级或"是"的概率 —— 概率经过校准。它是带决策头的 N-Q-26M-Chat，直接在这个标签页里运行。<b>10 月 27 日更新</b>：在逻辑推断、陷阱问题和依据文本核查事实方面明显更强，并新增了聊天决策 —— 是否需要计算器、回答前是否需要思考。</p>
 
+    <h2 style="font-family:var(--f-display);margin-top:28px" data-lang="ru">Примеры использования</h2>
+    <h2 style="font-family:var(--f-display);margin-top:28px" data-lang="en">Use cases</h2>
+    <h2 style="font-family:var(--f-display);margin-top:28px" data-lang="zh">应用示例</h2>
+    <p class="demo-note" data-lang="ru">Та же модель в разных интерфейсах — так JEV встраивается в продукты.</p>
+    <p class="demo-note" data-lang="en">The same model behind different interfaces — this is how JEV fits into products.</p>
+    <p class="demo-note" data-lang="zh">同一个模型，不同的界面 —— JEV 就是这样嵌入产品的。</p>
+    <div class="gallery">
+      <a class="gcard" href="router/"><span class="gcard__icon">🧭</span><span class="gcard__t"><span data-lang="ru">Маршрутизатор запросов</span><span data-lang="en">Request router</span><span data-lang="zh">请求路由器</span></span><span class="gcard__d"><span data-lang="ru">Тема, сложность, нужен ли калькулятор, думать ли — и куда отправить запрос.</span><span data-lang="en">Topic, difficulty, calculator, think first — and where to send the request.</span><span data-lang="zh">主题、难度、是否需要计算器、是否先思考 —— 以及请求发往何处。</span></span></a>
+      <a class="gcard" href="factcheck/"><span class="gcard__icon">🔎</span><span class="gcard__t"><span data-lang="ru">Проверка утверждений</span><span data-lang="en">Fact check</span><span data-lang="zh">事实核查</span></span><span class="gcard__d"><span data-lang="ru">Подтверждает ли текст каждое утверждение — проверка пересказов и RAG-ответов.</span><span data-lang="en">Does the text support each claim — checking summaries and RAG answers.</span><span data-lang="zh">文本是否支持每个论断 —— 检查摘要和 RAG 回答。</span></span></a>
+      <a class="gcard" href="moderation/"><span class="gcard__icon">🛡️</span><span class="gcard__t"><span data-lang="ru">Модерация комментариев</span><span data-lang="en">Comment moderation</span><span data-lang="zh">评论审核</span></span><span class="gcard__d"><span data-lang="ru">Лента с токсичностью и тональностью у каждого комментария, порог скрытия.</span><span data-lang="en">A feed with toxicity and sentiment for every comment, and a hide threshold.</span><span data-lang="zh">每条评论的毒性与情感，以及隐藏阈值。</span></span></a>
+      <a class="gcard" href="answers/"><span class="gcard__icon">✅</span><span class="gcard__t"><span data-lang="ru">Ответ по делу?</span><span data-lang="en">On-topic answers</span><span data-lang="zh">回答切题吗？</span></span><span class="gcard__d"><span data-lang="ru">Отсеивает ответы чат-бота, которые не отвечают на вопрос.</span><span data-lang="en">Filters out chatbot answers that do not address the question.</span><span data-lang="zh">过滤不回答问题的聊天机器人回复。</span></span></a>
+      <a class="gcard" href="logic/"><span class="gcard__icon">🧩</span><span class="gcard__t"><span data-lang="ru">Игра «Следует ли?»</span><span data-lang="en">Game: does it follow?</span><span data-lang="zh">游戏：能推出吗？</span></span><span class="gcard__d"><span data-lang="ru">Логика с подвохом: вы против JEV, счёт ведётся.</span><span data-lang="en">Tricky logic: you against JEV, with a score.</span><span data-lang="zh">带陷阱的逻辑题：你对战 JEV，记分。</span></span></a>
+      <a class="gcard" href="inbox/"><span class="gcard__icon">📥</span><span class="gcard__t"><span data-lang="ru">Сортировка обращений</span><span data-lang="en">Support inbox</span><span data-lang="zh">客服工单分拣</span></span><span class="gcard__d"><span data-lang="ru">Канбан по вашим категориям и метка недовольных клиентов (эксперимент).</span><span data-lang="en">A kanban by your categories and an unhappy-customer flag (experiment).</span><span data-lang="zh">按自定义类别分列的看板与不满客户标记（实验）。</span></span></a>
+    </div>
+
+    <h2 style="font-family:var(--f-display);margin-top:32px" data-lang="ru">Конструктор решений</h2>
+    <h2 style="font-family:var(--f-display);margin-top:32px" data-lang="en">Decision playground</h2>
+    <h2 style="font-family:var(--f-display);margin-top:32px" data-lang="zh">决策试验场</h2>
     <div class="demo-card">
       <div id="status" class="demo-status">loading&hellip;</div>
       <div id="selftest" class="demo-status"></div>
@@ -76,20 +94,6 @@
     </div>
 
 
-    <h2 style="font-family:var(--f-display);margin-top:36px" data-lang="ru">Примеры использования</h2>
-    <h2 style="font-family:var(--f-display);margin-top:36px" data-lang="en">Use cases</h2>
-    <h2 style="font-family:var(--f-display);margin-top:36px" data-lang="zh">应用示例</h2>
-    <p class="demo-note" data-lang="ru">Та же модель в разных интерфейсах — так JEV встраивается в продукты.</p>
-    <p class="demo-note" data-lang="en">The same model behind different interfaces — this is how JEV fits into products.</p>
-    <p class="demo-note" data-lang="zh">同一个模型，不同的界面 —— JEV 就是这样嵌入产品的。</p>
-    <div class="gallery">
-      <a class="gcard" href="router/"><span class="gcard__icon">🧭</span><span class="gcard__t"><span data-lang="ru">Маршрутизатор запросов</span><span data-lang="en">Request router</span><span data-lang="zh">请求路由器</span></span><span class="gcard__d"><span data-lang="ru">Тема, сложность, нужен ли калькулятор, думать ли — и куда отправить запрос.</span><span data-lang="en">Topic, difficulty, calculator, think first — and where to send the request.</span><span data-lang="zh">主题、难度、是否需要计算器、是否先思考 —— 以及请求发往何处。</span></span></a>
-      <a class="gcard" href="factcheck/"><span class="gcard__icon">🔎</span><span class="gcard__t"><span data-lang="ru">Проверка утверждений</span><span data-lang="en">Fact check</span><span data-lang="zh">事实核查</span></span><span class="gcard__d"><span data-lang="ru">Подтверждает ли текст каждое утверждение — проверка пересказов и RAG-ответов.</span><span data-lang="en">Does the text support each claim — checking summaries and RAG answers.</span><span data-lang="zh">文本是否支持每个论断 —— 检查摘要和 RAG 回答。</span></span></a>
-      <a class="gcard" href="moderation/"><span class="gcard__icon">🛡️</span><span class="gcard__t"><span data-lang="ru">Модерация комментариев</span><span data-lang="en">Comment moderation</span><span data-lang="zh">评论审核</span></span><span class="gcard__d"><span data-lang="ru">Лента с токсичностью и тональностью у каждого комментария, порог скрытия.</span><span data-lang="en">A feed with toxicity and sentiment for every comment, and a hide threshold.</span><span data-lang="zh">每条评论的毒性与情感，以及隐藏阈值。</span></span></a>
-      <a class="gcard" href="answers/"><span class="gcard__icon">✅</span><span class="gcard__t"><span data-lang="ru">Ответ по делу?</span><span data-lang="en">On-topic answers</span><span data-lang="zh">回答切题吗？</span></span><span class="gcard__d"><span data-lang="ru">Отсеивает ответы чат-бота, которые не отвечают на вопрос.</span><span data-lang="en">Filters out chatbot answers that do not address the question.</span><span data-lang="zh">过滤不回答问题的聊天机器人回复。</span></span></a>
-      <a class="gcard" href="logic/"><span class="gcard__icon">🧩</span><span class="gcard__t"><span data-lang="ru">Игра «Следует ли?»</span><span data-lang="en">Game: does it follow?</span><span data-lang="zh">游戏：能推出吗？</span></span><span class="gcard__d"><span data-lang="ru">Логика с подвохом: вы против JEV, счёт ведётся.</span><span data-lang="en">Tricky logic: you against JEV, with a score.</span><span data-lang="zh">带陷阱的逻辑题：你对战 JEV，记分。</span></span></a>
-      <a class="gcard" href="inbox/"><span class="gcard__icon">📥</span><span class="gcard__t"><span data-lang="ru">Сортировка обращений</span><span data-lang="en">Support inbox</span><span data-lang="zh">客服工单分拣</span></span><span class="gcard__d"><span data-lang="ru">Канбан по вашим категориям и метка недовольных клиентов (эксперимент).</span><span data-lang="en">A kanban by your categories and an unhappy-customer flag (experiment).</span><span data-lang="zh">按自定义类别分列的看板与不满客户标记（实验）。</span></span></a>
-    </div>
     <h2 style="font-family:var(--f-display);margin-top:36px" data-lang="ru">Где модель сильна, а где нет</h2>
     <h2 style="font-family:var(--f-display);margin-top:36px" data-lang="en">Where it is good, and where it is not</h2>
     <h2 style="font-family:var(--f-display);margin-top:36px" data-lang="zh">它擅长什么，不擅长什么</h2>
