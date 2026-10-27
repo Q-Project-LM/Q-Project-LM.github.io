@@ -395,10 +395,11 @@ section { max-width: var(--maxw); margin: 0 auto; padding: 88px 28px; }
 }
 .waitlist__text h3 { font-size: 1.35rem; }
 .waitlist__text p { color: var(--muted); margin: 8px 0 0; }
-.waitlist__field { display: flex; gap: 10px; flex: 1; min-width: 300px; max-width: 540px; }
+.waitlist__text { flex: 1 1 340px; }
+.waitlist__field { display: flex; gap: 10px; flex: 1 1 400px; min-width: 300px; max-width: 540px; }
 .waitlist__field .btn { flex: none; }
 .waitlist input {
-  flex: 1; min-width: 0; background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 11px;
+  flex: 1; min-width: 180px; background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 11px;
   padding: 13px 16px; color: var(--text); font-family: var(--f-body); font-size: 1rem;
 }
 .waitlist input::placeholder { color: var(--faint); }
@@ -500,7 +501,8 @@ section { max-width: var(--maxw); margin: 0 auto; padding: 88px 28px; }
 /* Stack the waitlist input + button so the button never gets squeezed */
 @media (max-width: 640px) {
   .waitlist { flex-direction: column; align-items: stretch; }
-  .waitlist__field { flex-direction: column; min-width: 0; max-width: none; }
+  .waitlist__field { flex-direction: column; flex: none; min-width: 0; max-width: none; }
+  .waitlist input { flex: none; min-width: 0; }
   .waitlist__field .btn { width: 100%; }
   .nav__inner { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 6px; padding: 12px 20px; }
   .nav__brand { grid-column: 1; grid-row: 1; font-size: 1rem; }
