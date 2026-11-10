@@ -1,0 +1,354 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Q Project Model License 1.0 — Q Project</title>
+  <meta name="description" content="Q Project Model License 1.0: N-Q models are free for non-commercial use including fine-tuning; commercial use of the model itself needs a paid license." />
+  <link rel="icon" type="image/svg+xml" href="assets/q-logo.svg" />
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("q-theme") || "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Release-page additions on top of the shared article styles */
+    .model-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 28px 0 8px; }
+    @media (max-width: 720px) { .model-pair { grid-template-columns: 1fr; } }
+    .model-pair .model { display: flex; flex-direction: column; gap: 10px; }
+    .model-pair .model__logo { width: 40px; height: 40px; margin-bottom: 2px; }
+    .model-pair .model__name { font-size: 1.2rem; }
+    .model-pair .model__desc { color: var(--muted); font-size: 0.92rem; margin: 0; }
+    .model-pair .model__foot { margin-top: auto; padding-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s cubic-bezier(0.2,0.7,0.2,1), transform 0.6s cubic-bezier(0.2,0.7,0.2,1); }
+    .reveal.is-in { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+    .stat-num { display: inline-block; font-variant-numeric: tabular-nums; }
+
+    .qbench-table-wrap { overflow-x: auto; margin-top: 18px; }
+    .qbench-table-wrap .doc-table td.best { color: var(--brand); font-weight: 600; }
+    .qbench-table-wrap .doc-table tr.us td { background: var(--surface-2); }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#intro"><span data-lang="ru">Перейти к статье</span><span data-lang="en">Skip to article</span><span data-lang="zh">跳到正文</span></a>
+
+  {% include header.html active="blog" %}
+
+  <article class="article" id="intro">
+
+  <div data-lang="ru">
+    <p class="article__kicker">ЛИЦЕНЗИЯ</p>
+    <h1 class="article__title">Лицензия моделей Q Project 1.0</h1>
+    <p class="article__lede">Модели N-Q бесплатны для некоммерческого использования, включая дообучение. Коммерческое использование самой модели — в продукте, на устройстве, на своих серверах или через API — платное.</p>
+    <div class="article__stats reveal"><div><b>Бесплатно</b><span>личное, учёба, исследования, дообучение</span></div><div><b>Платно</b><span>любое коммерческое использование самой модели</span></div><div><b>90 дней</b><span>оценка в компании</span></div></div>
+<p>Коммерческая лицензия: <a href="mailto:lakomoor@gmail.com">lakomoor@gmail.com</a>. Юридическую силу имеет английский текст ниже; копии моделей, скачанные до 10 ноября 2026 года под Apache-2.0, остаются под Apache-2.0.</p>
+    <div class="article__body"><p><strong>Бесплатно (некоммерческое использование):</strong> личное использование, учёба, преподавание, исследования (включая статьи,
+бенчмарки и публикацию производных для исследований), тестирование, некоммерческие организации. Можно запускать,
+изменять, <strong>дообучать</strong>, квантовать и распространять модель и производные.</p>
+<p><strong>Платно (коммерческое использование)</strong> — только по отдельной коммерческой лицензии от Q Project. Речь о <strong>самой
+модели</strong>, а не только об API: веса в любом виде (исходные, квантованные, сконвертированные, дообученные, слитые,
+дистиллированные), как бы они ни запускались — локально, на устройстве, внутри программы, на своих серверах или через API:
+- модель или производная внутри продукта, приложения, устройства или прошивки, которые продаются, распространяются за
+  плату или зарабатывают на рекламе и подписках, — даже если модель работает целиком на оборудовании клиента;
+- продукт, сервис или API на её основе, которые продаются или зарабатывают на рекламе и подписках;
+- использование внутри коммерческой компании (модерация, маршрутизация, поддержка, аналитика), даже если результат не
+  продаётся;
+- хостинг модели как сервиса, продажа производных, доступа, дообучения или консалтинга на её основе;
+- обучение коммерческих моделей на её ответах.</p>
+<p>Компании могут 90 дней бесплатно <strong>оценить</strong> модель, чтобы решить о покупке, — без запуска в продакшен и без
+предложения клиентам. Запрос коммерческой лицензии: <strong>lakomoor@gmail.com</strong>.</p>
+<p><strong>Условия:</strong> прикладывать лицензию и строку «Built with N-Q by Q Project»; производные — только на этих условиях; не
+называть производную просто «N-Q». <strong>Нельзя:</strong> нарушать закон; автоматические решения о людях без проверки человеком;
+травля, обман, спам, дезинформация; CSAM и интимный контент без согласия; оружие и кибератаки. Ответы модерации —
+вероятности, а не вердикты.</p>
+<p><strong>Данные третьих лиц.</strong> Лицензия передаёт только права Q Project. <strong>Без гарантий и ответственности.</strong> Нарушение, не
+исправленное за 30 дней, прекращает лицензию. <strong>Копии, полученные раньше под Apache-2.0, остаются под Apache-2.0.</strong></p><h2>English text (legally binding)</h2><p>Copyright (c) 2026 Q Project. Released 10 November 2026.</p>
+<p>This license covers the model weights, the packed model files (<code>*.safetensors</code>, <code>*.qpack</code>) and the accompanying code
+and documentation (together, the <strong>"Model"</strong>) published by Q Project under this license. "<strong>You</strong>" means any person or
+legal entity exercising rights under it. "<strong>Derivative</strong>" means any modification of the Model, any model fine-tuned,
+merged, quantised or distilled from it, and any model trained on outputs the Model produced for that purpose.</p>
+<h2>1. Free non-commercial use</h2>
+<p>Q Project grants You a worldwide, royalty-free, non-exclusive, non-transferable license (revocable only under Section 7)
+to use, reproduce, run, modify, <strong>fine-tune</strong>, quantise, distribute and create Derivatives of the Model <strong>for
+Non-Commercial Purposes</strong>, under the conditions in Sections 3–5.</p>
+<p><strong>Non-Commercial Purposes</strong> means personal use, study, teaching, academic and independent research (including
+publishing papers, benchmarks and Derivatives for research), evaluation and testing of the Model, and use by
+non-profit organisations for their non-profit activities — in each case <strong>without</strong> any of the commercial uses below.</p>
+<h2>2. Commercial use requires a paid license</h2>
+<p><strong>Commercial Use</strong> means any use of <strong>the Model itself</strong> — the weights in any form (original, quantised, converted,
+fine-tuned, merged or distilled), however it is run: locally, on a device, embedded in software, self-hosted on your
+own servers, or behind an API — or of a Derivative or their outputs, that is intended for or directed toward commercial
+advantage or monetary compensation. It is not limited to offering an API. It includes:</p>
+<ul>
+<li>shipping the Model or a Derivative inside a product, app, device or firmware that is sold, licensed, offered for a
+  fee, or supported by advertising or subscriptions — even when it runs entirely on the customer's own hardware;</li>
+<li>using it in, or to build, a product, service or API that is sold, licensed, offered for a fee, or supported by
+  advertising or subscriptions;</li>
+<li>using it inside a for-profit organisation's operations (for example moderation, routing, support, analytics),
+  even if the result is not sold;</li>
+<li>offering it as a hosted or managed service, or selling Derivatives, access, fine-tuning or consulting based on it;</li>
+<li>using its outputs to train or improve a model that is used commercially.</li>
+</ul>
+<p>Commercial Use is <strong>not</strong> permitted under this license. It requires a separate written commercial license from
+Q Project, available for a fee. To request one, write to <strong>lakomoor@gmail.com</strong>. Evaluating the Model inside a company for up to 90 days to decide whether to buy a
+commercial license is allowed without one, as long as nothing built on it is offered to customers or used in
+production during that time.</p>
+<h2>3. Conditions</h2>
+<ol>
+<li><strong>License and attribution.</strong> Anyone who distributes the Model or a Derivative must include a copy of this license
+   and the notice <em>"Built with N-Q by Q Project (https://q-project-lm.github.io)"</em>.</li>
+<li><strong>Same terms downstream.</strong> Derivatives may only be distributed under this license (or under a commercial license
+   from Q Project). Recipients get no rights beyond those in this license.</li>
+<li><strong>Name.</strong> A Derivative may not be called "N-Q" or "Q Project" alone and must not suggest that Q Project made or
+   endorses it; describing it as "based on N-Q" is allowed.</li>
+<li><strong>Research results.</strong> Publishing benchmarks, papers and comparisons that use the Model is explicitly allowed.</li>
+</ol>
+<h2>4. Acceptable use</h2>
+<p>You must not use the Model or a Derivative to:</p>
+<ul>
+<li>break the law, including privacy, consumer-protection, export-control and anti-discrimination law;</li>
+<li>make automated decisions with legal or similarly significant effects on a person (credit, employment, housing,
+  insurance, education, healthcare, justice, migration) <strong>without meaningful human review</strong>;</li>
+<li>harass, threaten, defame, impersonate or deceive people, or generate spam or disinformation at scale;</li>
+<li>create or spread child sexual abuse material, non-consensual intimate content or content that incites violence;</li>
+<li>develop weapons capable of mass casualties, or attack the security of computer systems;</li>
+<li>present Model output as human-written where disclosure is required by law.</li>
+</ul>
+<p>Moderation and decision outputs (for example toxicity, profanity or "is this answer right") are <strong>probabilistic
+signals</strong>, not verdicts: You are responsible for thresholds, review and appeals in any system that acts on them.</p>
+<h2>5. Third-party terms</h2>
+<p>The Model was trained on data from third parties whose own terms may apply to You, independently of this license. The
+model card of each release lists the datasets used and their licenses. <strong>This license grants only the rights Q Project
+holds</strong>; it does not grant rights held by third parties.</p>
+<h2>6. No warranty, limitation of liability</h2>
+<p>THE MODEL IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING ACCURACY, FITNESS FOR A
+PARTICULAR PURPOSE AND NON-INFRINGEMENT. Model outputs may be wrong, offensive or biased. IN NO EVENT SHALL Q PROJECT
+BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE MODEL OR ITS USE.</p>
+<h2>7. Termination</h2>
+<p>Your rights end automatically if You breach this license (including any Commercial Use without a commercial license)
+and do not cure the breach within 30 days of becoming aware of it. Sections 5, 6 and 7 survive termination.</p>
+<h2>8. Earlier releases</h2>
+<p>Copies of a Model obtained under a previous license (Apache-2.0) remain under that license. This license applies to
+copies obtained after it was published with the Model.</p></div>
+  </div>
+  <div data-lang="en">
+    <p class="article__kicker">LICENSE</p>
+    <h1 class="article__title">Q Project Model License 1.0</h1>
+    <p class="article__lede">N-Q models are free for non-commercial use, including fine-tuning. Commercial use of the model itself — in a product, on a device, on your own servers or behind an API — is paid.</p>
+    <div class="article__stats reveal"><div><b>Free</b><span>personal, study, research, fine-tuning</span></div><div><b>Paid</b><span>any commercial use of the model itself</span></div><div><b>90 days</b><span>evaluation inside a company</span></div></div>
+<p>Commercial license: <a href="mailto:lakomoor@gmail.com">lakomoor@gmail.com</a>. Copies downloaded before 10 November 2026 under Apache-2.0 keep that license.</p>
+    <div class="article__body"><p>Copyright (c) 2026 Q Project. Released 10 November 2026.</p>
+<p>This license covers the model weights, the packed model files (<code>*.safetensors</code>, <code>*.qpack</code>) and the accompanying code
+and documentation (together, the <strong>"Model"</strong>) published by Q Project under this license. "<strong>You</strong>" means any person or
+legal entity exercising rights under it. "<strong>Derivative</strong>" means any modification of the Model, any model fine-tuned,
+merged, quantised or distilled from it, and any model trained on outputs the Model produced for that purpose.</p>
+<h2>1. Free non-commercial use</h2>
+<p>Q Project grants You a worldwide, royalty-free, non-exclusive, non-transferable license (revocable only under Section 7)
+to use, reproduce, run, modify, <strong>fine-tune</strong>, quantise, distribute and create Derivatives of the Model <strong>for
+Non-Commercial Purposes</strong>, under the conditions in Sections 3–5.</p>
+<p><strong>Non-Commercial Purposes</strong> means personal use, study, teaching, academic and independent research (including
+publishing papers, benchmarks and Derivatives for research), evaluation and testing of the Model, and use by
+non-profit organisations for their non-profit activities — in each case <strong>without</strong> any of the commercial uses below.</p>
+<h2>2. Commercial use requires a paid license</h2>
+<p><strong>Commercial Use</strong> means any use of <strong>the Model itself</strong> — the weights in any form (original, quantised, converted,
+fine-tuned, merged or distilled), however it is run: locally, on a device, embedded in software, self-hosted on your
+own servers, or behind an API — or of a Derivative or their outputs, that is intended for or directed toward commercial
+advantage or monetary compensation. It is not limited to offering an API. It includes:</p>
+<ul>
+<li>shipping the Model or a Derivative inside a product, app, device or firmware that is sold, licensed, offered for a
+  fee, or supported by advertising or subscriptions — even when it runs entirely on the customer's own hardware;</li>
+<li>using it in, or to build, a product, service or API that is sold, licensed, offered for a fee, or supported by
+  advertising or subscriptions;</li>
+<li>using it inside a for-profit organisation's operations (for example moderation, routing, support, analytics),
+  even if the result is not sold;</li>
+<li>offering it as a hosted or managed service, or selling Derivatives, access, fine-tuning or consulting based on it;</li>
+<li>using its outputs to train or improve a model that is used commercially.</li>
+</ul>
+<p>Commercial Use is <strong>not</strong> permitted under this license. It requires a separate written commercial license from
+Q Project, available for a fee. To request one, write to <strong>lakomoor@gmail.com</strong>. Evaluating the Model inside a company for up to 90 days to decide whether to buy a
+commercial license is allowed without one, as long as nothing built on it is offered to customers or used in
+production during that time.</p>
+<h2>3. Conditions</h2>
+<ol>
+<li><strong>License and attribution.</strong> Anyone who distributes the Model or a Derivative must include a copy of this license
+   and the notice <em>"Built with N-Q by Q Project (https://q-project-lm.github.io)"</em>.</li>
+<li><strong>Same terms downstream.</strong> Derivatives may only be distributed under this license (or under a commercial license
+   from Q Project). Recipients get no rights beyond those in this license.</li>
+<li><strong>Name.</strong> A Derivative may not be called "N-Q" or "Q Project" alone and must not suggest that Q Project made or
+   endorses it; describing it as "based on N-Q" is allowed.</li>
+<li><strong>Research results.</strong> Publishing benchmarks, papers and comparisons that use the Model is explicitly allowed.</li>
+</ol>
+<h2>4. Acceptable use</h2>
+<p>You must not use the Model or a Derivative to:</p>
+<ul>
+<li>break the law, including privacy, consumer-protection, export-control and anti-discrimination law;</li>
+<li>make automated decisions with legal or similarly significant effects on a person (credit, employment, housing,
+  insurance, education, healthcare, justice, migration) <strong>without meaningful human review</strong>;</li>
+<li>harass, threaten, defame, impersonate or deceive people, or generate spam or disinformation at scale;</li>
+<li>create or spread child sexual abuse material, non-consensual intimate content or content that incites violence;</li>
+<li>develop weapons capable of mass casualties, or attack the security of computer systems;</li>
+<li>present Model output as human-written where disclosure is required by law.</li>
+</ul>
+<p>Moderation and decision outputs (for example toxicity, profanity or "is this answer right") are <strong>probabilistic
+signals</strong>, not verdicts: You are responsible for thresholds, review and appeals in any system that acts on them.</p>
+<h2>5. Third-party terms</h2>
+<p>The Model was trained on data from third parties whose own terms may apply to You, independently of this license. The
+model card of each release lists the datasets used and their licenses. <strong>This license grants only the rights Q Project
+holds</strong>; it does not grant rights held by third parties.</p>
+<h2>6. No warranty, limitation of liability</h2>
+<p>THE MODEL IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING ACCURACY, FITNESS FOR A
+PARTICULAR PURPOSE AND NON-INFRINGEMENT. Model outputs may be wrong, offensive or biased. IN NO EVENT SHALL Q PROJECT
+BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE MODEL OR ITS USE.</p>
+<h2>7. Termination</h2>
+<p>Your rights end automatically if You breach this license (including any Commercial Use without a commercial license)
+and do not cure the breach within 30 days of becoming aware of it. Sections 5, 6 and 7 survive termination.</p>
+<h2>8. Earlier releases</h2>
+<p>Copies of a Model obtained under a previous license (Apache-2.0) remain under that license. This license applies to
+copies obtained after it was published with the Model.</p></div>
+  </div>
+  <div data-lang="zh">
+    <p class="article__kicker">许可证</p>
+    <h1 class="article__title">Q Project 模型许可证 1.0</h1>
+    <p class="article__lede">N-Q 模型可免费用于非商业用途（包括微调）。对模型本身的任何商业使用 —— 嵌入产品、在设备上、自有服务器或通过 API —— 均需付费许可：<a href="mailto:lakomoor@gmail.com">lakomoor@gmail.com</a>。以下英文文本具有法律效力。</p>
+    <div class="article__body"><p>Copyright (c) 2026 Q Project. Released 10 November 2026.</p>
+<p>This license covers the model weights, the packed model files (<code>*.safetensors</code>, <code>*.qpack</code>) and the accompanying code
+and documentation (together, the <strong>"Model"</strong>) published by Q Project under this license. "<strong>You</strong>" means any person or
+legal entity exercising rights under it. "<strong>Derivative</strong>" means any modification of the Model, any model fine-tuned,
+merged, quantised or distilled from it, and any model trained on outputs the Model produced for that purpose.</p>
+<h2>1. Free non-commercial use</h2>
+<p>Q Project grants You a worldwide, royalty-free, non-exclusive, non-transferable license (revocable only under Section 7)
+to use, reproduce, run, modify, <strong>fine-tune</strong>, quantise, distribute and create Derivatives of the Model <strong>for
+Non-Commercial Purposes</strong>, under the conditions in Sections 3–5.</p>
+<p><strong>Non-Commercial Purposes</strong> means personal use, study, teaching, academic and independent research (including
+publishing papers, benchmarks and Derivatives for research), evaluation and testing of the Model, and use by
+non-profit organisations for their non-profit activities — in each case <strong>without</strong> any of the commercial uses below.</p>
+<h2>2. Commercial use requires a paid license</h2>
+<p><strong>Commercial Use</strong> means any use of <strong>the Model itself</strong> — the weights in any form (original, quantised, converted,
+fine-tuned, merged or distilled), however it is run: locally, on a device, embedded in software, self-hosted on your
+own servers, or behind an API — or of a Derivative or their outputs, that is intended for or directed toward commercial
+advantage or monetary compensation. It is not limited to offering an API. It includes:</p>
+<ul>
+<li>shipping the Model or a Derivative inside a product, app, device or firmware that is sold, licensed, offered for a
+  fee, or supported by advertising or subscriptions — even when it runs entirely on the customer's own hardware;</li>
+<li>using it in, or to build, a product, service or API that is sold, licensed, offered for a fee, or supported by
+  advertising or subscriptions;</li>
+<li>using it inside a for-profit organisation's operations (for example moderation, routing, support, analytics),
+  even if the result is not sold;</li>
+<li>offering it as a hosted or managed service, or selling Derivatives, access, fine-tuning or consulting based on it;</li>
+<li>using its outputs to train or improve a model that is used commercially.</li>
+</ul>
+<p>Commercial Use is <strong>not</strong> permitted under this license. It requires a separate written commercial license from
+Q Project, available for a fee. To request one, write to <strong>lakomoor@gmail.com</strong>. Evaluating the Model inside a company for up to 90 days to decide whether to buy a
+commercial license is allowed without one, as long as nothing built on it is offered to customers or used in
+production during that time.</p>
+<h2>3. Conditions</h2>
+<ol>
+<li><strong>License and attribution.</strong> Anyone who distributes the Model or a Derivative must include a copy of this license
+   and the notice <em>"Built with N-Q by Q Project (https://q-project-lm.github.io)"</em>.</li>
+<li><strong>Same terms downstream.</strong> Derivatives may only be distributed under this license (or under a commercial license
+   from Q Project). Recipients get no rights beyond those in this license.</li>
+<li><strong>Name.</strong> A Derivative may not be called "N-Q" or "Q Project" alone and must not suggest that Q Project made or
+   endorses it; describing it as "based on N-Q" is allowed.</li>
+<li><strong>Research results.</strong> Publishing benchmarks, papers and comparisons that use the Model is explicitly allowed.</li>
+</ol>
+<h2>4. Acceptable use</h2>
+<p>You must not use the Model or a Derivative to:</p>
+<ul>
+<li>break the law, including privacy, consumer-protection, export-control and anti-discrimination law;</li>
+<li>make automated decisions with legal or similarly significant effects on a person (credit, employment, housing,
+  insurance, education, healthcare, justice, migration) <strong>without meaningful human review</strong>;</li>
+<li>harass, threaten, defame, impersonate or deceive people, or generate spam or disinformation at scale;</li>
+<li>create or spread child sexual abuse material, non-consensual intimate content or content that incites violence;</li>
+<li>develop weapons capable of mass casualties, or attack the security of computer systems;</li>
+<li>present Model output as human-written where disclosure is required by law.</li>
+</ul>
+<p>Moderation and decision outputs (for example toxicity, profanity or "is this answer right") are <strong>probabilistic
+signals</strong>, not verdicts: You are responsible for thresholds, review and appeals in any system that acts on them.</p>
+<h2>5. Third-party terms</h2>
+<p>The Model was trained on data from third parties whose own terms may apply to You, independently of this license. The
+model card of each release lists the datasets used and their licenses. <strong>This license grants only the rights Q Project
+holds</strong>; it does not grant rights held by third parties.</p>
+<h2>6. No warranty, limitation of liability</h2>
+<p>THE MODEL IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING ACCURACY, FITNESS FOR A
+PARTICULAR PURPOSE AND NON-INFRINGEMENT. Model outputs may be wrong, offensive or biased. IN NO EVENT SHALL Q PROJECT
+BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE MODEL OR ITS USE.</p>
+<h2>7. Termination</h2>
+<p>Your rights end automatically if You breach this license (including any Commercial Use without a commercial license)
+and do not cure the breach within 30 days of becoming aware of it. Sections 5, 6 and 7 survive termination.</p>
+<h2>8. Earlier releases</h2>
+<p>Copies of a Model obtained under a previous license (Apache-2.0) remain under that license. This license applies to
+copies obtained after it was published with the Model.</p></div>
+  </div>
+
+  </article>
+
+  <footer class="footer">
+    <div class="footer__brand">
+      <img src="assets/q-logo.svg" alt="" width="28" height="28" />
+      <span>Q Project</span>
+    </div>
+    <p class="footer__tag">
+      <span data-lang="ru">Претрейн &middot; Файнтюн &middot; Агенты &middot; Исследования</span>
+      <span data-lang="en">Pretrain &middot; Finetune &middot; Agents &middot; Research</span>
+      <span data-lang="zh">预训练 &middot; 微调 &middot; 智能体 &middot; 研究</span>
+    </p>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="index.html"><span data-lang="ru">Главная</span><span data-lang="en">Home</span><span data-lang="zh">首页</span></a>
+      <a href="blog.html"><span data-lang="ru">Блог</span><span data-lang="en">Blog</span><span data-lang="zh">博客</span></a>
+      <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a>
+      <a href="https://github.com/Q-Project-LM" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <p class="footer__copy">
+      <span data-lang="ru">&copy; <span class="year"></span> Q Project. Разрабатывается независимо.</span>
+      <span data-lang="en">&copy; <span class="year"></span> Q Project. Built independently.</span>
+      <span data-lang="zh">&copy; <span class="year"></span> Q Project。独立开发。</span>
+    </p>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    (function () {
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var els = document.querySelectorAll(".reveal");
+      if (!("IntersectionObserver" in window) || reduce) {
+        els.forEach(function (el) { el.classList.add("is-in"); });
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          en.target.classList.add("is-in");
+          io.unobserve(en.target);
+          en.target.querySelectorAll(".stat-num[data-count]").forEach(function (num) {
+            var target = parseFloat(num.getAttribute("data-count"));
+            var suffix = num.getAttribute("data-suffix") || "";
+            var start = performance.now(), dur = 900;
+            function frame(t) {
+              var p = Math.min(1, (t - start) / dur);
+              var eased = 1 - Math.pow(1 - p, 3);
+              num.textContent = (target * eased).toFixed(target % 1 ? 1 : 0) + suffix;
+              if (p < 1) requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+          });
+        });
+      }, { threshold: 0.25 });
+      els.forEach(function (el) { io.observe(el); });
+    })();
+  </script>
+</body>
+</html>
