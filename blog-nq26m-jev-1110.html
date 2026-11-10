@@ -1,0 +1,176 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>N-Q-26M-JEV-1110: toxicity and profanity in Russian and English — Q Project</title>
+  <meta name="description" content="N-Q-26M-JEV-1110: the 26M decision model learns toxicity and profanity (мат) in Russian and English — 96% / 90% on held-out toxicity tests, 99% / 97% on profanity, no false alarms on ordinary questions." />
+  <link rel="icon" type="image/svg+xml" href="assets/q-logo.svg" />
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("q-theme") || "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Release-page additions on top of the shared article styles */
+    .model-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 28px 0 8px; }
+    @media (max-width: 720px) { .model-pair { grid-template-columns: 1fr; } }
+    .model-pair .model { display: flex; flex-direction: column; gap: 10px; }
+    .model-pair .model__logo { width: 40px; height: 40px; margin-bottom: 2px; }
+    .model-pair .model__name { font-size: 1.2rem; }
+    .model-pair .model__desc { color: var(--muted); font-size: 0.92rem; margin: 0; }
+    .model-pair .model__foot { margin-top: auto; padding-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s cubic-bezier(0.2,0.7,0.2,1), transform 0.6s cubic-bezier(0.2,0.7,0.2,1); }
+    .reveal.is-in { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+    .stat-num { display: inline-block; font-variant-numeric: tabular-nums; }
+
+    .qbench-table-wrap { overflow-x: auto; margin-top: 18px; }
+    .qbench-table-wrap .doc-table td.best { color: var(--brand); font-weight: 600; }
+    .qbench-table-wrap .doc-table tr.us td { background: var(--surface-2); }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#intro"><span data-lang="ru">Перейти к статье</span><span data-lang="en">Skip to article</span><span data-lang="zh">跳到正文</span></a>
+
+  {% include header.html active="blog" %}
+
+  <article class="article" id="intro">
+
+  <div data-lang="ru">
+    <p class="article__kicker">ОБНОВЛЕНИЕ &middot; ЛИНЕЙКА N-Q</p>
+    <h1 class="article__title">N-Q-26M-JEV-1110: мат и токсичность на русском и английском</h1>
+    <p class="article__lede">Модель решений научилась модерации. Она отличает оскорбления от мата, видит и то и другое на двух языках и больше не пугается обычных вопросов с числами.</p>
+    <div class="article__stats reveal">
+      <div><b>96%</b><span>токсичность, RU</span></div><div><b>90%</b><span>токсичность, EN</span></div>
+      <div><b>99%</b><span>мат, RU</span></div><div><b>97%</b><span>мат, EN</span></div>
+    </div>
+    <div class="article__body">
+      <p>Номер, как и раньше, — это дата: <b>1110</b> = 10 ноября.</p>
+      <h2>Что изменилось</h2>
+      <div class="qbench-table-wrap"><table class="doc-table"><thead><tr><th>Отложенный тест</th><th>JEV-1027</th><th><b>JEV-1110</b></th></tr></thead><tbody><tr><td>токсичность, RU</td><td>79.5 <small>(paradetox)</small></td><td><b>96.1</b></td></tr><tr><td>токсичность, EN</td><td>—</td><td><b>90.1</b></td></tr><tr><td>мат, RU</td><td>—</td><td><b>98.7</b></td></tr><tr><td>мат, EN</td><td>—</td><td><b>97.3</b></td></tr><tr><td>«Сколько будет 15% от 2 340 рублей?» — токсично?</td><td>1.00</td><td><b>0.00</b></td></tr></tbody></table></div>
+      <p>Добавили 110 тыс. примеров токсичности: русские комментарии с 2ch, Пикабу и OK.ru, наборы textdetox и OK ML Cup, английский civil_comments. Ещё 72 тыс. примеров на мат и 12 тыс. «трудных отрицательных» — обычные вопросы с числами, деньгами, кодом, «убить процесс» и «атакой конём». Раньше прошлая версия называла токсичным вопрос про проценты.</p>
+      <h2>Мат — это не «плохие слова из списка»</h2>
+      <p>Открытые словари мата отмечают даже «блин», «gay», «sex» и «hell». Модель, обученная на таких метках, начинает цензурировать нейтральные слова и идентичность. Поэтому мат мы размечали своими правилами: корни русского мата с приставками (охуеть, заебала, долбоёб) и ядро английской обсценной лексики. Обычные оскорбления вроде «дурак» или «idiot» — это токсичность, но не мат. Правила проверили на похожих словах: «застрахуй», «требую», «употребляют», «сукно», «Херсон» и «shiitake» матом не считаются.</p>
+      <h2>Где ошибается</h2>
+      <p>На английском насилие в безобидном контексте иногда выглядит токсичным: «I will kill this bug in the code today» — 0.77. Русский с тем же случаем справляется лучше: «Убей процесс командой kill -9» — 0.03. Остальные навыки не просели: логика, проверка фактов и внешние бенчмарки в пределах шума от 1027.</p>
+      <h2>Попробовать</h2>
+      <p><a href="jev/moderation/">Модерация комментариев</a> теперь показывает мат отдельной меткой и понимает английский. Новые примеры — в <a href="jev/">конструкторе JEV</a>. Всё работает в браузере, модель весит 47 МБ.</p>
+    </div>
+  </div>
+
+  <div data-lang="en">
+    <p class="article__kicker">UPDATE &middot; THE N-Q LADDER</p>
+    <h1 class="article__title">N-Q-26M-JEV-1110: toxicity and profanity in Russian and English</h1>
+    <p class="article__lede">The decision model learned moderation: it tells insults from swearing, sees both in two languages, and no longer flags ordinary questions with numbers.</p>
+    <div class="article__stats reveal">
+      <div><b>96%</b><span>toxicity, RU</span></div><div><b>90%</b><span>toxicity, EN</span></div>
+      <div><b>99%</b><span>profanity, RU</span></div><div><b>97%</b><span>profanity, EN</span></div>
+    </div>
+    <div class="article__body">
+      <p>As before, the number is a date: <b>1110</b> = November 10.</p>
+      <h2>What changed</h2>
+      <div class="qbench-table-wrap"><table class="doc-table"><thead><tr><th>Held-out test</th><th>JEV-1027</th><th><b>JEV-1110</b></th></tr></thead><tbody><tr><td>toxicity, RU</td><td>79.5 <small>(paradetox)</small></td><td><b>96.1</b></td></tr><tr><td>toxicity, EN</td><td>—</td><td><b>90.1</b></td></tr><tr><td>profanity, RU</td><td>—</td><td><b>98.7</b></td></tr><tr><td>profanity, EN</td><td>—</td><td><b>97.3</b></td></tr><tr><td>"Сколько будет 15% от 2 340 рублей?" — toxic?</td><td>1.00</td><td><b>0.00</b></td></tr></tbody></table></div>
+      <p>110k toxicity examples (Russian comments from 2ch, Pikabu and OK.ru, textdetox, OK ML Cup, English civil_comments), 72k profanity examples and 12k hard negatives — ordinary requests with numbers, money, code, "kill the process", chess "attack". The previous version called a percentage question toxic.</p>
+      <h2>Profanity is not a word list</h2>
+      <p>Public profanity lexicons also flag "блин", "gay", "sex" or "hell"; a model trained on them learns to censor neutral and identity words. Our profanity labels come from rules: Russian мат roots with their prefixes and the English obscene core. Plain insults ("дурак", "idiot") are toxicity, not profanity. The rules were checked on look-alikes ("застрахуй", "требую", "сукно", "Херсон", "shiitake").</p>
+      <h2>Where it fails</h2>
+      <p>In English, violent words in a harmless context can still look toxic: "I will kill this bug in the code today" scores 0.77; Russian handles it better ("Убей процесс командой kill -9": 0.03). The other skills are unchanged within noise.</p>
+      <h2>Try it</h2>
+      <p><a href="jev/moderation/">Comment moderation</a> now shows profanity as its own tag and reads English; new examples are in the <a href="jev/">JEV playground</a>. All in the browser, 47 MB.</p>
+    </div>
+  </div>
+
+  <div data-lang="zh">
+    <p class="article__kicker">更新 &middot; N-Q 系列</p>
+    <h1 class="article__title">N-Q-26M-JEV-1110：俄语和英语的毒性与脏话识别</h1>
+    <p class="article__lede">决策模型学会了内容审核：能区分侮辱和脏话，支持两种语言，并且不再把带数字的普通问题误判为有毒。</p>
+    <div class="article__stats reveal">
+      <div><b>96%</b><span>毒性（俄语）</span></div><div><b>90%</b><span>毒性（英语）</span></div>
+      <div><b>99%</b><span>脏话（俄语）</span></div><div><b>97%</b><span>脏话（英语）</span></div>
+    </div>
+    <div class="article__body">
+      <p>版本号仍是日期：<b>1110</b> = 11 月 10 日。</p>
+      <h2>改动</h2>
+      <div class="qbench-table-wrap"><table class="doc-table"><thead><tr><th>留出测试</th><th>JEV-1027</th><th><b>JEV-1110</b></th></tr></thead><tbody><tr><td>毒性（俄语）</td><td>79.5 <small>(paradetox)</small></td><td><b>96.1</b></td></tr><tr><td>毒性（英语）</td><td>—</td><td><b>90.1</b></td></tr><tr><td>脏话（俄语）</td><td>—</td><td><b>98.7</b></td></tr><tr><td>脏话（英语）</td><td>—</td><td><b>97.3</b></td></tr><tr><td>「Сколько будет 15% от 2 340 рублей?」是否有毒？</td><td>1.00</td><td><b>0.00</b></td></tr></tbody></table></div>
+      <p>新增 11 万条毒性样本、7.2 万条脏话样本和 1.2 万条困难负例（含数字、金额、代码、「结束进程」等普通请求）。</p>
+      <h2>脏话不是词表</h2>
+      <p>公开脏话词表连「блин」「gay」「sex」都会标记。我们用规则标注：俄语脏话词根及前缀、英语核心脏话；普通侮辱属于毒性而非脏话。</p>
+      <h2>不足</h2>
+      <p>英语中无害语境下的暴力词汇仍可能被判为有毒：「I will kill this bug in the code today」得分 0.77。其他能力基本不变。</p>
+      <h2>试用</h2>
+      <p><a href="jev/moderation/">评论审核</a>现在单独显示脏话标签并支持英语；更多示例见 <a href="jev/">JEV 试验场</a>。</p>
+    </div>
+  </div>
+
+  </article>
+
+  <footer class="footer">
+    <div class="footer__brand">
+      <img src="assets/q-logo.svg" alt="" width="28" height="28" />
+      <span>Q Project</span>
+    </div>
+    <p class="footer__tag">
+      <span data-lang="ru">Претрейн &middot; Файнтюн &middot; Агенты &middot; Исследования</span>
+      <span data-lang="en">Pretrain &middot; Finetune &middot; Agents &middot; Research</span>
+      <span data-lang="zh">预训练 &middot; 微调 &middot; 智能体 &middot; 研究</span>
+    </p>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="index.html"><span data-lang="ru">Главная</span><span data-lang="en">Home</span><span data-lang="zh">首页</span></a>
+      <a href="blog.html"><span data-lang="ru">Блог</span><span data-lang="en">Blog</span><span data-lang="zh">博客</span></a>
+      <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a>
+      <a href="https://github.com/Q-Project-LM" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <p class="footer__copy">
+      <span data-lang="ru">&copy; <span class="year"></span> Q Project. Разрабатывается независимо.</span>
+      <span data-lang="en">&copy; <span class="year"></span> Q Project. Built independently.</span>
+      <span data-lang="zh">&copy; <span class="year"></span> Q Project。独立开发。</span>
+    </p>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    (function () {
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var els = document.querySelectorAll(".reveal");
+      if (!("IntersectionObserver" in window) || reduce) {
+        els.forEach(function (el) { el.classList.add("is-in"); });
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          en.target.classList.add("is-in");
+          io.unobserve(en.target);
+          en.target.querySelectorAll(".stat-num[data-count]").forEach(function (num) {
+            var target = parseFloat(num.getAttribute("data-count"));
+            var suffix = num.getAttribute("data-suffix") || "";
+            var start = performance.now(), dur = 900;
+            function frame(t) {
+              var p = Math.min(1, (t - start) / dur);
+              var eased = 1 - Math.pow(1 - p, 3);
+              num.textContent = (target * eased).toFixed(target % 1 ? 1 : 0) + suffix;
+              if (p < 1) requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+          });
+        });
+      }, { threshold: 0.25 });
+      els.forEach(function (el) { io.observe(el); });
+    })();
+  </script>
+</body>
+</html>

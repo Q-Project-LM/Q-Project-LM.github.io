@@ -3,7 +3,7 @@
 // a promise queue over {type:'decide'} messages, a status pill and small helpers (language, escaping).
 (function () {
   const SRC = document.currentScript.src;
-  const V = 'nq26m-10', MODEL_V = 'jev-1027';
+  const V = 'nq26m-10', MODEL_V = 'jev-1110';
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const lang = () => { const l = (document.documentElement.getAttribute('lang') || 'en').slice(0, 2); return ['ru', 'en', 'zh'].includes(l) ? l : 'en'; };
   // trilingual inline text: every language is rendered, main.js shows the active one
@@ -25,7 +25,7 @@
         : `${L('скачиваю модель', 'downloading the model', '正在下载模型')} ${(m.got / 1e6).toFixed(1)}${m.total ? ' / ' + (m.total / 1e6).toFixed(1) : ''} MB`);
       else if (m.type === 'ready') {
         this.ready = true;
-        this.status('ready', `N-Q-26M-JEV-1027 · ${L('в этой вкладке', 'in this tab', '在此标签页中')} · self-test ${m.selftest[0]}/${m.selftest[1]}`);
+        this.status('ready', `N-Q-26M-JEV-1110 · ${L('в этой вкладке', 'in this tab', '在此标签页中')} · self-test ${m.selftest[0]}/${m.selftest[1]}`);
         this.readyCbs.forEach((f) => f()); this.readyCbs = [];
       } else if (m.type === 'decision' && this.busy) { const b = this.busy; this.busy = null; b.resolve({ ...m.result, _ms: m.ms }); this.next(); }
       else if (m.type === 'error') {
@@ -51,7 +51,8 @@
     tiers: { ru: ['легко', 'средне', 'сложно'], en: ['easy', 'medium', 'hard'] },
     calc: { ru: 'Понадобится ли для ответа точное вычисление калькулятором?', en: 'Does answering this need an exact calculator computation?' },
     think: { ru: 'Нужно ли рассуждать перед ответом на этот запрос?', en: 'Should the assistant reason step by step before answering?' },
-    toxic: { ru: 'Есть ли в сообщении токсичность?' },
+    toxic: { ru: 'Есть ли в сообщении токсичность?', en: 'Is this message toxic?' },
+    prof: { ru: 'Есть ли в тексте мат или нецензурная лексика?', en: 'Does the text contain profanity or obscene language?' },
     sentiment: { ru: 'Какая тональность у текста?', en: 'What is the sentiment of this text?' },
     sentOpts: { ru: ['нейтральная', 'положительная', 'отрицательная'], en: ['negative', 'positive'] },
     match: { ru: 'Отвечает ли ответ на вопрос пользователя?', en: "Does the reply answer the user's question?" },

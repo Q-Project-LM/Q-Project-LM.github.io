@@ -1,7 +1,7 @@
 'use strict';
 // N-Q-26M-JEV-1027 demo page: builds {name: {kind, question, options}} from the form and asks the worker to decide.
 (function () {
-  const V = 'nq26m-10', MODEL_V = 'jev-1027';   // code version / weights version (bumping MODEL_V forces a re-download)
+  const V = 'nq26m-10', MODEL_V = 'jev-1110';   // code version / weights version (bumping MODEL_V forces a re-download)
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const PRESETS = [
@@ -26,6 +26,10 @@
       qs: [['noul', 'Понадобится ли для ответа точное вычисление калькулятором?', 'нет, да'], ['noul', 'Нужно ли рассуждать перед ответом на этот запрос?', 'нет, да']] },
     { name: 'Fact check (new)', state: 'Text: The Eiffel Tower was completed in 1889 and is 330 metres tall.\nClaim: The Eiffel Tower was completed in 1925.',
       qs: [['noul', 'Does the text support the claim?', 'no, yes']] },
+    { name: 'Мат и грубость (новое)', state: 'Да пошёл ты нахер со своими советами, придурок.',
+      qs: [['noul', 'Есть ли в сообщении токсичность?', 'нет, да'], ['noul', 'Есть ли в тексте мат или нецензурная лексика?', 'нет, да']] },
+    { name: 'Swearing (new)', state: 'This is bullshit, total waste of money.',
+      qs: [['noul', 'Is this message toxic?', 'no, yes'], ['noul', 'Does the text contain profanity or obscene language?', 'no, yes']] },
     { name: 'Отзыв о ресторане', state: 'Еда была холодной, официант забыл про наш заказ, а счёт принесли с чужими блюдами. Больше не придём.',
       qs: [['choice', 'Какая тональность у текста?', 'нейтральная, положительная, отрицательная'], ['noul', 'Есть ли в сообщении токсичность?', 'нет, да'], ['choice', 'О чём этот запрос? Выбери тему.', 'cooking, travel, finance, health, entertainment, other']] },
     { name: 'Spam or not', state: 'Congratulations!!! You have WON a free iPhone. Click the link and enter your card number to claim your prize now.',

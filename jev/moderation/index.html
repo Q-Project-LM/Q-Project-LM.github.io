@@ -25,7 +25,7 @@
   <main class="run demo" id="demo">
     <p class="app-kicker"><a href="../">JEV</a> / moderation</p>
     <h1><span data-lang="ru">Модерация комментариев</span><span data-lang="en">Comment moderation</span><span data-lang="zh">评论审核</span></h1>
-    <p class="run__lede" data-lang="ru">Лента комментариев под новостью. JEV проверяет каждый комментарий на токсичность и тональность прямо в браузере, а токсичные можно скрывать по порогу. Добавьте свой комментарий и посмотрите, что скажет модель.</p><p class="run__lede" data-lang="en">A comment feed under a news story. JEV checks every comment for toxicity and sentiment right in the browser, and toxic ones can be hidden by a threshold. Add your own comment and see what the model says. (Toxicity is trained on Russian.)</p><p class="run__lede" data-lang="zh">新闻下的评论区。JEV 在浏览器中检查每条评论的毒性和情感，可按阈值隐藏有毒评论。添加你自己的评论，看看模型的判断。（毒性检测基于俄语训练。）</p>
+    <p class="run__lede" data-lang="ru">Лента комментариев под новостью. JEV проверяет каждый комментарий на токсичность, мат и тональность прямо в браузере — на русском и английском, а токсичные можно скрывать по порогу. Добавьте свой комментарий и посмотрите, что скажет модель.</p><p class="run__lede" data-lang="en">A comment feed under a news story. JEV checks every comment for toxicity, profanity and sentiment right in the browser (Russian and English), and toxic ones can be hidden by a threshold. Add your own comment and see what the model says.</p><p class="run__lede" data-lang="zh">新闻下的评论区。JEV 在浏览器中检查每条评论的毒性、脏话和情感（俄语和英语），可按阈值隐藏有毒评论。添加你自己的评论，看看模型的判断。</p>
     <div id="jevStatus" class="jev-pill"></div>
 
     <div class="demo-card">
@@ -38,11 +38,11 @@
       <div id="feed" style="display:grid;gap:10px;margin-top:14px"></div>
       <div class="row"><input id="mine" class="app-input" style="flex:1;min-width:200px" placeholder="Ваш комментарий…" /><button class="btn btn--solid btn--sm" id="add" disabled><span data-lang="ru">Отправить</span><span data-lang="en">Post</span><span data-lang="zh">发布</span></button></div>
     </div>
-    <p class="app-note"><span data-lang="ru">Модель — N-Q-26M-JEV-1027 (26M параметров), работает целиком в этой вкладке: текст никуда не отправляется. Она сильна на обученных типах решений и часто ошибается на необычных. <a href="../">Все примеры JEV</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">о модели</a></span><span data-lang="en">The model is N-Q-26M-JEV-1027 (26M parameters) and runs entirely in this tab: no text leaves your browser. It is strong on the decision types it was trained on and often wrong on unusual ones. <a href="../">All JEV examples</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">about the model</a></span><span data-lang="zh">模型为 N-Q-26M-JEV-1027（2600 万参数），完全在此标签页中运行：文本不会离开你的浏览器。它擅长训练过的决策类型，在不寻常的问题上常会出错。<a href="../">全部 JEV 示例</a> · <a href="https://huggingface.co/q-project/N-Q-26M-JEV-1027" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">关于模型</a></span></p>
+    <p class="app-note"><span data-lang="ru">Модель — N-Q-26M-JEV-1110 (26M параметров), работает целиком в этой вкладке: текст никуда не отправляется. Она сильна на обученных типах решений и часто ошибается на необычных. <a href="../">Все примеры JEV</a> · <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">о модели</a></span><span data-lang="en">The model is N-Q-26M-JEV-1110 (26M parameters) and runs entirely in this tab: no text leaves your browser. It is strong on the decision types it was trained on and often wrong on unusual ones. <a href="../">All JEV examples</a> · <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">about the model</a></span><span data-lang="zh">模型为 N-Q-26M-JEV-1110（2600 万参数），完全在此标签页中运行：文本不会离开你的浏览器。它擅长训练过的决策类型，在不寻常的问题上常会出错。<a href="../">全部 JEV 示例</a> · <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a> · <a href="../../blog-nq26m-jev-1027.html">关于模型</a></span></p>
   </main>
 
   <script src="../../main.js"></script>
-  <script src="../jev-client.js?v=1"></script>
+  <script src="../jev-client.js?v=2"></script>
   <script>
 'use strict';
 (function () {
@@ -52,7 +52,8 @@
 
   const SEED = [['Аня', 'Наконец-то! Гуляли там с детьми, очень красиво и чисто.'], ['Петр К.', 'Опять деньги на ерунду потратили, лучше бы дороги сделали.'],
     ['гость_42', 'Идиоты в мэрии совсем мозги потеряли, сжечь бы это всё.'], ['Марина', 'Подскажите, до скольки парк открыт?'], ['Олег', 'Велодорожки узкие, но в целом неплохо.'],
-    ['anon', 'Заткнись уже со своими дорогами, придурок.'], ['Света', 'Спасибо всем, кто это сделал! Лучший подарок району.'], ['Ник', 'Wi-Fi там не работает, проверял вчера.']];
+    ['anon', 'Заткнись уже со своими дорогами, придурок.'], ['Света', 'Спасибо всем, кто это сделал! Лучший подарок району.'], ['Ник', 'Wi-Fi там не работает, проверял вчера.'],
+    ['Вован', 'Да нахуй этот парк, всё равно всё разворуют.'], ['tourist_88', 'Lovely park, my kids loved the playground!'], ['mike', 'What a fucking waste of taxpayer money.'], ['Лена', 'Блин, опять дождь, а мы хотели погулять.']];
   const items = [];
   const thr = () => +$('thr').value;
   function draw() {
@@ -62,14 +63,17 @@
     $('feed').innerHTML = items.map((x) => {
       const tox = x.r && x.r.t >= thr(), hide = tox && $('hide').checked;
       const s = x.r ? x.r.s : null, sTag = s ? `<span class="tag ${s.k === 2 ? 'is-bad' : s.k === 1 ? 'is-good' : ''}">${[L('нейтрально', 'neutral', '中性'), L('позитив', 'positive', '正面'), L('негатив', 'negative', '负面')][s.k]} ${pct(s.p)}</span>` : '';
-      const tTag = x.r ? `<span class="tag ${tox ? 'is-bad' : 'is-good'}">${tox ? '⚠ ' + L('токсично', 'toxic', '有毒') : L('ок', 'ok', '正常')} ${pct(x.r.t)}</span>` : '<span class="spinner"></span>';
+      const tTag = x.r ? `<span class="tag ${tox ? 'is-bad' : 'is-good'}">${tox ? '⚠ ' + L('токсично', 'toxic', '有毒') : L('ок', 'ok', '正常')} ${pct(x.r.t)}</span>` + (x.r.m >= .5 ? `<span class="tag is-bad">🤬 ${L('мат', 'profanity', '脏话')} ${pct(x.r.m)}</span>` : '') : '<span class="spinner"></span>';
       return `<div class="tile"${hide ? ' style="opacity:.55"' : ''}><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${esc(x.who)}</b><span style="display:flex;gap:6px">${sTag}${tTag}</span></div>
         <div style="margin-top:6px;${hide ? 'filter:blur(5px);user-select:none' : ''}">${esc(x.text)}</div>${hide ? `<div class="small muted" style="margin-top:4px">${L('скрыто модерацией', 'hidden by moderation', '已被审核隐藏')}</div>` : ''}</div>`;
     }).join('');
   }
   async function check(x) {
-    const r = await jev.decide(cut(x.text, 700), { t: { kind: 'noul', question: Q.toxic.ru, options: Q.yn.ru }, s: { kind: 'choice', question: Q.sentiment.ru, options: Q.sentOpts.ru } });
-    x.r = { t: r.t.p_yes, s: { k: r.s.index, p: r.s.confidence } }; draw();
+    const k = isRu(x.text) ? 'ru' : 'en';
+    const qs = { t: { kind: 'noul', question: Q.toxic[k], options: Q.yn[k] }, m: { kind: 'noul', question: Q.prof[k], options: Q.yn[k] } };
+    if (k === 'ru') qs.s = { kind: 'choice', question: Q.sentiment.ru, options: Q.sentOpts.ru };
+    const r = await jev.decide(cut(x.text, 700), qs);
+    x.r = { t: r.t.p_yes, m: r.m.p_yes, s: r.s ? { k: r.s.index, p: r.s.confidence } : null }; draw();
   }
   SEED.forEach(([who, text]) => items.push({ who, text, r: null })); draw();
   jev.onReady(() => { $('add').disabled = false; items.forEach(check); });
