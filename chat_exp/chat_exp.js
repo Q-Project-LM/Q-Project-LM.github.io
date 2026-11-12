@@ -6,7 +6,7 @@
 // A conversation: {id, title, updated, messages: [{role:'user', content} | {role:'assistant', raw, segs:[{kind, text}], tools:[...], meta}]}
 // `raw` is the assistant turn with its control tokens (<THINK>, <CALC>…) — that is what the model re-reads.
 (function () {
-  const V = 'nq26m-10', MODEL_V = 'nq26m-q8-1', JEV_V = 'jev-1110';   // code version / weights version (bumping MODEL_V forces a re-download)
+  const V = 'nq26m-11', MODEL_V = 'nq26m-q8-1', JEV_V = 'jev-1110';   // code version / weights version (bumping MODEL_V forces a re-download)
   const $ = (id) => document.getElementById(id);
   const lang = () => (document.documentElement.lang || 'en').slice(0, 2);
   // a trilingual label that follows the site's language switch (main.js toggles .is-active on [data-lang])

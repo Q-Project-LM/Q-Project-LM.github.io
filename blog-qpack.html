@@ -1,0 +1,209 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qpack: one file per model — Q Project</title>
+  <meta name="description" content="qpack: a single-file model format and a C++ engine (CPU, CUDA, browser). Qwen2.5-0.5B in 232 MiB decoding faster than llama.cpp, gpt-oss-20b on an 8 GB Tesla P4, honest quality numbers." />
+  <link rel="icon" type="image/svg+xml" href="assets/q-logo.svg" />
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("q-theme") || "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Release-page additions on top of the shared article styles */
+    .model-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 28px 0 8px; }
+    @media (max-width: 720px) { .model-pair { grid-template-columns: 1fr; } }
+    .model-pair .model { display: flex; flex-direction: column; gap: 10px; }
+    .model-pair .model__logo { width: 40px; height: 40px; margin-bottom: 2px; }
+    .model-pair .model__name { font-size: 1.2rem; }
+    .model-pair .model__desc { color: var(--muted); font-size: 0.92rem; margin: 0; }
+    .model-pair .model__foot { margin-top: auto; padding-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s cubic-bezier(0.2,0.7,0.2,1), transform 0.6s cubic-bezier(0.2,0.7,0.2,1); }
+    .reveal.is-in { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+    .stat-num { display: inline-block; font-variant-numeric: tabular-nums; }
+
+    .qbench-table-wrap { overflow-x: auto; margin-top: 18px; }
+    .qbench-table-wrap .doc-table td.best { color: var(--brand); font-weight: 600; }
+    .qbench-table-wrap .doc-table tr.us td { background: var(--surface-2); }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#intro"><span data-lang="ru">Перейти к статье</span><span data-lang="en">Skip to article</span><span data-lang="zh">跳到正文</span></a>
+
+  {% include header.html active="blog" %}
+
+  <article class="article" id="intro">
+
+  <div data-lang="ru">
+    <p class="article__kicker">ИНСТРУМЕНТЫ &middot; QPACK</p>
+    <h1 class="article__title">qpack: один файл на модель, свой движок на C++, CUDA и браузер</h1>
+    <p class="article__lede">Как мы упаковали Qwen2.5-0.5B в 232 МиБ и обогнали llama.cpp по скорости генерации, а gpt-oss-20b запустили на 8-гигабайтной Tesla P4. И честно о том, чего это стоит по качеству.</p>
+    <div class="article__stats reveal">
+      <div><b>232</b><span>МиБ — Qwen2.5-0.5B (было 352)</span></div><div><b>84</b><span>ток/с на CPU (llama.cpp Q4_K_M: 57)</span></div>
+      <div><b>258</b><span>ток/с на Tesla P4 (llama.cpp: 150)</span></div><div><b>~50</b><span>ток/с gpt-oss-20b на 8 ГБ</span></div>
+    </div>
+    <div class="article__body">
+      <h2>Что такое qpack</h2>
+      <p><b>Формат.</b> Один файл, который можно отобразить в память (mmap): веса, <code>config.json</code>, токенизатор и встроенный самотест — эталонные логиты на нескольких промптах. Любой движок, открыв файл, может сам проверить, что считает правильно. Веса хранятся в f32, f16, int8 (q8), 4 битах группами по 32 (q4) или 1 бите (q1). QPACK3 дополнительно сжимает 4-битные веса без потерь энтропийным кодированием rANS.</p>
+      <p><b>Движок.</b> C++17 без зависимостей. Ядра AVX2 и NEON (x86, Apple Silicon, Android, часы), бэкенд CUDA для карт Pascal и новее. Есть токенизатор, сэмплер, кэш KV и состояния между запросами и спекулятивное декодирование. В комплекте:</p>
+      <ul>
+        <li><code>qpack-cli</code> — чат в терминале;</li>
+        <li><code>qpack-server</code> — сервер с OpenAI-совместимым API;</li>
+        <li><code>qpack-bench</code> и <code>qpack-perplexity</code> — замеры скорости и качества;</li>
+        <li><code>qpack-quantize</code> — квантование, в том числе с GPTQ;</li>
+        <li><code>qpack-pack</code> — сжатие rANS.</li>
+      </ul>
+      <p><b>Модели:</b> наша N-Q (Gated DeltaNet с точными вычислениями <code>&lt;CALC&gt;</code>), семейство Llama (Qwen2, Llama, Mistral, SmolLM, MiniCPM), Liquid LFM и gpt-oss. Также есть приложение для Android и пример для Wear OS.</p>
+      <h2>Qwen2.5-0.5B в 232 МиБ</h2>
+      <p>К весам Qwen применили три шага:</p>
+      <ul>
+        <li><b>Урезали словарь</b> со 152 тыс. до 80 тыс. токенов: частоты считали по русским и английским текстам, которые не пересекаются с проверочными.</li>
+        <li><b>Квантовали веса в 4 бита</b> с GPTQ, включая выходной слой.</li>
+        <li><b>Сжали 4-битные блоки</b> без потерь с помощью rANS.</li>
+      </ul>
+      <p>Замеры на нашем железе, качество — рост бит на байт относительно f16 у llama.cpp:</p>
+      <div class="qbench-table-wrap"><table class="doc-table"><thead><tr><th>Формат</th><th>МиБ</th><th>CPU, 8 потоков, ток/с</th><th>Tesla P4, ток/с</th><th>Потеря качества</th></tr></thead><tbody>
+        <tr class="us"><td><b>qpack, словарь 80k + q4</b></td><td class="best">232</td><td class="best">83.9</td><td class="best">257.8</td><td>+2.3%</td></tr>
+        <tr><td>qpack q4m</td><td>352</td><td>67.4</td><td>226.7</td><td>+1.7%</td></tr>
+        <tr><td>llama.cpp Q4_K_M</td><td>379</td><td>57.0</td><td>150.3</td><td class="best">+1.5%</td></tr>
+        <tr><td>llama.cpp Q4_0</td><td>336</td><td>68.6</td><td>164.8</td><td>+5.8%</td></tr>
+      </tbody></table></div>
+      <p>Честно: по качеству мы на уровне Q4_K_M с поправкой на шум, но не лучше. Выигрыш — в размере и скорости генерации. Обработка длинного промпта на CPU у нас <b>медленнее</b>, чем у llama.cpp (405 против 443 ток/с на 16 потоках). Не прошли бюджет в +2% и не вошли в релиз: группы по 64–128, удаление слоя, 1-битные веса для плотной модели 0.5B.</p>
+      <h2>gpt-oss-20b на карте за 8 ГБ</h2>
+      <p>У gpt-oss-20b эксперты занимают около 90% весов. Мы квантовали их до 1 бита с компенсацией ошибки, как в GPTQ, и оставили часть самых нагруженных экспертов точными (MXFP4). Модель целиком влезает в 6.5 ГБ видеопамяти Tesla P4 без всякого дообучения и выдаёт около 50 ток/с. Цена высокая: перплексия в 1.4–3.6 раза хуже оригинала. Это исследовательский релиз, а не замена модели.</p>
+      <h2>В браузере</h2>
+      <p>У qpack есть рантайм на WebAssembly SIMD. Теперь в <a href="chat/">чате на сайте</a> можно выбрать одну из трёх моделей, и все они работают прямо во вкладке, без сервера:</p>
+      <ul>
+        <li>N-Q-26M-Chat, 47 МБ;</li>
+        <li>N-Q-164M-Chat, 230 МБ;</li>
+        <li>Qwen2.5-0.5B-Instruct в 4 битах, 269 МБ.</li>
+      </ul>
+      <p>Для Qwen мы добавили в браузерное ядро 4-битные веса. Самотест прямо в браузере проходит 4 из 4. Пока браузер читает только QPACK2: формат QPACK3 и gpt-oss в WASM не поддерживаются.</p>
+      <h2>Ссылки</h2>
+      <p>Код: <a href="https://github.com/Q-Project-LM/qpack" target="_blank" rel="noopener">github.com/Q-Project-LM/qpack</a>. Модели: <a href="https://huggingface.co/q-project/Qwen2.5-0.5B-Instruct-qpack" target="_blank" rel="noopener">Qwen2.5-0.5B-Instruct-qpack</a>, <a href="https://huggingface.co/q-project/gpt-oss-20b-qpack-q1" target="_blank" rel="noopener">gpt-oss-20b-qpack-q1</a>, <a href="https://huggingface.co/q-project/N-Q-164M-Chat" target="_blank" rel="noopener">N-Q-164M-Chat</a>.</p>
+    </div>
+  </div>
+
+  <div data-lang="en">
+    <p class="article__kicker">TOOLS &middot; QPACK</p>
+    <h1 class="article__title">qpack: one file per model, our own C++ engine, CUDA and the browser</h1>
+    <p class="article__lede">How we packed Qwen2.5-0.5B into 232 MiB and decode faster than llama.cpp, ran gpt-oss-20b on an 8 GB Tesla P4, and what that costs in quality.</p>
+    <div class="article__stats reveal">
+      <div><b>232</b><span>MiB, Qwen2.5-0.5B (was 352)</span></div><div><b>84</b><span>tok/s on CPU (llama.cpp Q4_K_M: 57)</span></div>
+      <div><b>258</b><span>tok/s on a Tesla P4 (llama.cpp: 150)</span></div><div><b>~50</b><span>tok/s gpt-oss-20b in 8 GB</span></div>
+    </div>
+    <div class="article__body">
+      <h2>What qpack is</h2>
+      <p><b>Format.</b> One mmap-able file: weights, <code>config.json</code>, tokenizer and a built-in self-test (reference logits), so any engine can check itself. Tensors: f32, f16, int8 (q8), 4-bit groups of 32 (q4), 1-bit (q1); QPACK3 adds lossless rANS coding of the 4-bit blobs.</p>
+      <p><b>Engine.</b> C++17, no dependencies: AVX2 and NEON kernels, a CUDA backend (Pascal and newer), tokenizer, sampler, KV/state reuse, speculative decoding; <code>qpack-cli</code>, an OpenAI-compatible <code>qpack-server</code>, <code>qpack-bench</code>, <code>qpack-perplexity</code>, <code>qpack-quantize</code> (GPTQ) and <code>qpack-pack</code>. Models: N-Q, the Llama family (Qwen2, Llama, Mistral, SmolLM, MiniCPM), Liquid LFM and gpt-oss. Plus an Android app and a Wear OS sample.</p>
+      <h2>Qwen2.5-0.5B in 232 MiB</h2>
+      <p>Vocabulary trimmed from 152k to 80k tokens (frequencies from RU/EN text that does not overlap the evaluation), 4-bit GPTQ weights and a 4-bit output head, lossless rANS on top.</p>
+      <div class="qbench-table-wrap"><table class="doc-table"><thead><tr><th>Format</th><th>MiB</th><th>CPU, 8 threads, tok/s</th><th>Tesla P4, tok/s</th><th>Quality loss</th></tr></thead><tbody>
+        <tr class="us"><td><b>qpack trim80k + q4</b></td><td class="best">232</td><td class="best">83.9</td><td class="best">257.8</td><td>+2.3%</td></tr>
+        <tr><td>qpack q4m</td><td>352</td><td>67.4</td><td>226.7</td><td>+1.7%</td></tr>
+        <tr><td>llama.cpp Q4_K_M</td><td>379</td><td>57.0</td><td>150.3</td><td class="best">+1.5%</td></tr>
+        <tr><td>llama.cpp Q4_0</td><td>336</td><td>68.6</td><td>164.8</td><td>+5.8%</td></tr>
+      </tbody></table></div>
+      <p>Honestly: quality is level with Q4_K_M within noise, not better; the gains are size and decode speed. CPU prompt processing is <b>slower</b> than llama.cpp (405 vs 443 tok/s at 16 threads). Groups of 64–128, dropping a layer and 1-bit weights for a dense 0.5B model failed the +2% budget.</p>
+      <h2>gpt-oss-20b on an 8 GB card</h2>
+      <p>Experts are ~90% of gpt-oss-20b. We quantised them to 1 bit with GPTQ-style error feedback and kept the busiest experts exact (MXFP4): the whole model fits 6.5 GB of a Tesla P4 with no training and decodes at ~50 tok/s. The price is high — perplexity 1.4–3.6× the reference. A research release, not a replacement.</p>
+      <h2>In the browser</h2>
+      <p>qpack's WebAssembly SIMD runtime now runs three models in the <a href="chat/">site chat</a>, all in the tab: N-Q-26M-Chat (47 MB), N-Q-164M-Chat (230 MB) and 4-bit Qwen2.5-0.5B-Instruct (269 MB). For Qwen we added 4-bit weights to the browser core; the in-browser self-test passes 4/4. The browser reads QPACK2 only (no QPACK3, no gpt-oss yet).</p>
+      <h2>Links</h2>
+      <p>Code: <a href="https://github.com/Q-Project-LM/qpack" target="_blank" rel="noopener">github.com/Q-Project-LM/qpack</a>. Models: <a href="https://huggingface.co/q-project/Qwen2.5-0.5B-Instruct-qpack" target="_blank" rel="noopener">Qwen2.5-0.5B-Instruct-qpack</a>, <a href="https://huggingface.co/q-project/gpt-oss-20b-qpack-q1" target="_blank" rel="noopener">gpt-oss-20b-qpack-q1</a>, <a href="https://huggingface.co/q-project/N-Q-164M-Chat" target="_blank" rel="noopener">N-Q-164M-Chat</a>.</p>
+    </div>
+  </div>
+
+  <div data-lang="zh">
+    <p class="article__kicker">工具 &middot; QPACK</p>
+    <h1 class="article__title">qpack：单文件模型格式、自研 C++ 引擎、CUDA 与浏览器</h1>
+    <p class="article__lede">我们把 Qwen2.5-0.5B 压缩到 232 MiB，解码速度超过 llama.cpp；把 gpt-oss-20b 跑在 8 GB 的 Tesla P4 上——以及这在质量上的代价。</p>
+    <div class="article__stats reveal">
+      <div><b>232</b><span>MiB，Qwen2.5-0.5B</span></div><div><b>84</b><span>CPU 词元/秒</span></div>
+      <div><b>258</b><span>Tesla P4 词元/秒</span></div><div><b>~50</b><span>gpt-oss-20b 词元/秒</span></div>
+    </div>
+    <div class="article__body">
+      <p>qpack 是一个可内存映射的单文件格式（权重、配置、分词器和内置自检），以及一个无依赖的 C++17 引擎（AVX2、NEON、CUDA），带 OpenAI 兼容服务器、量化（GPTQ、4 比特、1 比特）和 rANS 无损压缩。</p>
+      <div class="qbench-table-wrap"><table class="doc-table"><thead><tr><th>格式</th><th>MiB</th><th>CPU</th><th>P4</th><th>质量损失</th></tr></thead><tbody>
+        <tr class="us"><td><b>qpack trim80k + q4</b></td><td class="best">232</td><td class="best">83.9</td><td class="best">257.8</td><td>+2.3%</td></tr>
+        <tr><td>llama.cpp Q4_K_M</td><td>379</td><td>57.0</td><td>150.3</td><td class="best">+1.5%</td></tr>
+      </tbody></table></div>
+      <p>质量与 Q4_K_M 相当（在噪声范围内），优势在于体积和解码速度；CPU 上的提示处理比 llama.cpp 慢。gpt-oss-20b 的 1 比特专家版本可装进 8 GB 显卡，约 50 词元/秒，但困惑度是原模型的 1.4–3.6 倍。网站<a href="chat/">聊天</a>现在可在浏览器中运行三个模型，包括 4 比特的 Qwen2.5-0.5B。</p>
+      <p>代码：<a href="https://github.com/Q-Project-LM/qpack" target="_blank" rel="noopener">github.com/Q-Project-LM/qpack</a></p>
+    </div>
+  </div>
+
+  </article>
+
+  <footer class="footer">
+    <div class="footer__brand">
+      <img src="assets/q-logo.svg" alt="" width="28" height="28" />
+      <span>Q Project</span>
+    </div>
+    <p class="footer__tag">
+      <span data-lang="ru">Претрейн &middot; Файнтюн &middot; Агенты &middot; Исследования</span>
+      <span data-lang="en">Pretrain &middot; Finetune &middot; Agents &middot; Research</span>
+      <span data-lang="zh">预训练 &middot; 微调 &middot; 智能体 &middot; 研究</span>
+    </p>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="index.html"><span data-lang="ru">Главная</span><span data-lang="en">Home</span><span data-lang="zh">首页</span></a>
+      <a href="blog.html"><span data-lang="ru">Блог</span><span data-lang="en">Blog</span><span data-lang="zh">博客</span></a>
+      <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a>
+      <a href="https://github.com/Q-Project-LM" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <p class="footer__copy">
+      <span data-lang="ru">&copy; <span class="year"></span> Q Project. Разрабатывается независимо.</span>
+      <span data-lang="en">&copy; <span class="year"></span> Q Project. Built independently.</span>
+      <span data-lang="zh">&copy; <span class="year"></span> Q Project。独立开发。</span>
+    </p>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    (function () {
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var els = document.querySelectorAll(".reveal");
+      if (!("IntersectionObserver" in window) || reduce) {
+        els.forEach(function (el) { el.classList.add("is-in"); });
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          en.target.classList.add("is-in");
+          io.unobserve(en.target);
+          en.target.querySelectorAll(".stat-num[data-count]").forEach(function (num) {
+            var target = parseFloat(num.getAttribute("data-count"));
+            var suffix = num.getAttribute("data-suffix") || "";
+            var start = performance.now(), dur = 900;
+            function frame(t) {
+              var p = Math.min(1, (t - start) / dur);
+              var eased = 1 - Math.pow(1 - p, 3);
+              num.textContent = (target * eased).toFixed(target % 1 ? 1 : 0) + suffix;
+              if (p < 1) requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+          });
+        });
+      }, { threshold: 0.25 });
+      els.forEach(function (el) { io.observe(el); });
+    })();
+  </script>
+</body>
+</html>

@@ -21,14 +21,14 @@ const yieldChannel = new MessageChannel(); const yieldQueue = [];
 yieldChannel.port1.onmessage = () => { const r = yieldQueue.shift(); if (r) r(); };
 const yieldNow = () => new Promise((r) => { yieldQueue.push(r); yieldChannel.port2.postMessage(0); });
 
-async function fetchCached(url, version) {
+async function fetchCached(url, version, size) {
   const key = `${url}#${version}`;
   try {
     const cache = await caches.open('nq-models');
     const hit = await cache.match(key);
     if (hit) { postMessage({ type: 'progress', cached: true }); return await hit.arrayBuffer(); }
     const resp = await fetch(url); if (!resp.ok) throw new Error(`fetch ${url}: ${resp.status}`);
-    const total = Number(resp.headers.get('content-length')) || 0, reader = resp.body.getReader(), chunks = []; let got = 0;
+    const total = Number(resp.headers.get('content-length')) || size || 0, reader = resp.body.getReader(), chunks = []; let got = 0;
     for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); got += value.byteLength; postMessage({ type: 'progress', got, total }); }
     const buf = new Uint8Array(got); let off = 0; for (const c of chunks) { buf.set(c, off); off += c.byteLength; }
     try { for (const k of await cache.keys()) if (k.url.split('#')[0].endsWith(url.split('?')[0])) await cache.delete(k); await cache.put(key, new Response(buf)); } catch (e) {}
@@ -39,8 +39,8 @@ async function fetchCached(url, version) {
   }
 }
 
-async function load(url, version) {
-  const buf = await fetchCached(url, version);
+async function load(url, version, size) {
+  const buf = await fetchCached(url, version, size);
   postMessage({ type: 'status', text: 'unpacking' });
   const c = Lib.readContainer(buf), loaded = Lib.loadNQ(c);
   tok = new Lib.NQTokenizer(c.json('tokenizer.json')); model = new Lib.NQ4JS(loaded);
@@ -156,7 +156,7 @@ async function answer(turns, text, o, regenerate) {
 onmessage = async (ev) => {
   const m = ev.data;
   try {
-    if (m.type === 'load') await load(m.url, m.version);
+    if (m.type === 'load') await load(m.url, m.version, m.size);
     else if (m.type === 'stop') stop = true;
     else if (m.type === 'reset') resetChat();
     else if (m.type === 'chat') await answer(m.turns, m.text, m.opts, false);

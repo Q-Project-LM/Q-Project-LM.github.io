@@ -30,6 +30,11 @@
       if (e.kind === 'f16') data = f16ToF32Array(b);
       else if (e.kind === 'f32') data = new Float32Array(copy);
       else if (e.kind === 'i64') data = new BigInt64Array(copy);
+      else if (e.kind === 'q4') {   // groups of 32 columns: 16 bytes + an fp16 scale (widened to float32 here)
+        const sb = c.blob(e.scale);
+        t[e.name] = { q4: new Uint8Array(copy), scale: f16ToF32Array(sb), shape: e.shape };
+        continue;
+      }
       else if (e.kind === 'q8') {   // QPACK2: int8 rows + float32 per-row scale
         const sb = c.blob(e.scale);
         t[e.name] = { q8: new Int8Array(copy), scale: new Float32Array(sb.buffer.slice(sb.byteOffset, sb.byteOffset + sb.length)), shape: e.shape };
@@ -57,6 +62,19 @@
       let s = 0; const base = r * cols;
       for (let c = 0; c < cols; c++) s += Q[base + c] * x[c];
       out[r] = s * scale[r];
+    }
+    return out;
+  }
+  function matvecQ4(Q, scale, x, rows, cols, out) {   // q4 groups: byte j = column j (low nibble) and j + 16 (high), q + 8
+    const G = cols / 32;
+    for (let r = 0; r < rows; r++) {
+      let s = 0;
+      for (let k = 0; k < G; k++) {
+        const base = r * (cols / 2) + 16 * k, c = 32 * k; let g = 0;
+        for (let j = 0; j < 16; j++) { const b = Q[base + j]; g += ((b & 15) - 8) * x[c + j] + ((b >> 4) - 8) * x[c + j + 16]; }
+        s += g * scale[r * G + k];
+      }
+      out[r] = s;
     }
     return out;
   }
@@ -129,6 +147,7 @@
         out.set(k.F32.subarray(k.yPtr >> 2, (k.yPtr >> 2) + rows));
         return out;
       }
+      if (t.q4) return matvecQ4(t.q4, t.scale, x, rows, cols, out);
       return t.q8 ? matvecQ8(t.q8, t.scale, x, rows, cols, out) : matvec(t.data, x, rows, cols, out);
     }
 
@@ -137,6 +156,11 @@
       const t = this.t[name], cols = t.shape[1], k = this.kernel;
       if (t.ptr && t.q8) { k.ex.row_q8(t.ptr, t.sptr, i, cols, k.yPtr); out.set(k.F32.subarray(k.yPtr >> 2, (k.yPtr >> 2) + cols)); return out; }
       if (t.ptr) { out.set(k.F32.subarray((t.ptr >> 2) + i * cols, (t.ptr >> 2) + (i + 1) * cols)); return out; }
+      if (t.q4) {
+        const G = cols / 32;
+        for (let k = 0; k < G; k++) { const sc = t.scale[i * G + k], base = i * (cols / 2) + 16 * k; for (let j = 0; j < 16; j++) { const b = t.q4[base + j]; out[32 * k + j] = ((b & 15) - 8) * sc; out[32 * k + j + 16] = ((b >> 4) - 8) * sc; } }
+        return out;
+      }
       if (t.q8) { const sc = t.scale[i]; for (let c = 0; c < cols; c++) out[c] = t.q8[i * cols + c] * sc; return out; }
       out.set(t.data.subarray(i * cols, (i + 1) * cols)); return out;
     }
@@ -153,7 +177,8 @@
       const put = (slot, name) => {
         const x = t[name]; if (!x) return;
         const rows = x.shape[0], cols = x.shape.slice(1).reduce((a, b) => a * b, 1);
-        if (x.q8) { const p = ex.alloc(x.q8.length), sp = ex.alloc(4 * rows); new Int8Array(ex.memory.buffer, p, x.q8.length).set(x.q8); new Float32Array(ex.memory.buffer, sp, rows).set(x.scale); ex.nq_set(slot, p, sp, rows, cols); }
+        if (x.q4) { const p = ex.alloc(x.q4.length), sp = ex.alloc(4 * x.scale.length); new Uint8Array(ex.memory.buffer, p, x.q4.length).set(x.q4); new Float32Array(ex.memory.buffer, sp, x.scale.length).set(x.scale); ex.nq_set4(slot, p, sp, rows, cols); }
+        else if (x.q8) { const p = ex.alloc(x.q8.length), sp = ex.alloc(4 * rows); new Int8Array(ex.memory.buffer, p, x.q8.length).set(x.q8); new Float32Array(ex.memory.buffer, sp, rows).set(x.scale); ex.nq_set(slot, p, sp, rows, cols); }
         else if (x.data instanceof BigInt64Array) { const p = ex.alloc(8 * x.data.length); new BigInt64Array(ex.memory.buffer, p, x.data.length).set(x.data); ex.nq_set(slot, p, 0, rows, cols); }
         else { const p = ex.alloc(4 * x.data.length); new Float32Array(ex.memory.buffer, p, x.data.length).set(x.data); ex.nq_set(slot, p, 0, rows, cols); }
       };
@@ -168,7 +193,7 @@
       if (!ex.nq_init()) throw new Error('out of WASM memory');
       new Float32Array(ex.memory.buffer, ex.nq_inv(), this.inv.length).set(this.inv);   // RoPE inverse frequencies (no pow() without libc)
       this.core = { ex, maxCtx, statePtr: ex.nq_state_ptr(), stateBytes: Number(ex.nq_state_bytes()) };
-      for (const k of Object.keys(t)) if (!k.startsWith('decide_head')) { t[k].data = null; t[k].q8 = null; t[k].scale = null; }   // released: the core owns them
+      for (const k of Object.keys(t)) if (!k.startsWith('decide_head')) { t[k].data = null; t[k].q8 = null; t[k].q4 = null; t[k].scale = null; }   // released: the core owns them
       const mem = () => ex.memory.buffer;
       this.step = (tok, want = true) => {
         const ptr = ex.nq_step(tok, want === 'hidden' ? 2 : want ? 1 : 0);

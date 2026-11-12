@@ -3,11 +3,13 @@
 // A conversation: {id, title, updated, messages: [{role:'user', content} | {role:'assistant', raw, segs:[{kind, text}], tools:[...], meta}]}
 // `raw` is the assistant turn with its control tokens (<THINK>, <CALC>…) — that is what the model re-reads.
 (function () {
-  const V = 'nq-10';   // code version
+  const V = 'nq-11';   // code version
   // selectable models: the small one is served by the site, the 164M one (230 MB, over GitHub's file limit) from Hugging Face
   const MODELS = {
     nq26m: { name: 'N-Q-26M-Chat', url: 'model.q8.qpack', v: 'nq26m-q8-1', mb: 47, blog: '../blog-nq26m.html', size: ['26M параметров', '26M parameters', '26M 参数'] },
     nq164m: { name: 'N-Q-164M-Chat', url: 'https://huggingface.co/q-project/N-Q-164M-Chat/resolve/main/model.q8.qpack', v: 'nq164m-q8-1', mb: 230, blog: '../blog-nq164m.html', size: ['164M параметров', '164M parameters', '164M 参数'] },
+    qwen05: { name: 'Qwen2.5-0.5B-Instruct · qpack q4', url: 'https://huggingface.co/q-project/Qwen2.5-0.5B-Instruct-qpack/resolve/main/qwen2.5-0.5b-instruct.trim80k.q4.qpack', v: 'qwen05-trim80k-q4-1', mb: 269,
+      worker: 'llama_worker.js', blog: '../blog-qpack.html', size: ['Qwen2.5 0.5B (Alibaba), 4 бита', 'Qwen2.5 0.5B (Alibaba), 4-bit', 'Qwen2.5 0.5B（阿里巴巴），4 比特'] },
   };
   let modelKey = 'nq26m';
   try { const k = localStorage.getItem('nq-chat-model'); if (MODELS[k]) modelKey = k; } catch (e) {}
@@ -123,10 +125,10 @@
     ready = false; busy = false; live = null; lastAnswered = null;
     applyModelUi(); $('loading').hidden = false; $('empty').hidden = true; $('loadBar').style.width = '0%'; $('loadText').textContent = 'Downloading the model…';
     $('modelMeta').textContent = '…'; setStatus('loading'); updateSend();
-    worker = new Worker(`../nq-runtime/nq_worker.js?v=${V}`);
-    worker.onmessage = onWorker;
     const M = MODELS[modelKey];
-    worker.postMessage({ type: 'load', url: new URL(`${M.url}${M.url.includes('?') ? '&' : '?'}v=${M.v}`, location.href).href, version: M.v });   // absolute: the worker resolves URLs from /nq-runtime/
+    worker = new Worker(`../nq-runtime/${M.worker || 'nq_worker.js'}?v=${V}`);
+    worker.onmessage = onWorker;
+    worker.postMessage({ type: 'load', url: new URL(`${M.url}${M.url.includes('?') ? '&' : '?'}v=${M.v}`, location.href).href, version: M.v, size: M.mb * 1e6 });   // absolute: the worker resolves URLs from /nq-runtime/
   }
   function onWorker(ev) {
     const m = ev.data;

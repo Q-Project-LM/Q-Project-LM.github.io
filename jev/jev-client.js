@@ -3,7 +3,7 @@
 // a promise queue over {type:'decide'} messages, a status pill and small helpers (language, escaping).
 (function () {
   const SRC = document.currentScript.src;
-  const V = 'nq26m-10', MODEL_V = 'jev-1110';
+  const V = 'nq26m-11', MODEL_V = 'jev-1110';
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const lang = () => { const l = (document.documentElement.getAttribute('lang') || 'en').slice(0, 2); return ['ru', 'en', 'zh'].includes(l) ? l : 'en'; };
   // trilingual inline text: every language is rendered, main.js shows the active one
