@@ -5,8 +5,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
-  <title>Chat with N-Q-26M — Q Project</title>
-  <meta name="description" content="Chat with N-Q-26M, a 26M-class Russian/English model trained from scratch on one V100 (Gated DeltaNet + gated attention, exact tool calls), running entirely in your browser — no server, no Python." />
+  <title>Chat with N-Q — Q Project</title>
+  <meta name="description" content="Chat with N-Q-26M or N-Q-164M, small Russian/English model trained from scratch on one V100 (Gated DeltaNet + gated attention, exact tool calls), running entirely in your browser — no server, no Python." />
   <link rel="icon" type="image/svg+xml" href="../assets/q-logo.svg" />
   <script>
     (function () { try { document.documentElement.setAttribute("data-theme", localStorage.getItem("q-theme") || "light"); } catch (e) {} })();
@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../styles.css" />
-  <link rel="stylesheet" href="chat.css?v=nq26m-9" />
+  <link rel="stylesheet" href="chat.css?v=nq-10" />
 </head>
 <body class="chat-page">
   {% include header.html base="../" active="chat" %}
@@ -28,12 +28,12 @@
       </button>
       <div class="side__list" id="convList"></div>
       <div class="side__model">
-        <div class="side__model-name"><img src="../assets/q-logo.svg" alt="" width="20" height="20" /> N-Q-26M-Chat</div>
+        <div class="side__model-name"><img src="../assets/q-logo.svg" alt="" width="20" height="20" /> <span id="modelName">N-Q-26M-Chat</span></div>
         <div class="side__model-meta" id="modelMeta">
           <span data-lang="ru">загрузка…</span><span data-lang="en">loading…</span><span data-lang="zh">加载中…</span>
         </div>
         <div class="side__links">
-          <a href="../blog-nq26m.html"><span data-lang="ru">О модели</span><span data-lang="en">About</span><span data-lang="zh">关于模型</span></a>
+          <a href="../blog-nq26m.html" id="aboutLink"><span data-lang="ru">О модели</span><span data-lang="en">About</span><span data-lang="zh">关于模型</span></a>
           <a href="../chat_exp/"><span data-lang="ru">Чат + JEV (эксперимент)</span><span data-lang="en">Chat + JEV (experiment)</span><span data-lang="zh">聊天 + JEV（实验）</span></a>
           <a href="../jev/">JEV</a>
           <a href="../chat-q-u-164m/">Q-U-164M</a>
@@ -47,7 +47,14 @@
         <button class="icon-btn topbar__menu" id="menuBtn" type="button" aria-label="Conversations">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
-        <div class="topbar__title">N-Q-26M-Chat <span class="pill" id="statusPill"><span class="pill__dot"></span><span id="statusText">loading</span></span></div>
+        <div class="topbar__title">
+          <label class="model-pick"><span class="sr-only">Model</span>
+            <select id="modelSel" aria-label="Model">
+              <option value="nq26m">N-Q-26M-Chat · 47 MB</option>
+              <option value="nq164m">N-Q-164M-Chat · 230 MB</option>
+            </select>
+          </label>
+          <span class="pill" id="statusPill"><span class="pill__dot"></span><span id="statusText">loading</span></span></div>
         <button class="icon-btn" id="settingsBtn" type="button" aria-label="Settings" aria-expanded="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
         </button>
@@ -72,11 +79,11 @@
           <img src="../assets/q-logo.svg" alt="" width="44" height="44" />
           <div class="loading__text" id="loadText">Downloading the model…</div>
           <div class="bar"><div class="bar__fill" id="loadBar"></div></div>
-          <div class="loading__hint"><span data-lang="ru">47 МБ, один раз — дальше модель берётся из кеша браузера.</span><span data-lang="en">47 MB, once — after that the model loads from the browser cache.</span><span data-lang="zh">47 MB，只需下载一次 —— 之后从浏览器缓存加载。</span></div>
+          <div class="loading__hint" id="loadHint"><span data-lang="ru">47 МБ, один раз — дальше модель берётся из кеша браузера.</span><span data-lang="en">47 MB, once — after that the model loads from the browser cache.</span><span data-lang="zh">47 MB，只需下载一次 —— 之后从浏览器缓存加载。</span></div>
         </div>
         <div class="empty" id="empty" hidden>
           <img src="../assets/q-logo.svg" alt="" width="52" height="52" />
-          <h1>N-Q-26M-Chat</h1>
+          <h1 id="emptyTitle">N-Q-26M-Chat</h1>
           <p><span data-lang="ru">Маленькая русско-английская модель, обученная с нуля на одной V100. Работает прямо в этой вкладке. Точные вычисления делает исполнитель — их видно как отдельные плашки.</span><span data-lang="en">A small Russian/English model trained from scratch on one V100, running right in this tab. Exact computation is done by an executor — you'll see it as separate chips.</span><span data-lang="zh">一个在单张 V100 上从零训练的小型俄英双语模型，直接在这个标签页里运行。精确计算由执行器完成 —— 会以单独的标签显示。</span></p>
           <div class="suggest" id="suggest"></div>
         </div>
@@ -84,17 +91,17 @@
       </div>
 
       <form class="composer" id="composer">
-        <textarea id="input" rows="1" placeholder="Message N-Q-26M…" aria-label="Message"></textarea>
+        <textarea id="input" rows="1" placeholder="Message N-Q…" aria-label="Message"></textarea>
         <button class="send" id="send" type="submit" disabled aria-label="Send">
           <svg class="send__go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           <svg class="send__stop" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
         </button>
       </form>
-      <p class="disclaimer"><span data-lang="ru">26M параметров: часто путает факты и зацикливается. Работает локально, ничего не отправляется на сервер.</span><span data-lang="en">26M parameters: often gets facts wrong and loops. Runs locally — nothing is sent to a server.</span><span data-lang="zh">26M 参数：经常弄错事实、陷入重复。在本地运行 —— 不会向服务器发送任何内容。</span></p>
+      <p class="disclaimer" id="disclaimer"><span data-lang="ru">26M параметров: часто путает факты и зацикливается. Работает локально, ничего не отправляется на сервер.</span><span data-lang="en">26M parameters: often gets facts wrong and loops. Runs locally — nothing is sent to a server.</span><span data-lang="zh">26M 参数：经常弄错事实、陷入重复。在本地运行 —— 不会向服务器发送任何内容。</span></p>
     </main>
   </div>
 
   <script src="../main.js"></script>
-  <script src="chat.js?v=nq26m-9"></script>
+  <script src="chat.js?v=nq-10"></script>
 </body>
 </html>

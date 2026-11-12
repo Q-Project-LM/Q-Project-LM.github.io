@@ -3,7 +3,15 @@
 // A conversation: {id, title, updated, messages: [{role:'user', content} | {role:'assistant', raw, segs:[{kind, text}], tools:[...], meta}]}
 // `raw` is the assistant turn with its control tokens (<THINK>, <CALC>…) — that is what the model re-reads.
 (function () {
-  const V = 'nq26m-9', MODEL_V = 'nq26m-q8-1';   // code version / weights version (bumping MODEL_V forces a re-download)
+  const V = 'nq-10';   // code version
+  // selectable models: the small one is served by the site, the 164M one (230 MB, over GitHub's file limit) from Hugging Face
+  const MODELS = {
+    nq26m: { name: 'N-Q-26M-Chat', url: 'model.q8.qpack', v: 'nq26m-q8-1', mb: 47, blog: '../blog-nq26m.html', size: ['26M параметров', '26M parameters', '26M 参数'] },
+    nq164m: { name: 'N-Q-164M-Chat', url: 'https://huggingface.co/q-project/N-Q-164M-Chat/resolve/main/model.q8.qpack', v: 'nq164m-q8-1', mb: 230, blog: '../blog-nq164m.html', size: ['164M параметров', '164M parameters', '164M 参数'] },
+  };
+  let modelKey = 'nq26m';
+  try { const k = localStorage.getItem('nq-chat-model'); if (MODELS[k]) modelKey = k; } catch (e) {}
+  try { const k = new URLSearchParams(location.search).get('model'); if (MODELS[k]) modelKey = k; } catch (e) {}
   const $ = (id) => document.getElementById(id);
   const lang = () => (document.documentElement.lang || 'en').slice(0, 2);
   // a trilingual label that follows the site's language switch (main.js toggles .is-active on [data-lang])
@@ -102,9 +110,25 @@
   function scrollDown(force) { const t = $('thread'); if (force || t.scrollHeight - t.scrollTop - t.clientHeight < 160) t.scrollTop = t.scrollHeight; }
 
   // ---------------------------------------------------------------- worker
-  const worker = new Worker(`../nq-runtime/nq_worker.js?v=${V}`);
-  let ready = false, busy = false, live = null, lastAnswered = null, lastMemory = true;
-  worker.onmessage = (ev) => {
+  let worker = null, ready = false, busy = false, live = null, lastAnswered = null, lastMemory = true;
+  function applyModelUi() {
+    const M = MODELS[modelKey], [sru, sen, szh] = M.size;
+    $('modelSel').value = modelKey; $('modelName').textContent = M.name; $('emptyTitle').textContent = M.name; $('aboutLink').href = M.blog;
+    $('loadHint').innerHTML = L(`${M.mb} МБ, один раз — дальше модель берётся из кеша браузера.`, `${M.mb} MB, once — after that the model loads from the browser cache.`, `${M.mb} MB，只需下载一次 —— 之后从浏览器缓存加载。`);
+    $('disclaimer').innerHTML = L(`${sru}: часто путает факты. Работает локально, ничего не отправляется на сервер.`, `${sen}: often gets facts wrong. Runs locally — nothing is sent to a server.`, `${szh}：经常弄错事实。在本地运行 —— 不会向服务器发送任何内容。`);
+    document.title = `Chat with ${M.name} — Q Project`;
+  }
+  function startWorker() {
+    if (worker) worker.terminate();
+    ready = false; busy = false; live = null; lastAnswered = null;
+    applyModelUi(); $('loading').hidden = false; $('empty').hidden = true; $('loadBar').style.width = '0%'; $('loadText').textContent = 'Downloading the model…';
+    $('modelMeta').textContent = '…'; setStatus('loading'); updateSend();
+    worker = new Worker(`../nq-runtime/nq_worker.js?v=${V}`);
+    worker.onmessage = onWorker;
+    const M = MODELS[modelKey];
+    worker.postMessage({ type: 'load', url: new URL(`${M.url}${M.url.includes('?') ? '&' : '?'}v=${M.v}`, location.href).href, version: M.v });   // absolute: the worker resolves URLs from /nq-runtime/
+  }
+  function onWorker(ev) {
     const m = ev.data;
     if (m.type === 'progress') {
       if (m.cached) { $('loadText').textContent = 'Loading from browser cache…'; $('loadBar').style.width = '100%'; }
@@ -132,8 +156,7 @@
       else if (live) { live.note = 'error: ' + esc(m.message); finishLive(); }
       setStatus(ready ? 'ready' : 'error');
     }
-  };
-  worker.postMessage({ type: 'load', url: new URL(`model.q8.qpack?v=${MODEL_V}`, location.href).href, version: MODEL_V });   // absolute: the worker resolves URLs from /nq-runtime/
+  }
 
   function setStatus(s) {
     const p = $('statusPill'); p.classList.toggle('is-ready', s === 'ready'); p.classList.toggle('is-busy', s === 'busy');
@@ -202,5 +225,11 @@
   for (const [q, ru, en] of SUGGEST) {
     const b = document.createElement('button'); b.type = 'button'; b.innerHTML = `${esc(q)}<small>${L(ru, en, en)}</small>`; b.onclick = () => send(q); $('suggest').appendChild(b);
   }
-  loadConvs(); newConv(); renderList();
+  $('modelSel').addEventListener('change', () => {
+    const k = $('modelSel').value; if (!MODELS[k] || k === modelKey) return;
+    if (busy) { $('modelSel').value = modelKey; return; }
+    modelKey = k; try { localStorage.setItem('nq-chat-model', k); } catch (e) {}
+    $('msgs').innerHTML = ''; newConv(); startWorker();
+  });
+  loadConvs(); newConv(); renderList(); startWorker();
 })();

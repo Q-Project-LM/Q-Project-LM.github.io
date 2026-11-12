@@ -94,12 +94,71 @@
       </div>
 
       <div class="models__grid">
-        <article class="model model--live model--featured" aria-label="N-Q-26M">
+        <article class="model model--live model--featured" aria-label="N-Q-164M">
           <div class="model__status">
             <span class="dot dot--pulse" aria-hidden="true"></span>
             <span data-lang="ru">Новинка &middot; Apache 2.0</span>
             <span data-lang="en">New &middot; Apache 2.0</span>
             <span data-lang="zh">新发布 &middot; Apache 2.0</span>
+          </div>
+          <h3 class="model__name">N-Q-164M</h3>
+          <p class="model__desc" data-lang="ru">
+            Вторая ступень линейки N-Q: та же архитектура, что у 26M, в 6 раз больше параметров и 8 млрд токенов.
+            Обучена с нуля на одной V100. Чат-версия прошла SFT, рассуждения, DPO, GRPO и агентный RL
+            и решает школьные задачи в 4 раза лучше 26M.
+          </p>
+          <p class="model__desc" data-lang="en">
+            The second rung of the N-Q ladder: the 26M architecture with 6× the parameters and 8B tokens,
+            trained from scratch on one V100. The chat version went through SFT, reasoning, DPO, GRPO and
+            agentic RL and solves grade-school math 4× better than 26M.
+          </p>
+          <p class="model__desc" data-lang="zh">
+            N-Q 系列第二级：与 26M 相同的架构，参数多 6 倍，80 亿词元，在一张 V100 上从零训练。
+            聊天版本经过 SFT、推理、DPO、GRPO 和智能体 RL，小学数学题表现是 26M 的 4 倍。
+          </p>
+
+          <dl class="spec" data-lang="ru">
+            <div><dt>Параметры</dt><dd>166.8M + 58.7M n-грамм</dd></div>
+            <div><dt>Токенов претрейна</dt><dd>8B</dd></div>
+            <div><dt>GSM8K EN / RU</dt><dd>7.2% / 6.2%</dd></div>
+            <div><dt>Инструменты</dt><dd>16/16</dd></div>
+          </dl>
+          <dl class="spec" data-lang="en">
+            <div><dt>Parameters</dt><dd>166.8M + 58.7M n-gram</dd></div>
+            <div><dt>Pretrain tokens</dt><dd>8B</dd></div>
+            <div><dt>GSM8K EN / RU</dt><dd>7.2% / 6.2%</dd></div>
+            <div><dt>Tool calls</dt><dd>16/16</dd></div>
+          </dl>
+          <dl class="spec" data-lang="zh">
+            <div><dt>参数量</dt><dd>166.8M + 58.7M n-gram</dd></div>
+            <div><dt>预训练词元数</dt><dd>80 亿</dd></div>
+            <div><dt>GSM8K 英/俄</dt><dd>7.2% / 6.2%</dd></div>
+            <div><dt>工具调用</dt><dd>16/16</dd></div>
+          </dl>
+
+          <div class="model__foot" data-lang="ru">
+            <a class="btn btn--solid btn--sm" href="https://huggingface.co/q-project/N-Q-164M-Chat" target="_blank" rel="noopener">Чат-модель</a>
+            <a href="https://huggingface.co/q-project/N-Q-164M" target="_blank" rel="noopener" style="color:var(--muted); font-size:0.85rem;">База &middot;</a>
+            <a href="blog-nq164m.html" style="color:var(--muted); font-size:0.85rem;">Читать разбор &rarr;</a>
+          </div>
+          <div class="model__foot" data-lang="en">
+            <a class="btn btn--solid btn--sm" href="https://huggingface.co/q-project/N-Q-164M-Chat" target="_blank" rel="noopener">Chat model</a>
+            <a href="https://huggingface.co/q-project/N-Q-164M" target="_blank" rel="noopener" style="color:var(--muted); font-size:0.85rem;">Base &middot;</a>
+            <a href="blog-nq164m.html" style="color:var(--muted); font-size:0.85rem;">Read the writeup &rarr;</a>
+          </div>
+          <div class="model__foot" data-lang="zh">
+            <a class="btn btn--solid btn--sm" href="https://huggingface.co/q-project/N-Q-164M-Chat" target="_blank" rel="noopener">聊天模型</a>
+            <a href="https://huggingface.co/q-project/N-Q-164M" target="_blank" rel="noopener" style="color:var(--muted); font-size:0.85rem;">基座 &middot;</a>
+            <a href="blog-nq164m.html" style="color:var(--muted); font-size:0.85rem;">阅读详细介绍 &rarr;</a>
+          </div>
+        </article>
+
+        <article class="model model--live" aria-label="N-Q-26M">
+          <div class="model__status">
+            <span class="dot" aria-hidden="true"></span>
+            <span data-lang="ru">Уже доступна &middot; Apache 2.0</span>
+            <span data-lang="en">Available now &middot; Apache 2.0</span>
+            <span data-lang="zh">已发布 &middot; Apache 2.0</span>
           </div>
           <h3 class="model__name">N-Q-26M</h3>
           <p class="model__desc" data-lang="ru">

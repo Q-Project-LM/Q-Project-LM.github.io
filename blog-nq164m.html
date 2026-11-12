@@ -1,0 +1,206 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>N-Q-164M: the second rung of the N-Q ladder — Q Project</title>
+  <meta name="description" content="N-Q-164M and N-Q-164M-Chat: 164M Russian/English models trained from scratch on one V100, 8B tokens, 16/16 tool calls, GSM8K 7.2% vs 2.0% for N-Q-26M. Apache 2.0." />
+  <link rel="icon" type="image/svg+xml" href="assets/q-logo.svg" />
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("q-theme") || "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Release-page additions on top of the shared article styles */
+    .model-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 28px 0 8px; }
+    @media (max-width: 720px) { .model-pair { grid-template-columns: 1fr; } }
+    .model-pair .model { display: flex; flex-direction: column; gap: 10px; }
+    .model-pair .model__logo { width: 40px; height: 40px; margin-bottom: 2px; }
+    .model-pair .model__name { font-size: 1.2rem; }
+    .model-pair .model__desc { color: var(--muted); font-size: 0.92rem; margin: 0; }
+    .model-pair .model__foot { margin-top: auto; padding-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s cubic-bezier(0.2,0.7,0.2,1), transform 0.6s cubic-bezier(0.2,0.7,0.2,1); }
+    .reveal.is-in { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+    .stat-num { display: inline-block; font-variant-numeric: tabular-nums; }
+
+    .qbench-table-wrap { overflow-x: auto; margin-top: 18px; }
+    .qbench-table-wrap .doc-table td.best { color: var(--brand); font-weight: 600; }
+    .qbench-table-wrap .doc-table tr.us td { background: var(--surface-2); }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#intro"><span data-lang="ru">Перейти к статье</span><span data-lang="en">Skip to article</span><span data-lang="zh">跳到正文</span></a>
+
+  {% include header.html active="blog" %}
+
+  <article class="article" id="intro">
+
+  <div data-lang="ru">
+    <p class="article__kicker">РЕЛИЗ &middot; ЛИНЕЙКА N-Q</p>
+    <h1 class="article__title">N-Q-164M: вторая ступень линейки, в 6 раз больше и в 4 раза умнее в математике</h1>
+    <p class="article__lede">Базовая и чат-модель на 164M параметров. Обучены с нуля на одной V100 по тому же рецепту, что и N-Q-26M, и открыты под Apache 2.0.</p>
+    <div class="article__stats reveal">
+      <div><b>8B</b><span>токенов претрейна</span></div><div><b>16/16</b><span>вызовов инструментов</span></div>
+      <div><b>7.2%</b><span>GSM8K EN (у 26M 2.0%)</span></div><div><b>6.6</b><span>перплексия RU Wiki (у 26M 10.2)</span></div>
+    </div>
+    <div class="article__body">
+      <div class="model-pair">
+        <div class="model"><h3 class="model__name">N-Q-164M</h3><p class="model__desc">Базовая модель: продолжает текст. 166.8M параметров + 58.7M n-грамм, 8 млрд токенов.</p><div class="model__foot"><a class="btn btn--sm" href="https://huggingface.co/q-project/N-Q-164M" target="_blank" rel="noopener">Hugging Face</a></div></div>
+        <div class="model"><h3 class="model__name">N-Q-164M-Chat</h3><p class="model__desc">Чат-модель после SFT, рассуждений, DPO, GRPO и агентного RL. Точные вычисления через встроенный исполнитель.</p><div class="model__foot"><a class="btn btn--solid btn--sm" href="https://huggingface.co/q-project/N-Q-164M-Chat" target="_blank" rel="noopener">Hugging Face</a></div></div>
+      </div>
+      <h2>Что это</h2>
+      <p>Та же архитектура, что победила в абляции на 26M: Gated DeltaNet и обычное внимание в пропорции 3:1, Gated Residual на 4 потока и хэшированные n-граммы. Здесь всё больше: 16 слоёв вместо 8, ширина 896 вместо 512 и в 4 раза больше данных. Токенизатор общий с 26M, поэтому перплексии можно сравнивать напрямую.</p>
+      <h2>База: насколько лучше 26M</h2>
+      <div class="qbench-table-wrap"><table class="doc-table"><thead><tr><th>Отложенный текст, перплексия</th><th>N-Q-26M</th><th><b>N-Q-164M</b></th></tr></thead><tbody><tr><td>FineWeb-Edu (EN)</td><td>10.8</td><td><b>7.4</b></td></tr><tr><td>Cultura-Ru-Edu (RU)</td><td>14.2</td><td><b>9.3</b></td></tr><tr><td>Русская Википедия</td><td>10.2</td><td><b>6.6</b></td></tr></tbody></table></div>
+      <h2>Чат: каждая стадия на счету</h2>
+      <p>На 26M обучение с подкреплением почти ничего не давало, и мы выложили DPO-чекпоинт. На 164M каждая стадия добавляла понемногу, поэтому выложен последний чекпоинт.</p>
+      <div class="qbench-table-wrap"><table class="doc-table"><thead><tr><th>Чекпоинт</th><th>Инструменты (16 задач)</th><th>GSM8K EN</th><th>GSM8K RU</th></tr></thead><tbody>
+        <tr><td>N-Q-26M-Chat</td><td>15/16</td><td>2.0%</td><td>2.2%</td></tr>
+        <tr><td>164M, рассуждения</td><td>16/16</td><td>5.0%</td><td>3.4%</td></tr>
+        <tr><td>164M, DPO</td><td>16/16</td><td>5.6%</td><td>3.0%</td></tr>
+        <tr><td>164M, GRPO</td><td>16/16</td><td>6.8%</td><td>5.8%</td></tr>
+        <tr class="us"><td><b>N-Q-164M-Chat</b> (агентный RL)</td><td class="best">16/16</td><td class="best">7.2%</td><td class="best">6.2%</td></tr>
+      </tbody></table></div>
+      <p>Пример: «Товар стоит 1250 рублей, скидка 15%. Сколько платить?» Модель сама пишет два вызова, <code>1250*15/100</code> и <code>1250-187.5</code>, и отвечает: «Скидка 187.5 руб., итоговая цена 1062.5 руб.». Числа считает исполнитель, а модель решает, что считать.</p>
+      <h2>Честно о слабых местах</h2>
+      <p>7% на GSM8K — это всё ещё мало: модель правильно вызывает калькулятор, но многошаговые задачи не планирует. В фактах путается в деталях. Например, про фотосинтез пишет верно в целом, но говорит «выделяет кислород (CO2)». Стихи получаются складными, но без смысла. Агентные эпизоды из нескольких ходов модель так и не научилась доводить до верного ответа: прирост дал лучший вызов инструментов за один ход.</p>
+      <h2>Как обучали</h2>
+      <p>Всё на одной V100 16 ГБ. Претрейн на 8 млрд токенов занял около 117 часов. После него SFT 2.8 ч, рассуждения 0.9 ч, DPO 4.5 ч, GRPO 2 ч и агентный RL 3.2 ч. По пути претрейн однажды убили извне, и мы добавили супервизор с автоперезапуском. DPO в первый раз не влез в память, пришлось перейти на одну пару за шаг.</p>
+      <p>Дальше по линейке: N-Q-64M и MoE уже обучаются.</p>
+    </div>
+  </div>
+
+  <div data-lang="en">
+    <p class="article__kicker">RELEASE &middot; THE N-Q LADDER</p>
+    <h1 class="article__title">N-Q-164M: the second rung, 6× larger and 4× better at math</h1>
+    <p class="article__lede">A 164M base model and chat model, trained from scratch on one V100 with the same recipe as N-Q-26M, open under Apache 2.0.</p>
+    <div class="article__stats reveal">
+      <div><b>8B</b><span>pretraining tokens</span></div><div><b>16/16</b><span>tool calls</span></div>
+      <div><b>7.2%</b><span>GSM8K EN (26M: 2.0%)</span></div><div><b>6.6</b><span>RU Wiki perplexity (26M: 10.2)</span></div>
+    </div>
+    <div class="article__body">
+      <div class="model-pair">
+        <div class="model"><h3 class="model__name">N-Q-164M</h3><p class="model__desc">Base model: text continuation. 166.8M parameters + 58.7M n-gram, 8B tokens.</p><div class="model__foot"><a class="btn btn--sm" href="https://huggingface.co/q-project/N-Q-164M" target="_blank" rel="noopener">Hugging Face</a></div></div>
+        <div class="model"><h3 class="model__name">N-Q-164M-Chat</h3><p class="model__desc">Chat model after SFT, reasoning, DPO, GRPO and agentic RL. Exact computation through the built-in executor.</p><div class="model__foot"><a class="btn btn--solid btn--sm" href="https://huggingface.co/q-project/N-Q-164M-Chat" target="_blank" rel="noopener">Hugging Face</a></div></div>
+      </div>
+      <h2>What it is</h2>
+      <p>The architecture that won the 26M ablation, scaled up: Gated DeltaNet and gated attention 3:1, a 4-stream Gated Residual and hashed n-grams. 16 layers instead of 8, width 896 instead of 512, 4× the data. The tokenizer is shared with 26M, so the perplexities compare directly.</p>
+      <h2>Base model vs 26M</h2>
+      <div class="qbench-table-wrap"><table class="doc-table"><thead><tr><th>Held-out perplexity</th><th>N-Q-26M</th><th><b>N-Q-164M</b></th></tr></thead><tbody><tr><td>FineWeb-Edu (EN)</td><td>10.8</td><td><b>7.4</b></td></tr><tr><td>Cultura-Ru-Edu (RU)</td><td>14.2</td><td><b>9.3</b></td></tr><tr><td>Russian Wikipedia</td><td>10.2</td><td><b>6.6</b></td></tr></tbody></table></div>
+      <h2>Chat: every stage counts</h2>
+      <p>At 26M, RL did almost nothing and we released the DPO checkpoint. At 164M every stage added a little, so the release is the last checkpoint.</p>
+      <div class="qbench-table-wrap"><table class="doc-table"><thead><tr><th>Checkpoint</th><th>Tools (16 tasks)</th><th>GSM8K EN</th><th>GSM8K RU</th></tr></thead><tbody>
+        <tr><td>N-Q-26M-Chat</td><td>15/16</td><td>2.0%</td><td>2.2%</td></tr>
+        <tr><td>164M, reasoning</td><td>16/16</td><td>5.0%</td><td>3.4%</td></tr>
+        <tr><td>164M, DPO</td><td>16/16</td><td>5.6%</td><td>3.0%</td></tr>
+        <tr><td>164M, GRPO</td><td>16/16</td><td>6.8%</td><td>5.8%</td></tr>
+        <tr class="us"><td><b>N-Q-164M-Chat</b> (agentic RL)</td><td class="best">16/16</td><td class="best">7.2%</td><td class="best">6.2%</td></tr>
+      </tbody></table></div>
+      <p>Example: "An item costs 1250 roubles with a 15% discount. How much to pay?" The model writes two calls, <code>1250*15/100</code> and <code>1250-187.5</code>, and answers "discount 187.5, final price 1062.5". The executor does the arithmetic; the model decides what to compute.</p>
+      <h2>Honest weak spots</h2>
+      <p>7% on GSM8K is still low: the model calls the calculator correctly but does not plan multi-step problems. Facts go wrong in the details (photosynthesis "releases oxygen (CO2)"); poems are fluent and meaningless. Multi-turn agentic episodes stayed near zero; the gain comes from better single-turn tool use.</p>
+      <h2>Training</h2>
+      <p>One V100 16GB: pretraining on 8B tokens ≈117 h, then SFT 2.8 h, reasoning 0.9 h, DPO 4.5 h, GRPO 2 h, agentic RL 3.2 h. Along the way pretraining was killed from outside once (we added a supervisor with auto-restart), and DPO first ran out of memory (now one pair per micro-batch).</p>
+      <p>Next on the ladder: N-Q-64M and the MoE are training.</p>
+    </div>
+  </div>
+
+  <div data-lang="zh">
+    <p class="article__kicker">发布 &middot; N-Q 系列</p>
+    <h1 class="article__title">N-Q-164M：系列第二级，规模大 6 倍，数学强 4 倍</h1>
+    <p class="article__lede">164M 基座模型与聊天模型，在一张 V100 上按与 N-Q-26M 相同的流程从零训练，以 Apache 2.0 开源。</p>
+    <div class="article__stats reveal">
+      <div><b>8B</b><span>预训练词元</span></div><div><b>16/16</b><span>工具调用</span></div>
+      <div><b>7.2%</b><span>GSM8K 英语（26M：2.0%）</span></div><div><b>6.6</b><span>俄语维基困惑度（26M：10.2）</span></div>
+    </div>
+    <div class="article__body">
+      <div class="model-pair">
+        <div class="model"><h3 class="model__name">N-Q-164M</h3><p class="model__desc">基座模型：166.8M 参数 + 58.7M n-gram，80 亿词元。</p><div class="model__foot"><a class="btn btn--sm" href="https://huggingface.co/q-project/N-Q-164M" target="_blank" rel="noopener">Hugging Face</a></div></div>
+        <div class="model"><h3 class="model__name">N-Q-164M-Chat</h3><p class="model__desc">经过 SFT、推理、DPO、GRPO 和智能体 RL 的聊天模型，通过内置执行器精确计算。</p><div class="model__foot"><a class="btn btn--solid btn--sm" href="https://huggingface.co/q-project/N-Q-164M-Chat" target="_blank" rel="noopener">Hugging Face</a></div></div>
+      </div>
+      <h2>结果</h2>
+      <div class="qbench-table-wrap"><table class="doc-table"><thead><tr><th>检查点</th><th>工具（16 题）</th><th>GSM8K 英语</th><th>GSM8K 俄语</th></tr></thead><tbody>
+        <tr><td>N-Q-26M-Chat</td><td>15/16</td><td>2.0%</td><td>2.2%</td></tr>
+        <tr class="us"><td><b>N-Q-164M-Chat</b></td><td class="best">16/16</td><td class="best">7.2%</td><td class="best">6.2%</td></tr>
+      </tbody></table></div>
+      <p>留出困惑度（26M → 164M）：FineWeb-Edu 10.8 → 7.4，Cultura-Ru-Edu 14.2 → 9.3，俄语维基 10.2 → 6.6。</p>
+      <h2>不足</h2>
+      <p>多步数学题仍然很弱（约 7%），事实细节常出错，多轮智能体任务几乎没有学会。</p>
+      <h2>训练</h2>
+      <p>一张 V100 16GB：预训练约 117 小时，之后 SFT 2.8 小时、推理 0.9 小时、DPO 4.5 小时、GRPO 2 小时、智能体 RL 3.2 小时。</p>
+    </div>
+  </div>
+
+  </article>
+
+  <footer class="footer">
+    <div class="footer__brand">
+      <img src="assets/q-logo.svg" alt="" width="28" height="28" />
+      <span>Q Project</span>
+    </div>
+    <p class="footer__tag">
+      <span data-lang="ru">Претрейн &middot; Файнтюн &middot; Агенты &middot; Исследования</span>
+      <span data-lang="en">Pretrain &middot; Finetune &middot; Agents &middot; Research</span>
+      <span data-lang="zh">预训练 &middot; 微调 &middot; 智能体 &middot; 研究</span>
+    </p>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="index.html"><span data-lang="ru">Главная</span><span data-lang="en">Home</span><span data-lang="zh">首页</span></a>
+      <a href="blog.html"><span data-lang="ru">Блог</span><span data-lang="en">Blog</span><span data-lang="zh">博客</span></a>
+      <a href="https://huggingface.co/q-project" target="_blank" rel="noopener">Hugging Face</a>
+      <a href="https://github.com/Q-Project-LM" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <p class="footer__copy">
+      <span data-lang="ru">&copy; <span class="year"></span> Q Project. Разрабатывается независимо.</span>
+      <span data-lang="en">&copy; <span class="year"></span> Q Project. Built independently.</span>
+      <span data-lang="zh">&copy; <span class="year"></span> Q Project。独立开发。</span>
+    </p>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    (function () {
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var els = document.querySelectorAll(".reveal");
+      if (!("IntersectionObserver" in window) || reduce) {
+        els.forEach(function (el) { el.classList.add("is-in"); });
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          en.target.classList.add("is-in");
+          io.unobserve(en.target);
+          en.target.querySelectorAll(".stat-num[data-count]").forEach(function (num) {
+            var target = parseFloat(num.getAttribute("data-count"));
+            var suffix = num.getAttribute("data-suffix") || "";
+            var start = performance.now(), dur = 900;
+            function frame(t) {
+              var p = Math.min(1, (t - start) / dur);
+              var eased = 1 - Math.pow(1 - p, 3);
+              num.textContent = (target * eased).toFixed(target % 1 ? 1 : 0) + suffix;
+              if (p < 1) requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+          });
+        });
+      }, { threshold: 0.25 });
+      els.forEach(function (el) { io.observe(el); });
+    })();
+  </script>
+</body>
+</html>
