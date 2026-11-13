@@ -3,13 +3,15 @@
 // A conversation: {id, title, updated, messages: [{role:'user', content} | {role:'assistant', raw, segs:[{kind, text}], tools:[...], meta}]}
 // `raw` is the assistant turn with its control tokens (<THINK>, <CALC>…) — that is what the model re-reads.
 (function () {
-  const V = 'nq-11';   // code version
+  const V = 'nq-12';   // code version
   // selectable models: the small one is served by the site, the 164M one (230 MB, over GitHub's file limit) from Hugging Face
   const MODELS = {
     nq26m: { name: 'N-Q-26M-Chat', url: 'model.q8.qpack', v: 'nq26m-q8-1', mb: 47, blog: '../blog-nq26m.html', size: ['26M параметров', '26M parameters', '26M 参数'] },
     nq164m: { name: 'N-Q-164M-Chat', url: 'https://huggingface.co/q-project/N-Q-164M-Chat/resolve/main/model.q8.qpack', v: 'nq164m-q8-1', mb: 230, blog: '../blog-nq164m.html', size: ['164M параметров', '164M parameters', '164M 参数'] },
     qwen05: { name: 'Qwen2.5-0.5B-Instruct · qpack q4', url: 'https://huggingface.co/q-project/Qwen2.5-0.5B-Instruct-qpack/resolve/main/qwen2.5-0.5b-instruct.trim80k.q4.qpack', v: 'qwen05-trim80k-q4-1', mb: 269,
       worker: 'llama_worker.js', blog: '../blog-qpack.html', size: ['Qwen2.5 0.5B (Alibaba), 4 бита', 'Qwen2.5 0.5B (Alibaba), 4-bit', 'Qwen2.5 0.5B（阿里巴巴），4 比特'] },
+    gptoss: { name: 'gpt-oss-20b · qpack q1', url: 'https://huggingface.co/q-project/gpt-oss-20b-qpack-q1/resolve/main/gptoss-20b.c7-mixed.qpack', v: 'gptoss-c7-1', mb: 8209,
+      worker: 'gptoss_worker.js', gate: true, blog: '../blog-qpack.html', size: ['gpt-oss-20b (OpenAI), 1-битные эксперты, WebGPU', 'gpt-oss-20b (OpenAI), 1-bit experts, WebGPU', 'gpt-oss-20b（OpenAI），1 比特专家，WebGPU'] },
   };
   let modelKey = 'nq26m';
   try { const k = localStorage.getItem('nq-chat-model'); if (MODELS[k]) modelKey = k; } catch (e) {}
@@ -120,8 +122,44 @@
     $('disclaimer').innerHTML = L(`${sru}: часто путает факты. Работает локально, ничего не отправляется на сервер.`, `${sen}: often gets facts wrong. Runs locally — nothing is sent to a server.`, `${szh}：经常弄错事实。在本地运行 —— 不会向服务器发送任何内容。`);
     document.title = `Chat with ${M.name} — Q Project`;
   }
-  function startWorker() {
-    if (worker) worker.terminate();
+  // big models: check WebGPU / limits / storage first and download only after an explicit click
+  async function gateCheck() {
+    const items = []; let ok = true;
+    const add = (good, ru, en) => { items.push([good, L(ru, en, en)]); if (good === false) ok = false; };
+    let ad = null;
+    try { ad = navigator.gpu ? await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' }) : null; } catch (e) { ad = null; }
+    if (!navigator.gpu) add(false, 'WebGPU недоступен в этом браузере (нужен Chrome / Edge 113+ на компьютере)', 'WebGPU is not available in this browser (Chrome / Edge 113+ on a desktop)');
+    else if (!ad) add(false, 'WebGPU есть, но видеокарта не найдена', 'WebGPU is present but no GPU adapter was found');
+    else {
+      const i = ad.info || {}, mb = Math.round(ad.limits.maxBufferSize / 1048576), sb = Math.round(ad.limits.maxStorageBufferBindingSize / 1048576);
+      add(true, `WebGPU: ${i.vendor || '?'} ${i.architecture || ''}`.trim(), `WebGPU: ${i.vendor || '?'} ${i.architecture || ''}`.trim());
+      const big = Math.min(mb, sb) >= 600;
+      add(big, `лимит буфера ${Math.min(mb, sb)} МБ (нужно ≥ 600)`, `buffer limit ${Math.min(mb, sb)} MB (≥ 600 needed)`);
+      if (ad.isFallbackAdapter || i.architecture === 'swiftshader') add(null, 'это программный (CPU) адаптер — будет очень медленно', 'this is a software (CPU) adapter — it will be very slow');
+    }
+    try { const est = await navigator.storage.estimate(); const free = (est.quota - est.usage) / 1e9;
+      add(free > 8.5 ? true : null, `место для кэша: ${free.toFixed(0)} ГБ${free > 8.5 ? '' : ' — не хватит, модель будет качаться заново при каждом заходе'}`, `cache space: ${free.toFixed(0)} GB${free > 8.5 ? '' : ' — not enough, the model will be downloaded on every visit'}`); } catch (e) {}
+    return { ok, items };
+  }
+  async function showGate() {
+    const g = $('gate'); g.hidden = false; $('loadText').textContent = ''; $('loadBar').parentElement.hidden = true;
+    g.innerHTML = L('Проверяю браузер…', 'Checking the browser…', 'Checking the browser…');
+    const r = await gateCheck();
+    g.innerHTML = `<b>${L('gpt-oss-20b прямо в браузере', 'gpt-oss-20b right in the browser', 'gpt-oss-20b right in the browser')}</b>
+      <div>${L('7.8 ГБ весов: 1-битные эксперты + точные MXFP4, ~6.6 ГБ видеопамяти и ~1.2 ГБ оперативной. Нужна видеокарта с 8 ГБ+ (или Apple Silicon с 16 ГБ). Скачивается один раз и хранится в кэше сайта. Качество заметно ниже оригинала (перплексия ×1.4–3.6).',
+        '7.8 GB of weights: 1-bit experts + exact MXFP4 ones, ~6.6 GB of GPU memory and ~1.2 GB of RAM. Needs an 8 GB+ GPU (or Apple Silicon with 16 GB). Downloaded once and kept in the site cache. Quality is clearly below the original (perplexity ×1.4–3.6).',
+        '7.8 GB of weights, ~6.6 GB GPU memory. Quality is below the original.')}</div>
+      <ul>${r.items.map(([good, t]) => `<li class="${good === true ? 'ok' : good === false ? 'bad' : ''}">${t}</li>`).join('')}</ul>
+      ${r.ok ? `<button class="btn btn--solid btn--sm" id="gateGo" type="button">${L('Скачать и запустить (7.8 ГБ)', 'Download and run (7.8 GB)', 'Download and run (7.8 GB)')}</button>` : ''}`;
+    if (r.ok) $('gateGo').onclick = () => { g.hidden = true; $('loadBar').parentElement.hidden = false; startWorker(true); };
+  }
+  function startWorker(confirmed) {
+    if (worker) { worker.terminate(); worker = null; }
+    if (MODELS[modelKey].gate && !confirmed) {
+      ready = false; busy = false; applyModelUi(); $('loading').hidden = false; $('empty').hidden = true; $('modelMeta').textContent = '…'; setStatus('loading'); updateSend();
+      showGate(); return;
+    }
+    $('gate').hidden = true; $('loadBar').parentElement.hidden = false;
     ready = false; busy = false; live = null; lastAnswered = null;
     applyModelUi(); $('loading').hidden = false; $('empty').hidden = true; $('loadBar').style.width = '0%'; $('loadText').textContent = 'Downloading the model…';
     $('modelMeta').textContent = '…'; setStatus('loading'); updateSend();
@@ -133,12 +171,14 @@
   function onWorker(ev) {
     const m = ev.data;
     if (m.type === 'progress') {
-      if (m.cached) { $('loadText').textContent = 'Loading from browser cache…'; $('loadBar').style.width = '100%'; }
+      if (m.cached) { $('loadText').textContent = 'Loading from browser cache…' + (m.total ? ` ${(m.got / 1e6).toFixed(0)} / ${(m.total / 1e6).toFixed(0)} MB` : ''); $('loadBar').style.width = m.total ? Math.round(100 * m.got / m.total) + '%' : '100%'; }
       else { const pct = m.total ? Math.round(100 * m.got / m.total) : 0; $('loadBar').style.width = pct + '%'; $('loadText').textContent = `Downloading the model… ${(m.got / 1e6).toFixed(1)}${m.total ? ' / ' + (m.total / 1e6).toFixed(1) : ''} MB`; }
-    } else if (m.type === 'status' && !ready) { $('loadText').textContent = 'Unpacking and self-testing…'; }
+    } else if (m.type === 'status' && !ready) { $('loadText').textContent = ({ webgpu: 'Starting WebGPU…', building: 'Building GPU pipelines…' })[m.text] || 'Unpacking and self-testing…'; }
     else if (m.type === 'ready') {
       ready = true; $('loading').hidden = true; setStatus('ready');
-      $('modelMeta').innerHTML = `${m.layers} layers · hidden ${m.hidden} · vocab ${m.vocab.toLocaleString()}<br>self-test ${m.selftest[0]}/${m.selftest[1]} ${m.selftest[0] === m.selftest[1] ? '✓' : '✗'} · ${m.format} · ${({ 'wasm-core': 'WASM SIMD core', wasm: 'WASM SIMD', js: 'JS' })[m.backend]}`;
+      $('modelMeta').innerHTML = `${m.layers} layers · hidden ${m.hidden} · vocab ${m.vocab.toLocaleString()}<br>` + (m.backend === 'webgpu'
+        ? `WebGPU · ${esc(m.gpu || '')} · ${m.gpuMB} MB on the GPU · ${esc(m.format)}`
+        : `self-test ${m.selftest[0]}/${m.selftest[1]} ${m.selftest[0] === m.selftest[1] ? '✓' : '✗'} · ${m.format} · ${({ 'wasm-core': 'WASM SIMD core', wasm: 'WASM SIMD', js: 'JS' })[m.backend]}`);
       updateSend(); renderAll(); $('input').focus();
     } else if (m.type === 'seg' && live) {
       let s = live.segs.find((x) => x.i === m.i && x.kind === m.kind);

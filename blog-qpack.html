@@ -53,10 +53,10 @@
   <div data-lang="ru">
     <p class="article__kicker">ИНСТРУМЕНТЫ &middot; QPACK</p>
     <h1 class="article__title">qpack: один файл на модель, свой движок на C++, CUDA и браузер</h1>
-    <p class="article__lede">Как мы упаковали Qwen2.5-0.5B в 232 МиБ и обогнали llama.cpp по скорости генерации, а gpt-oss-20b запустили на 8-гигабайтной Tesla P4. И честно о том, чего это стоит по качеству.</p>
+    <p class="article__lede">Как мы упаковали Qwen2.5-0.5B в 232 МиБ и обогнали llama.cpp по скорости генерации, а gpt-oss-20b запустили на 8-гигабайтной Tesla P4 и прямо в браузере. И честно о том, чего это стоит по качеству.</p>
     <div class="article__stats reveal">
       <div><b>232</b><span>МиБ — Qwen2.5-0.5B (было 352)</span></div><div><b>84</b><span>ток/с на CPU (llama.cpp Q4_K_M: 57)</span></div>
-      <div><b>258</b><span>ток/с на Tesla P4 (llama.cpp: 150)</span></div><div><b>~50</b><span>ток/с gpt-oss-20b на 8 ГБ</span></div>
+      <div><b>258</b><span>ток/с на Tesla P4 (llama.cpp: 150)</span></div><div><b>20B</b><span>gpt-oss в браузере на WebGPU</span></div>
     </div>
     <div class="article__body">
       <h2>Что такое qpack</h2>
@@ -94,7 +94,10 @@
         <li>N-Q-164M-Chat, 230 МБ;</li>
         <li>Qwen2.5-0.5B-Instruct в 4 битах, 269 МБ.</li>
       </ul>
-      <p>Для Qwen мы добавили в браузерное ядро 4-битные веса. Самотест прямо в браузере проходит 4 из 4. Пока браузер читает только QPACK2: формат QPACK3 и gpt-oss в WASM не поддерживаются.</p>
+      <p>Для Qwen мы добавили в браузерное ядро 4-битные веса. Самотест прямо в браузере проходит 4 из 4. Пока браузер читает только QPACK2, формат QPACK3 не поддерживается.</p>
+      <h2>gpt-oss-20b в браузере через WebGPU</h2>
+      <p>Четвёртая модель в чате — gpt-oss-20b с 1-битными экспертами. Она работает на WebGPU — собственных вычислительных шейдерах для каждого формата весов: int8 для attention и выходного слоя, 1-битные эксперты с вторым остаточным слоем и точные MXFP4. Роутер выбирает 4 эксперта прямо на видеокарте, без возврата данных в JavaScript. Эмбеддинг (1.2 ГБ) остаётся в памяти вкладки, на видеокарту уходит около 6.6 ГБ. Файл весит 7.8 ГБ: он качается один раз потоком прямо в видеопамять и одновременно сохраняется в кэш сайта (OPFS).</p>
+      <p>Проверка: на урезанной до 3 слоёв версии модели логиты в браузере совпадают с нашим C++ движком до четвёртого знака. Нужна видеокарта от 8 ГБ или Apple Silicon с 16 ГБ, а также Chrome или Edge. Перед загрузкой страница сама проверяет WebGPU, лимиты буферов и место для кэша.</p>
       <h2>Ссылки</h2>
       <p>Код: <a href="https://github.com/Q-Project-LM/qpack" target="_blank" rel="noopener">github.com/Q-Project-LM/qpack</a>. Модели: <a href="https://huggingface.co/q-project/Qwen2.5-0.5B-Instruct-qpack" target="_blank" rel="noopener">Qwen2.5-0.5B-Instruct-qpack</a>, <a href="https://huggingface.co/q-project/gpt-oss-20b-qpack-q1" target="_blank" rel="noopener">gpt-oss-20b-qpack-q1</a>, <a href="https://huggingface.co/q-project/N-Q-164M-Chat" target="_blank" rel="noopener">N-Q-164M-Chat</a>.</p>
     </div>
@@ -106,7 +109,7 @@
     <p class="article__lede">How we packed Qwen2.5-0.5B into 232 MiB and decode faster than llama.cpp, ran gpt-oss-20b on an 8 GB Tesla P4, and what that costs in quality.</p>
     <div class="article__stats reveal">
       <div><b>232</b><span>MiB, Qwen2.5-0.5B (was 352)</span></div><div><b>84</b><span>tok/s on CPU (llama.cpp Q4_K_M: 57)</span></div>
-      <div><b>258</b><span>tok/s on a Tesla P4 (llama.cpp: 150)</span></div><div><b>~50</b><span>tok/s gpt-oss-20b in 8 GB</span></div>
+      <div><b>258</b><span>tok/s on a Tesla P4 (llama.cpp: 150)</span></div><div><b>20B</b><span>gpt-oss in the browser on WebGPU</span></div>
     </div>
     <div class="article__body">
       <h2>What qpack is</h2>
@@ -144,7 +147,7 @@
         <tr class="us"><td><b>qpack trim80k + q4</b></td><td class="best">232</td><td class="best">83.9</td><td class="best">257.8</td><td>+2.3%</td></tr>
         <tr><td>llama.cpp Q4_K_M</td><td>379</td><td>57.0</td><td>150.3</td><td class="best">+1.5%</td></tr>
       </tbody></table></div>
-      <p>质量与 Q4_K_M 相当（在噪声范围内），优势在于体积和解码速度；CPU 上的提示处理比 llama.cpp 慢。gpt-oss-20b 的 1 比特专家版本可装进 8 GB 显卡，约 50 词元/秒，但困惑度是原模型的 1.4–3.6 倍。网站<a href="chat/">聊天</a>现在可在浏览器中运行三个模型，包括 4 比特的 Qwen2.5-0.5B。</p>
+      <p>质量与 Q4_K_M 相当（在噪声范围内），优势在于体积和解码速度；CPU 上的提示处理比 llama.cpp 慢。gpt-oss-20b 的 1 比特专家版本可装进 8 GB 显卡，约 50 词元/秒，但困惑度是原模型的 1.4–3.6 倍。网站<a href="chat/">聊天</a>现在可在浏览器中运行四个模型，包括 4 比特的 Qwen2.5-0.5B 和通过 WebGPU 运行的 gpt-oss-20b。</p>
       <p>代码：<a href="https://github.com/Q-Project-LM/qpack" target="_blank" rel="noopener">github.com/Q-Project-LM/qpack</a></p>
     </div>
   </div>

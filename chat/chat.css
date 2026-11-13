@@ -111,3 +111,9 @@ details.think .md { margin-top: 6px; }
 .model-pick select:disabled { opacity: .6; cursor: wait; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .topbar__title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+.gate { max-width: 520px; text-align: left; background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; color: var(--text); font-size: .9rem; display: flex; flex-direction: column; gap: 10px; }
+.gate[hidden] { display: none; }
+.gate ul { margin: 0; padding-left: 18px; color: var(--muted); }
+.gate li.ok { color: #16a34a; } .gate li.bad { color: #dc2626; }
+.gate .btn { align-self: flex-start; }
